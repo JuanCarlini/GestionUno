@@ -1,3 +1,5 @@
+const esDev = process.env.NODE_ENV === "development"
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const esDev = process.env.NODE_ENV === "development"
