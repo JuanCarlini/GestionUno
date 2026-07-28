@@ -1,6 +1,3 @@
-import { fileURLToPath } from "node:url"
-import { dirname } from "node:path"
-
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const esDev = process.env.NODE_ENV === "development"
