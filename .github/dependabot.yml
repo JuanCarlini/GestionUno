@@ -1,0 +1,25 @@
+version: 2
+
+# El `npm audit` del CI avisa cuando ya hay un advisory abierto; Dependabot es el que
+# propone la actualización. Sin esto, mantener las deps al día depende de que alguien se
+# acuerde de mirar (así se acumularon 29 advisories de Next entre julio y noviembre).
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Un PR por grupo en vez de uno por paquete: menos ruido, y los parches de
+      # seguridad no quedan sepultados entre bumps cosméticos.
+      radix:
+        patterns: ["@radix-ui/*"]
+      dev:
+        dependency-type: development
+
+  # Las actions también se pinean por SHA en los workflows: Dependabot entiende ese
+  # formato y actualiza el SHA junto con el comentario de versión.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
