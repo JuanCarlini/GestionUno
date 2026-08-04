@@ -9,6 +9,16 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    # Los majors se hacen a mano y de a uno. Agrupados no sirven: el grupo `dev`
+    # armó un PR con tailwind 3→4, typescript 5→7 y eslint 8→10 juntos, y el build
+    # murió resolviendo el alias `@/*` del tsconfig sin dejar claro cuál de los tres
+    # lo rompió. Con esto Dependabot sigue proponiendo minor y patch (que es donde
+    # entra la mayoría de los parches de seguridad); los saltos de major quedan para
+    # cuando haya tiempo de revisar el changelog. El `npm audit` del CI sigue siendo
+    # la red que avisa si un advisory solo se arregla con un major.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     groups:
       # Un PR por grupo en vez de uno por paquete: menos ruido, y los parches de
       # seguridad no quedan sepultados entre bumps cosméticos.
