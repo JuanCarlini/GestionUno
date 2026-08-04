@@ -6,6 +6,10 @@ import { getJwtSecret } from '@/lib/auth/jwt-secret'
 
 const JWT_EXPIRES_IN = '7d'
 
+// Hash bcrypt de relleno (de un valor descartado): cuando el email no existe se compara
+// igual contra esto, para que el tiempo de respuesta no delate qué emails están registrados.
+const HASH_RELLENO = '$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW'
+
 // El join gu_roles(nombre) es many-to-one: en runtime llega como objeto,
 // pero el cliente sin tipar lo infiere como array
 function rolNombreDe(gu_roles: unknown): string | undefined {
@@ -24,7 +28,7 @@ export interface AuthUser {
   updated_at?: string | null
 }
 
-export interface JWTPayload {
+interface JWTPayload {
   userId: number
   email: string
   nombre: string
@@ -58,6 +62,7 @@ export class AuthService {
         .single()
 
       if (error || !usuario) {
+        await bcrypt.compare(password, HASH_RELLENO)
         console.error('Usuario no encontrado:', error)
         return null
       }

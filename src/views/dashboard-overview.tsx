@@ -22,11 +22,11 @@ import { StatusBadge } from "@/components/status-badge"
 const getTipoIcon = (tipo: string) => {
   switch (tipo) {
     case 'orden_compra':
-      return <ShoppingCart className="h-4 w-4 text-blue-600" />
+      return <ShoppingCart className="h-4 w-4 text-muted-foreground" />
     case 'orden_pago':
-      return <CreditCard className="h-4 w-4 text-green-600" />
+      return <CreditCard className="h-4 w-4 text-muted-foreground" />
     case 'proveedor':
-      return <Building2 className="h-4 w-4 text-purple-600" />
+      return <Building2 className="h-4 w-4 text-muted-foreground" />
     default:
       return <div className="h-4 w-4" />
   }
@@ -74,15 +74,15 @@ export function DashboardOverview() {
       value: stats.ordenesCompra.total.toString(),
       change: `${stats.ordenesCompra.recientes} nueva${stats.ordenesCompra.recientes !== 1 ? 's' : ''} esta semana`,
       icon: ShoppingCart,
-      color: "text-blue-600",
+      color: "text-muted-foreground",
       details: `${stats.ordenesCompra.pendientes} pendientes, ${stats.ordenesCompra.aprobadas} aprobadas`
     },
     {
       title: "Órdenes de Pago",
       value: stats.ordenesPago.total.toString(),
-      change: `${stats.ordenesPago.vencidas} vencida${stats.ordenesPago.vencidas !== 1 ? 's' : ''}`,
+      change: `${stats.ordenesPago.porPagar} por pagar`,
       icon: CreditCard,
-      color: stats.ordenesPago.vencidas > 0 ? "text-red-600" : "text-green-600",
+      color: stats.ordenesPago.porPagar > 0 ? "text-destructive" : "text-muted-foreground",
       details: `${stats.ordenesPago.pendientes} pendientes, ${stats.ordenesPago.aprobadas} aprobadas`
     },
     {
@@ -90,15 +90,18 @@ export function DashboardOverview() {
       value: stats.proveedores.total.toString(),
       change: `${stats.proveedores.activos} activos`,
       icon: Building2,
-      color: "text-purple-600",
+      color: "text-muted-foreground",
       details: `${stats.proveedores.nuevos} nuevo${stats.proveedores.nuevos !== 1 ? 's' : ''} este mes`
     },
     {
       title: "Total Pagado",
-      value: formatCurrency(stats.ordenesPago.montoTotal, "ARS"),
+      value:
+        Object.entries(stats.ordenesPago.montoPagadoPorMoneda)
+          .map(([moneda, monto]) => formatCurrency(monto, moneda))
+          .join(" · ") || formatCurrency(0, "ARS"),
       change: "Órdenes completadas",
       icon: TrendingUp,
-      color: "text-orange-600",
+      color: "text-muted-foreground",
       details: "Monto total de pagos realizados"
     }
   ]
@@ -126,7 +129,7 @@ export function DashboardOverview() {
                 <IconComponent className={`h-4 w-4 ${stat.color}`} />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+                <div className="text-2xl font-bold text-foreground break-words">{stat.value}</div>
                 <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
                 <p className="text-xs text-muted-foreground mt-1">{stat.details}</p>
               </CardContent>
@@ -170,25 +173,25 @@ export function DashboardOverview() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Órdenes de pago vencidas */}
-              {stats.ordenesPago.vencidas > 0 && (
-                <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-lg">
+              {/* Órdenes de pago aprobadas sin pagar */}
+              {stats.ordenesPago.porPagar > 0 && (
+                <div className="flex items-center justify-between gap-2 p-3 bg-destructive/10 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <AlertTriangle className="h-4 w-4 text-destructive" />
                     <div>
-                      <p className="text-sm font-medium text-destructive">Órdenes Vencidas</p>
-                      <p className="text-xs text-destructive">{stats.ordenesPago.vencidas} órdenes de pago vencidas</p>
+                      <p className="text-sm font-medium text-destructive">Pagos pendientes</p>
+                      <p className="text-xs text-destructive">{stats.ordenesPago.porPagar} órdenes de pago aprobadas sin pagar</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">
-                    Urgente
+                  <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 shrink-0">
+                    Por pagar
                   </Badge>
                 </div>
               )}
 
               {/* Órdenes pendientes */}
               {stats.ordenesCompra.pendientes > 0 && (
-                <div className="flex items-center justify-between p-3 bg-amber-500/10 rounded-lg">
+                <div className="flex items-center justify-between gap-2 p-3 bg-amber-500/10 rounded-lg">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                     <div>
@@ -196,14 +199,14 @@ export function DashboardOverview() {
                       <p className="text-xs text-amber-600 dark:text-amber-400">{stats.ordenesCompra.pendientes} órdenes de compra por aprobar</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20">
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 shrink-0">
                     Pendiente
                   </Badge>
                 </div>
               )}
 
               {/* Si todo está bien */}
-              {stats.ordenesPago.vencidas === 0 && stats.ordenesCompra.pendientes === 0 && (
+              {stats.ordenesPago.porPagar === 0 && stats.ordenesCompra.pendientes === 0 && (
                 <div className="flex items-center space-x-2 p-3 bg-emerald-500/10 rounded-lg">
                   <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                   <div>

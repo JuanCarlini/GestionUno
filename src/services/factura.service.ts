@@ -1,4 +1,5 @@
 import { FacturaRepository } from "@/repositories/factura.repository"
+import { CertificacionRepository } from "@/repositories/certificacion.repository"
 import { HttpError } from "@/lib/route/http-error"
 import { totalesDeLinea, totalesDeCabecera, IVA_DEFAULT } from "@/services/totales"
 import { puedeTransicionar, TRANSICIONES_FACTURA } from "@/services/transiciones"
@@ -51,8 +52,31 @@ export class FacturaService {
     }
   }
 
+  /**
+   * Certificaciones imputables del proveedor: aprobadas y con saldo facturable > 0
+   * (total_con_iva − monto_facturado, leído de v_cert_rollup). El shape es el que
+   * consume el formulario de factura; el filtro vive acá, no en el cliente.
+   */
   static async getCertificacionesAprobadas(proveedorId: number) {
-    return FacturaRepository.findCertificacionesAprobadas(proveedorId)
+    const certs = await FacturaRepository.findCertificacionesAprobadas(proveedorId)
+    if (certs.length === 0) return []
+
+    const rollups = await CertificacionRepository.findRollupsByIds(certs.map((c: any) => c.id))
+    const porId = new Map(rollups.map((r) => [r.certificacion_id, r]))
+
+    return certs
+      .map((c: any) => {
+        const total = Number(c.total_con_iva ?? 0)
+        const facturado = Number(porId.get(c.id)?.monto_facturado ?? 0)
+        return {
+          id: c.id,
+          numero_cert: c.numero_cert,
+          moneda: c.gu_ordenesdecompra?.moneda ?? null,
+          total_con_iva: total,
+          saldo_facturable: total - facturado,
+        }
+      })
+      .filter((c) => c.saldo_facturable > 0.01)
   }
 
   /**
@@ -151,7 +175,14 @@ export class FacturaService {
     return FacturaRepository.updateEstado(id, destino)
   }
 
+  // Solo se borra un borrador: una factura finalizada o anulada es historia contable y se
+  // preserva (la baja con rastro es la anulación, no el DELETE).
   static async delete(id: number) {
+    const factura = await FacturaRepository.findById(id)
+    if (!factura) throw new HttpError(404, "Factura no encontrada")
+    if (factura.estado !== "borrador") {
+      throw new HttpError(422, `No se puede eliminar una factura en estado "${factura.estado}": anulala en su lugar`)
+    }
     return FacturaRepository.deleteById(id)
   }
 

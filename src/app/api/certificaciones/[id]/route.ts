@@ -6,10 +6,7 @@ import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
-
-interface Params {
-  params: Promise<{ id: string }>
-}
+import type { IdParams } from "@/lib/route/params"
 
 // GET /api/certificaciones/[id] - Cabecera + líneas derivadas + rollup de facturación
 export const GET = getByIdRoute({
@@ -20,7 +17,7 @@ export const GET = getByIdRoute({
 })
 
 // PUT /api/certificaciones/[id] - Editar la cabecera (el estado va por PATCH /estado)
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError, user } = await requirePermission("certificaciones", "crear")
     if (authError) return authError
@@ -48,9 +45,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 // DELETE /api/certificaciones/[id]
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: IdParams) {
   try {
-    const { error: authError } = await requirePermission("certificaciones", "borrar")
+    const { error: authError, user } = await requirePermission("certificaciones", "borrar")
     if (authError) return authError
 
     const id = parseId((await params).id)
@@ -60,7 +57,8 @@ export async function DELETE(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Certificación no encontrada" }, { status: 404 })
     }
 
-    await AuditService.registrarDesdeRequest({
+    await AuditService.registrar({
+      usuarioId: user!.id,
       tabla: "gu_certificaciones",
       registroId: id,
       accion: "eliminar",

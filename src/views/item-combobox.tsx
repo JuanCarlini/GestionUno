@@ -124,7 +124,7 @@ export function ItemCombobox({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
+      <PopoverContent className="w-[min(400px,calc(100vw-2rem))] p-0" align="start">
         <Command>
           <CommandInput
             placeholder="Buscar item..."
@@ -180,7 +180,7 @@ export function ItemCombobox({
                           value === item.id ? "opacity-100" : "opacity-0"
                         )}
                       />
-                      <div className="flex flex-col">
+                      <div className="flex min-w-0 flex-col">
                         <span className="font-medium">{item.nombre}</span>
                         {item.descripcion && (
                           <span className="text-xs text-muted-foreground truncate">

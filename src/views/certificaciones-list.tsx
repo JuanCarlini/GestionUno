@@ -4,15 +4,27 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { SearchBar } from "@/components/ui/search-bar"
-import { SearchStats } from "@/components/ui/search-stats"
-import { Eye } from "lucide-react"
-import { ListShell } from "@/components/ui/list-shell"
+import { SearchBar } from "@/components/search-bar"
+import { SearchStats } from "@/components/search-stats"
+import { Eye, FileCheck } from "lucide-react"
+import { EmptyState } from "@/components/empty-state"
+import { CrearButton } from "@/components/crear-button"
+import { ListShell } from "@/components/list-shell"
+import { SortControl, useSort, type SortField } from "@/components/sort-control"
+import { LABEL_ESTADO } from "@/models"
 import Link from "next/link"
 import { searchWithScore } from "@/shared/search-utils"
 import { formatCurrency } from "@/shared/format-utils"
 import { showErrorToast } from "@/shared/toast-helpers"
 import { StatusBadge } from "@/components/status-badge"
+
+const SORT_FIELDS: SortField[] = [
+  { key: "numero_cert", label: "Número de certificación" },
+  { key: "fecha_cert", label: "Fecha" },
+  { key: "total_con_iva", label: "Total" },
+  // Ordena por la etiqueta visible, no por el valor crudo del enum.
+  { key: "estado", label: "Estado", get: (i) => LABEL_ESTADO[i.estado as keyof typeof LABEL_ESTADO] ?? i.estado },
+]
 
 export function CertificacionesList() {
   const [certificaciones, setCertificaciones] = useState<any[]>([])
@@ -40,6 +52,9 @@ export function CertificacionesList() {
     }
   }
 
+  const sort = useSort(SORT_FIELDS)
+
+
   const filteredCertificaciones = searchWithScore(
     certificaciones,
     searchTerm,
@@ -47,17 +62,19 @@ export function CertificacionesList() {
     { numero_cert: 3, numero_oc: 2, proveedor_nombre: 2, estado: 2 }
   )
 
+  const sorted = sort.apply(filteredCertificaciones)
+
   return (
     <ListShell loading={loading} error={error} loadingText="Cargando certificaciones...">
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle>Certificaciones ({filteredCertificaciones.length})</CardTitle>
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
             placeholder="Buscar por número, OC, proveedor..."
-            className="w-80"
+            className="w-full sm:w-80"
           />
         </div>
       </CardHeader>
@@ -69,17 +86,26 @@ export function CertificacionesList() {
           entityName="certificación"
         />
 
+        <div className="mb-4 flex justify-end">
+          <SortControl {...sort} />
+        </div>
+
         <div className="space-y-4">
           {filteredCertificaciones.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                {searchTerm
+            <EmptyState
+              icon={FileCheck}
+              title={
+                searchTerm
                   ? `No se encontraron certificaciones que coincidan con "${searchTerm}"`
-                  : "No hay certificaciones registradas"}
-              </p>
-            </div>
+                  : "No hay certificaciones registradas"
+              }
+            >
+              {!searchTerm && (
+                <CrearButton modulo="certificaciones" href="/certificaciones/nueva" label="Crear la primera certificación" />
+              )}
+            </EmptyState>
           ) : (
-            filteredCertificaciones.map((cert: any) => (
+            sorted.map((cert: any) => (
               <div
                 key={cert.id}
                 className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
@@ -102,8 +128,8 @@ export function CertificacionesList() {
                   </div>
 
                   <div>
-                    <p className="font-medium text-foreground">
-                      {formatCurrency(cert.total_con_iva ?? 0)}
+                    <p className="font-medium text-foreground tabular-nums">
+                      {formatCurrency(cert.total_con_iva ?? 0, cert.moneda ?? "ARS")}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusBadge estado={cert.estado} showIcon />

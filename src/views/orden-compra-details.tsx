@@ -119,7 +119,7 @@ export function OrdenCompraDetails({ ordenId }: Props) {
     <Card>
       <CardContent className="p-6">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6 pb-6 border-b">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-6 pb-6 border-b">
           <div>
             <h2 className="text-2xl font-bold text-foreground">
               Orden de Compra {orden.numero_oc ?? `#${orden.id}`}
@@ -157,7 +157,7 @@ export function OrdenCompraDetails({ ordenId }: Props) {
               {orden.observaciones && (
                 <div>
                   <p className="text-sm text-muted-foreground">Observaciones:</p>
-                  <p className="text-base text-foreground whitespace-pre-wrap">
+                  <p className="text-base text-foreground whitespace-pre-wrap break-words">
                     {orden.observaciones}
                   </p>
                 </div>
@@ -174,19 +174,19 @@ export function OrdenCompraDetails({ ordenId }: Props) {
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Subtotal:</span>
                 <span className="text-base text-foreground">
-                  {formatCurrency(Number(orden.total_neto ?? 0))}
+                  {formatCurrency(Number(orden.total_neto ?? 0), orden.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Impuestos:</span>
                 <span className="text-base text-foreground">
-                  {formatCurrency(Number(orden.total_iva ?? 0))}
+                  {formatCurrency(Number(orden.total_iva ?? 0), orden.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between pt-3 border-t">
                 <span className="text-lg font-bold text-foreground">Total:</span>
                 <span className="text-lg font-bold text-foreground">
-                  {formatCurrency(Number(orden.total_con_iva ?? 0))}
+                  {formatCurrency(Number(orden.total_con_iva ?? 0), orden.moneda ?? "ARS")}
                 </span>
               </div>
             </div>
@@ -234,14 +234,14 @@ export function OrdenCompraDetails({ ordenId }: Props) {
                       <td className="px-4 py-3 text-sm text-foreground">
                         {linea.item_codigo ?? "—"}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm text-foreground">
+                      <td className="px-4 py-3 text-right text-sm text-foreground tabular-nums whitespace-nowrap">
                         {Number(linea.cantidad ?? 0)}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm text-foreground">
-                        {formatCurrency(Number(linea.precio_unitario_neto ?? 0))}
+                      <td className="px-4 py-3 text-right text-sm text-foreground tabular-nums whitespace-nowrap">
+                        {formatCurrency(Number(linea.precio_unitario_neto ?? 0), orden.moneda ?? "ARS")}
                       </td>
-                      <td className="px-4 py-3 text-right text-sm font-medium text-foreground">
-                        {formatCurrency(Number(linea.total_neto ?? 0))}
+                      <td className="px-4 py-3 text-right text-sm font-medium text-foreground tabular-nums whitespace-nowrap">
+                        {formatCurrency(Number(linea.total_neto ?? 0), orden.moneda ?? "ARS")}
                       </td>
                     </tr>
                   ))}

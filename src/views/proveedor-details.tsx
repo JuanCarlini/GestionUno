@@ -72,15 +72,15 @@ export function ProveedorDetails({ proveedor, onActivar, onSuspender }: Props) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-4">
           <Button variant="outline" size="sm" asChild>
             <Link href="/proveedores">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
               {proveedor.nombre || "Proveedor"}
             </h1>
             <p className="text-muted-foreground">CUIT: {proveedor.cuit || "—"}</p>
@@ -90,7 +90,7 @@ export function ProveedorDetails({ proveedor, onActivar, onSuspender }: Props) {
           )}
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" asChild>
             <Link href={`/proveedores/${proveedor.id}/editar`}>
               <Edit className="h-4 w-4 mr-2" />
@@ -106,7 +106,7 @@ export function ProveedorDetails({ proveedor, onActivar, onSuspender }: Props) {
                   onClick={handleSuspender}
                   disabled={isProcessing}
                 >
-                  <XCircle className="h-4 w-4 mr-2 text-red-600" />
+                  <XCircle className="h-4 w-4 mr-2 text-destructive" />
                   Desactivar
                 </Button>
               ) : (
@@ -115,7 +115,7 @@ export function ProveedorDetails({ proveedor, onActivar, onSuspender }: Props) {
                   onClick={handleActivar}
                   disabled={isProcessing}
                 >
-                  <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                  <CheckCircle className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
                   Activar
                 </Button>
               )}
@@ -176,7 +176,7 @@ export function ProveedorDetails({ proveedor, onActivar, onSuspender }: Props) {
                       {proveedor.email ? (
                         <a
                           href={`mailto:${proveedor.email}`}
-                          className="text-blue-600 hover:underline"
+                          className="text-primary hover:underline break-all"
                         >
                           {proveedor.email}
                         </a>
@@ -192,7 +192,7 @@ export function ProveedorDetails({ proveedor, onActivar, onSuspender }: Props) {
                       {proveedor.telefono ? (
                         <a
                           href={`tel:${proveedor.telefono}`}
-                          className="text-blue-600 hover:underline"
+                          className="text-primary hover:underline"
                         >
                           {proveedor.telefono}
                         </a>
@@ -217,7 +217,7 @@ export function ProveedorDetails({ proveedor, onActivar, onSuspender }: Props) {
               <div className="space-y-3">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Dirección</p>
-                  <p className="text-foreground">{proveedor.direccion || "—"}</p>
+                  <p className="text-foreground break-words">{proveedor.direccion || "—"}</p>
                 </div>
               </div>
             </CardContent>

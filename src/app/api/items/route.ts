@@ -9,7 +9,10 @@ import { createRoute } from "@/lib/route/crud-route"
 // Query params opcionales: ?includeInactive=true, ?categoria=string
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
+    const { error } = await requirePermission("items", "ver")
+    if (error) return error
+
+    const searchParams = request.nextUrl.searchParams
     const includeInactive = searchParams.get("includeInactive") === "true"
     const categoria = searchParams.get("categoria")
 

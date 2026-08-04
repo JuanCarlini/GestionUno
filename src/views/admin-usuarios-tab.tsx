@@ -149,13 +149,13 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                     key={userData.id}
                     className={`flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors ${userData.estado === "inactivo" ? "opacity-60" : ""}`}
                   >
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                      <div>
+                    <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                      <div className="min-w-0">
                         <p className="font-medium text-foreground">{userData.nombre}</p>
-                        <p className="text-sm text-muted-foreground">{userData.email}</p>
+                        <p className="text-sm text-muted-foreground truncate">{userData.email}</p>
                         <div className="flex gap-1 mt-1">
                           {esUnoMismo && (
-                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Tú</span>
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">Tú</span>
                           )}
                           <Badge variant={userData.estado === "activo" ? "outline" : "destructive"}>
                             {userData.estado}
@@ -213,7 +213,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                             disabled={esUnoMismo || updatingUserId === userData.id}
                             onClick={() => handleBaja(userData)}
                           >
-                            <UserX className="h-4 w-4 text-red-600" />
+                            <UserX className="h-4 w-4 text-destructive" />
                           </Button>
                         ) : (
                           <Button
@@ -224,7 +224,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                             disabled={updatingUserId === userData.id}
                             onClick={() => handleReactivar(userData)}
                           >
-                            <UserCheck className="h-4 w-4 text-green-600" />
+                            <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                           </Button>
                         )}
                       </div>

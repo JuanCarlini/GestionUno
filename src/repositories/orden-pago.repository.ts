@@ -90,7 +90,8 @@ export class OrdenPagoRepository {
       .delete()
       .eq("orden_pago_id", opId)
       .eq("factura_id", facturaId)
-    return !error
+    if (error) throw error
+    return true
   }
 
   // --- Líneas de caja (desde qué cajas se paga). fn_op_gate valida moneda y Σ al mandar a aprobar.
@@ -119,6 +120,7 @@ export class OrdenPagoRepository {
       .delete()
       .eq("orden_pago_id", opId)
       .eq("caja_id", cajaId)
-    return !error
+    if (error) throw error
+    return true
   }
 }

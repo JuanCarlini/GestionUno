@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/service"
+import { esSinFilas } from "./base.repository"
 import type { Tables, TablesUpdate } from "@/lib/supabase/database.types"
 
 const TABLE = "gu_roles"
@@ -20,7 +21,10 @@ export class RolRepository {
   static async findById(id: number): Promise<{ id: number; nombre: string } | null> {
     const supabase = createClient()
     const { data, error } = await supabase.from(TABLE).select("id, nombre").eq("id", id).single()
-    if (error) return null
+    if (error) {
+      if (esSinFilas(error)) return null
+      throw error
+    }
     return data as { id: number; nombre: string } | null
   }
 

@@ -23,42 +23,6 @@ export function useProveedores() {
     }
   }
 
-  const createProveedor = async (proveedorData: any) => {
-    try {
-      const newProveedor = await api("/api/proveedores", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(proveedorData),
-      })
-      setProveedores(prev => [...prev, newProveedor])
-      showSuccessToast(toastMessages.proveedor.created, newProveedor.nombre)
-      return newProveedor
-    } catch (err) {
-      showErrorToast(toastMessages.proveedor.error, err instanceof Error ? err.message : "Error desconocido")
-      throw err
-    }
-  }
-
-  const updateProveedor = async (id: number, proveedorData: any) => {
-    try {
-      const updatedProveedor = await api(`/api/proveedores/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(proveedorData),
-      })
-      if (updatedProveedor) {
-        setProveedores(prev =>
-          prev.map(proveedor => proveedor.id === id ? updatedProveedor : proveedor)
-        )
-        showSuccessToast(toastMessages.proveedor.updated, updatedProveedor.nombre)
-      }
-      return updatedProveedor
-    } catch (err) {
-      showErrorToast(toastMessages.proveedor.error, err instanceof Error ? err.message : "Error desconocido")
-      throw err
-    }
-  }
-
   const activarProveedor = async (id: number) => {
     try {
       const updatedProveedor = await api(`/api/proveedores/${id}/activar`, { method: "PATCH" })
@@ -92,17 +56,6 @@ export function useProveedores() {
     }
   }
 
-  const deleteProveedor = async (id: number) => {
-    try {
-      await api(`/api/proveedores/${id}`, { method: "DELETE" })
-      setProveedores(prev => prev.filter(proveedor => proveedor.id !== id))
-      showSuccessToast(toastMessages.proveedor.deleted)
-    } catch (err) {
-      showErrorToast(toastMessages.proveedor.error, err instanceof Error ? err.message : "Error desconocido")
-      throw err
-    }
-  }
-
   useEffect(() => {
     fetchProveedores()
   }, [])
@@ -111,11 +64,7 @@ export function useProveedores() {
     proveedores,
     loading,
     error,
-    refreshProveedores: fetchProveedores,
-    createProveedor,
-    updateProveedor,
     activarProveedor,
     suspenderProveedor,
-    deleteProveedor
   }
 }

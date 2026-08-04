@@ -92,7 +92,7 @@ export function UserMenu({ userName = "Admin" }: UserMenuProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{userName}</span>
+            <span className="text-sm text-muted-foreground max-w-[120px] truncate">{userName}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
@@ -105,7 +105,7 @@ export function UserMenu({ userName = "Admin" }: UserMenuProps) {
           <DropdownMenuItem
             onClick={handleLogout}
             disabled={isLoading}
-            className="text-red-600 cursor-pointer"
+            className="text-destructive cursor-pointer"
           >
             {isLoading ? (
               <>

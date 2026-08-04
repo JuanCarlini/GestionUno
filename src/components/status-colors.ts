@@ -1,4 +1,5 @@
-// Semaforización unificada de estados: todos los estados de la app usan estos colores.
+// Semaforización de los estados del circuito (OC/CE/FACT/OP), consumida vía StatusBadge.
+// Proyectos y roles de admin tienen sus propios mapas de color.
 
 import {
   CheckCircle,
@@ -10,9 +11,10 @@ import {
 
 enum StatusCategory {
   SUCCESS = "success",    // Verde - Aprobado/Completado
-  PENDING = "pending",    // Amarillo - Pendiente/En proceso
+  PENDING = "pending",    // Amarillo - Esperando a un tercero
   ERROR = "error",        // Rojo - Rechazado/Error/Anulado
-  INFO = "info"          // Azul - Informativo
+  INFO = "info",         // Azul - Informativo/En curso
+  DRAFT = "draft"        // Neutro - Documento propio sin enviar
 }
 
 const statusMap: Record<string, StatusCategory> = {
@@ -22,14 +24,22 @@ const statusMap: Record<string, StatusCategory> = {
   "pagado": StatusCategory.SUCCESS,
   "finalizado": StatusCategory.SUCCESS,
 
+  // Borrador es un documento propio todavía en edición: neutro, no amarillo,
+  // para que no se confunda con los estados que esperan acción de un tercero.
+  "borrador": StatusCategory.DRAFT,
+  "planificado": StatusCategory.DRAFT,
+
   // Estados pendientes/en proceso - AMARILLO
-  "borrador": StatusCategory.PENDING,
   "pendiente": StatusCategory.PENDING,
   "en_aprobacion": StatusCategory.PENDING,
+
+  // Estados en curso - AZUL
+  "en_ejecucion": StatusCategory.INFO,
 
   // Estados rechazados/error - ROJO
   "rechazado": StatusCategory.ERROR,
   "anulado": StatusCategory.ERROR,
+  "cancelado": StatusCategory.ERROR,
   "error": StatusCategory.ERROR,
   "inactivo": StatusCategory.ERROR,
 }
@@ -52,6 +62,8 @@ function getStatusColor(estado: string | null | undefined): string {
       return "bg-destructive/10 text-destructive border-destructive/20"
     case StatusCategory.INFO:
       return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+    case StatusCategory.DRAFT:
+      return "bg-muted text-muted-foreground border-border"
     default:
       return "bg-muted text-muted-foreground border-border"
   }
@@ -69,6 +81,8 @@ function getStatusIcon(estado: string | null | undefined) {
       return XCircle
     case StatusCategory.INFO:
       return Activity
+    case StatusCategory.DRAFT:
+      return FileText
     default:
       return FileText
   }
@@ -86,6 +100,8 @@ function getStatusIconColor(estado: string | null | undefined): string {
       return "text-destructive"
     case StatusCategory.INFO:
       return "text-blue-600 dark:text-blue-400"
+    case StatusCategory.DRAFT:
+      return "text-muted-foreground"
     default:
       return "text-muted-foreground"
   }

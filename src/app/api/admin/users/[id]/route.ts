@@ -1,34 +1,32 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 import { requireAdmin } from "@/lib/auth/permissions-server"
 import { UsuarioService } from "@/services/usuario.service"
 import { AuditService } from "@/lib/audit/audit.service"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
+import type { IdParams } from "@/lib/route/params"
 
-interface Params {
-  params: Promise<{ id: string }>
-}
+// Whitelist del body, como el resto de las rutas: campos sueltos a mano dejaban pasar
+// un email sin formato o un estado fuera del enum hasta reventar en la DB.
+const UpdateUsuarioSchema = z.object({
+  nombre: z.string().min(1).optional(),
+  email: z.string().email("Email inválido").optional(),
+  rol_id: z.coerce.number().int().positive().optional(),
+  estado: z.enum(["activo", "inactivo"]).optional(),
+})
 
 // PUT /api/admin/users/[id] - Editar usuario (nombre, email, rol, estado)
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError, user } = await requireAdmin()
     if (authError) return authError
 
     const userId = parseId((await params).id)
-    const body = await request.json()
+    const data = UpdateUsuarioSchema.parse(await request.json())
 
     // El anti auto-lockout vive en UsuarioService.update (regla de negocio, testeable).
-    const actualizado = await UsuarioService.update(
-      userId,
-      {
-        nombre: body.nombre,
-        email: body.email,
-        rol_id: body.rol_id !== undefined ? Number(body.rol_id) : undefined,
-        estado: body.estado,
-      },
-      { id: user!.id }
-    )
+    const actualizado = await UsuarioService.update(userId, data, { id: user!.id })
 
     await AuditService.registrar({
       usuarioId: user!.id,
@@ -45,7 +43,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 // DELETE /api/admin/users/[id] - Baja lógica (estado = inactivo; el login la excluye)
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError, user } = await requireAdmin()
     if (authError) return authError

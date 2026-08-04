@@ -6,7 +6,7 @@ import { AuditService } from "@/lib/audit/audit.service"
 // Factories de los dos CRUD uniformes (GET /[id] y POST de colección). NO cubren PUT/DELETE:
 // esos divergen (audit condicional, DELETE con isInUse→409) y forzarlos sería una sopa de flags.
 //
-// Mismo shape { error, user } que devuelven requireRole/requirePermission/requireAdmin.
+// Mismo shape { error, user } que devuelven requirePermission/requireAdmin/requireAuth.
 type Autorizacion = Promise<{ error: NextResponse | null; user: { id: number } | null }>
 
 // ---------- GET /[id] ----------
@@ -58,7 +58,8 @@ export function createRoute<In, Out extends { id: number }>(cfg: CreateConfig<In
       const creado = await cfg.crear(data, user!)
 
       if (cfg.audit) {
-        await AuditService.registrarDesdeRequest({
+        await AuditService.registrar({
+          usuarioId: user!.id,
           tabla: cfg.audit.tabla,
           registroId: creado.id,
           accion: "crear",

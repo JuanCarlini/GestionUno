@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/service"
+import { esSinFilas } from "./base.repository"
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/database.types"
 import type { Certificacion, CertRollup, EstadoAprobacion, LocRollup } from "@/models"
 
@@ -14,7 +15,7 @@ export class CertificacionRepository {
     const supabase = createClient()
     const { data, error } = await supabase
       .from(TABLE)
-      .select("*, gu_proveedores(nombre), gu_ordenesdecompra(id, numero_oc)")
+      .select("*, gu_proveedores(nombre), gu_ordenesdecompra(id, numero_oc, moneda)")
       .order("created_at", { ascending: false })
 
     if (error) throw error
@@ -62,7 +63,10 @@ export class CertificacionRepository {
   static async update(id: number, data: TablesUpdate<"gu_certificaciones">): Promise<Certificacion | null> {
     const supabase = createClient()
     const { data: updated, error } = await supabase.from(TABLE).update(data).eq("id", id).select().single()
-    if (error) return null
+    if (error) {
+      if (esSinFilas(error)) return null
+      throw error
+    }
     return updated
   }
 
@@ -77,7 +81,8 @@ export class CertificacionRepository {
   static async deleteById(id: number): Promise<boolean> {
     const supabase = createClient()
     const { error } = await supabase.from(TABLE).delete().eq("id", id)
-    return !error
+    if (error) throw error
+    return true
   }
 
   // Líneas certificables de UNA orden de compra (la CE cuelga de una sola).

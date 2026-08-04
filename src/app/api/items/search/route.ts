@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import { ItemService } from "@/services"
+import { requirePermission } from "@/lib/auth/permissions-server"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 
 // GET /api/items/search?query=texto - Buscar items por nombre o descripción
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const query = searchParams.get("query")
+    const { error } = await requirePermission("items", "ver")
+    if (error) return error
+
+    const query = request.nextUrl.searchParams.get("query")
 
     if (!query || query.trim().length === 0) {
       return NextResponse.json(

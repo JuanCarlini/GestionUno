@@ -127,7 +127,7 @@ export function ItemQuickCreateDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Nombre <span className="text-red-500">*</span>
+                    Nombre <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -169,14 +169,14 @@ export function ItemQuickCreateDialog({
             {/* Código y Unidad de Medida en la misma fila.
                 El precio ya no es del item: vive en gu_item_proveedor_precio (por proveedor)
                 y se carga al vuelo desde la línea de OC. */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="codigo"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Código <span className="text-red-500">*</span>
+                      Código <span className="text-destructive">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input

@@ -52,7 +52,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error: authError } = await requirePermission("ordenes_compra", "borrar")
+    const { error: authError, user } = await requirePermission("ordenes_compra", "borrar")
     if (authError) return authError
 
     const id = parseId((await params).id)
@@ -62,7 +62,8 @@ export async function DELETE(
       return NextResponse.json({ error: "Orden de compra no encontrada" }, { status: 404 })
     }
 
-    await AuditService.registrarDesdeRequest({
+    await AuditService.registrar({
+      usuarioId: user!.id,
       tabla: "gu_ordenesdecompra",
       registroId: id,
       accion: "eliminar",

@@ -48,7 +48,8 @@ export const ItemRepository = {
   async setActive(id: number, isActive: boolean): Promise<boolean> {
     const supabase = createClient()
     const { error } = await supabase.from(TABLE).update({ is_active: isActive }).eq("id", id)
-    return !error
+    if (error) throw error
+    return true
   },
 
   // ¿el item aparece en alguna línea de OC? (existencia; error se trata como "no en uso")

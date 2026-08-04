@@ -14,43 +14,26 @@ export const showErrorToast = (message: string, description?: string) => {
   })
 }
 
-// Toast messages específicos para acciones comunes
+// Solo los mensajes con consumidores: las transiciones de estado de los hooks de lista
+// y activar/suspender proveedores. Los de crear/editar/borrar murieron con las
+// mutaciones sin uso de los hooks (los formularios manejan sus errores con el form).
 export const toastMessages = {
-  // Órdenes de Compra
   ordenCompra: {
-    created: "Orden de compra creada exitosamente",
     updated: "Orden de compra actualizada",
-    deleted: "Orden de compra eliminada",
     approved: "Orden de compra aprobada",
     rejected: "Orden de compra rechazada",
     error: "Error al procesar la orden de compra"
   },
-  
-  // Órdenes de Pago
   ordenPago: {
-    created: "Orden de pago creada exitosamente",
     updated: "Orden de pago actualizada",
-    deleted: "Orden de pago eliminada",
     approved: "Orden de pago aprobada",
     rejected: "Orden de pago rechazada",
     paid: "Orden de pago marcada como pagada",
     error: "Error al procesar la orden de pago"
   },
-  
-  // Proveedores
   proveedor: {
-    created: "Proveedor registrado exitosamente",
-    updated: "Información del proveedor actualizada",
-    deleted: "Proveedor eliminado",
     activated: "Proveedor activado",
     deactivated: "Proveedor desactivado",
     error: "Error al procesar el proveedor"
   },
-  
-  // General
-  general: {
-    loading: "Procesando...",
-    networkError: "Error de conexión",
-    unknownError: "Ha ocurrido un error inesperado"
-  }
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { BarChart3, Building2, CreditCard, ShoppingCart, Home, FileCheck, Receipt, Shield, LogOut, ClipboardList } from "lucide-react"
+import { BarChart3, Building2, CreditCard, ShoppingCart, Home, FileCheck, FolderKanban, Receipt, Shield, LogOut, ClipboardList } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import {
@@ -19,16 +19,18 @@ import { useAuth } from "@/components/auth-context"
 import { isAdmin, stringToUserRole } from "@/shared/permissions"
 import { Button } from "@/components/ui/button"
 
-// `modulo` = clave de la matriz; si está, el item solo se muestra con permiso `ver`.
-// Dashboard y Reportes no son módulos de matriz → siempre visibles.
+// `módulo` = clave de la matriz; si está, el item solo se muestra con permiso `ver`.
+// Dashboard no es módulo de matriz → siempre visible. Reportes sí lo es desde el
+// rediseño: se catea con reportes:ver como cualquier otra sección.
 const menuItems = [
-  { title: "Dashboard", url: "/dashboard", icon: Home },
+  { title: "Inicio", url: "/dashboard", icon: Home },
   { title: "Órdenes de Compra", url: "/ordenes-compra", icon: ShoppingCart, modulo: "ordenes_compra" },
   { title: "Certificaciones", url: "/certificaciones", icon: FileCheck, modulo: "certificaciones" },
   { title: "Facturas", url: "/facturas", icon: Receipt, modulo: "facturas" },
   { title: "Órdenes de Pago", url: "/ordenes-pago", icon: CreditCard, modulo: "ordenes_pago" },
   { title: "Proveedores", url: "/proveedores", icon: Building2, modulo: "proveedores" },
-  { title: "Reportes", url: "/reportes", icon: BarChart3 },
+  { title: "Proyectos", url: "/proyectos", icon: FolderKanban, modulo: "proyectos" },
+  { title: "Reportes", url: "/reportes", icon: BarChart3, modulo: "reportes" },
 ]
 
 export function AppSidebar() {
@@ -39,7 +41,7 @@ export function AppSidebar() {
   const userRole = user ? stringToUserRole(user.rol) : null
   const userIsAdmin = userRole ? isAdmin(userRole) : false
 
-  // Solo los módulos que el rol puede ver (Dashboard/Reportes no llevan módulo → siempre).
+  // Solo los módulos que el rol puede ver (Dashboard no lleva módulo → siempre visible).
   const visibles = menuItems.filter((item) => !item.modulo || puede(item.modulo, "ver"))
 
   const handleLogout = async () => {

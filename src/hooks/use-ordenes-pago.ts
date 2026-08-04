@@ -6,7 +6,7 @@ import { showSuccessToast, showErrorToast, toastMessages } from "@/shared/toast-
 import { api } from "@/shared/api-client"
 
 // Fila de OP enriquecida con el join de proveedor que hace OrdenPagoService.getAll
-export type OrdenPagoRow = OrdenPago & { proveedor_nombre?: string }
+type OrdenPagoRow = OrdenPago & { proveedor_nombre?: string }
 
 // Transición de estado: ruta propia (PATCH /estado), gateada por rol y por fn_op_gate.
 function patchEstado(id: string | number, estado: string) {
@@ -17,7 +17,7 @@ function patchEstado(id: string | number, estado: string) {
   })
 }
 
-export function useOrdensPago() {
+export function useOrdenesPago() {
   const [orders, setOrders] = useState<OrdenPagoRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -32,22 +32,6 @@ export function useOrdensPago() {
       setError(err instanceof Error ? err.message : "Error desconocido")
     } finally {
       setLoading(false)
-    }
-  }
-
-  const createOrder = async (orderData: any) => {
-    try {
-      const newOrder = await api("/api/ordenes-pago", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      })
-      setOrders(prev => [...prev, newOrder])
-      showSuccessToast(toastMessages.ordenPago.created, `Orden #${newOrder.numero_op}`)
-      return newOrder
-    } catch (err) {
-      showErrorToast(toastMessages.ordenPago.error, err instanceof Error ? err.message : "Error desconocido")
-      throw err
     }
   }
 
@@ -72,20 +56,9 @@ export function useOrdensPago() {
     }
   }
 
-  const aprobarOrder = (id: string | number) => cambiarEstado(id, "aprobado")
-  const pagarOrder = (id: string | number) => cambiarEstado(id, "pagado")
-  const rechazarOrder = (id: string | number) => cambiarEstado(id, "rechazado")
-
-  const deleteOrder = async (id: string | number) => {
-    try {
-      await api(`/api/ordenes-pago/${id}`, { method: "DELETE" })
-      setOrders(prev => prev.filter(order => order.id !== Number(id)))
-      showSuccessToast(toastMessages.ordenPago.deleted)
-    } catch (err) {
-      showErrorToast(toastMessages.ordenPago.error, err instanceof Error ? err.message : "Error desconocido")
-      throw err
-    }
-  }
+  const aprobarOrden = (id: string | number) => cambiarEstado(id, "aprobado")
+  const pagarOrden = (id: string | number) => cambiarEstado(id, "pagado")
+  const rechazarOrden = (id: string | number) => cambiarEstado(id, "rechazado")
 
   useEffect(() => {
     fetchOrders()
@@ -95,12 +68,9 @@ export function useOrdensPago() {
     orders,
     loading,
     error,
-    refreshOrders: fetchOrders,
-    createOrder,
     cambiarEstado,
-    aprobarOrder,
-    pagarOrder,
-    rechazarOrder,
-    deleteOrder
+    aprobarOrden,
+    pagarOrden,
+    rechazarOrden,
   }
 }

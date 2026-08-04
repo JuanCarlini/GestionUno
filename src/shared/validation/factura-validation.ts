@@ -3,7 +3,7 @@ import { ESTADOS_FACTURA, MONEDAS } from "@/models/enums"
 
 // Línea de factura. La columna de precio es `precio_unitario` (no `_neto` como en LOC).
 // Los totales los calcula el server (no se aceptan del cliente).
-export const CreateFacturaLineaSchema = z.object({
+const CreateFacturaLineaSchema = z.object({
   descripcion: z.string().min(1, "La descripción de la línea es requerida"),
   cantidad: z.number().positive("La cantidad debe ser mayor a 0"),
   precio_unitario: z.number().min(0),
@@ -11,7 +11,7 @@ export const CreateFacturaLineaSchema = z.object({
 })
 
 // Imputación N:M a una certificación aprobada, con su monto.
-export const CreateImputacionSchema = z.object({
+const CreateImputacionSchema = z.object({
   certificacion_id: z.number().int().positive(),
   monto_asignado: z.number().positive("El monto imputado debe ser mayor a 0"),
 })

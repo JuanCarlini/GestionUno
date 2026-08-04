@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/service"
+import { esSinFilas } from "./base.repository"
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/database.types"
 import type { EstadoAprobacion, LocRollup, OcRollup } from "@/models"
 import {
@@ -24,7 +25,10 @@ export class OrdenCompraRepository {
   static async findById(id: number): Promise<OrdenCompra | null> {
     const supabase = createClient()
     const { data, error } = await supabase.from(TABLE).select("*").eq("id", id).single()
-    if (error) return null
+    if (error) {
+      if (esSinFilas(error)) return null
+      throw error
+    }
     return data as OrdenCompra
   }
 
@@ -99,7 +103,8 @@ export class OrdenCompraRepository {
   static async deleteById(id: number): Promise<boolean> {
     const supabase = createClient()
     const { error } = await supabase.from(TABLE).delete().eq("id", id)
-    return !error
+    if (error) throw error
+    return true
   }
 
   static async findLineasWithItems(ordenId: number): Promise<OrdenCompraLineaConItem[]> {
@@ -134,13 +139,17 @@ export class OrdenCompraRepository {
   ): Promise<OrdenCompraLinea | null> {
     const supabase = createClient()
     const { data, error } = await supabase.from(TABLE_LINEAS).update(updates).eq("id", lineaId).select().single()
-    if (error) return null
+    if (error) {
+      if (esSinFilas(error)) return null
+      throw error
+    }
     return data as OrdenCompraLinea
   }
 
   static async deleteLinea(lineaId: number): Promise<boolean> {
     const supabase = createClient()
     const { error } = await supabase.from(TABLE_LINEAS).delete().eq("id", lineaId)
-    return !error
+    if (error) throw error
+    return true
   }
 }

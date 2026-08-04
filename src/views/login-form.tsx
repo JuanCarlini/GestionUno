@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
+import { showErrorToast } from "@/shared/toast-helpers"
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
@@ -29,12 +29,7 @@ export function LoginForm() {
         throw new Error(data.error || "Error al iniciar sesión")
       }
       
-      showSuccessToast("Sesión iniciada", `Bienvenido ${data.user.nombre}`)
-      
-      // Esperar un momento para que la cookie se establezca
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Usar window.location para forzar recarga completa
+      // Recarga completa: el middleware y los server components releen la cookie de sesión.
       window.location.href = "/dashboard"
     } catch (error) {
       showErrorToast("Error", error instanceof Error ? error.message : "Verifica tus credenciales")

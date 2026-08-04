@@ -15,11 +15,11 @@ export function SearchStats({ totalItems, filteredItems, searchTerm, entityName 
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+    <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-4">
       {searchTerm && (
         <>
           <span>Búsqueda:</span>
-          <Badge variant="secondary" className="font-normal">
+          <Badge variant="secondary" className="font-normal max-w-[200px] truncate">
             &ldquo;{searchTerm}&rdquo;
           </Badge>
         </>

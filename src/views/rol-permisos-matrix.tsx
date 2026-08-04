@@ -9,7 +9,7 @@ interface Props {
   readOnly?: boolean
 }
 
-// Columnas: las 4 acciones en el orden del catálogo. Filas: los 6 módulos.
+// Columnas: las 4 acciones en el orden del catálogo. Filas: todos los módulos del catálogo.
 const ACCIONES = Object.keys(ACCION_LABEL) as Accion[]
 const MODULOS = Object.entries(PERMISOS_CATALOGO)
 

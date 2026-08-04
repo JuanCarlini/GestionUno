@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -90,10 +91,7 @@ export default function AuditoriaPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Auditoría</h1>
-        <p className="text-muted-foreground">Bitácora de operaciones y control de cambios del sistema</p>
-      </div>
+      <PageHeader title="Auditoría" description="Bitácora de operaciones y control de cambios del sistema" />
 
       <Card>
         <CardHeader>
@@ -152,7 +150,7 @@ export default function AuditoriaPage() {
       </Card>
 
       <Tabs value={fuente} onValueChange={(v) => setFuente(v as Fuente)}>
-        <TabsList>
+        <TabsList className="max-w-full justify-start overflow-x-auto scrollbar-none">
           <TabsTrigger value="bitacora"><ClipboardList className="h-4 w-4 mr-2" />Bitácora de operaciones</TabsTrigger>
           <TabsTrigger value="cambios"><History className="h-4 w-4 mr-2" />Control de cambios</TabsTrigger>
         </TabsList>
@@ -181,7 +179,7 @@ export default function AuditoriaPage() {
                       <TableCell><Badge variant="outline">{f.accion}</Badge></TableCell>
                       <TableCell className="text-muted-foreground">{f.tabla}</TableCell>
                       <TableCell className="text-muted-foreground">#{f.registro_id}</TableCell>
-                      <TableCell className="text-muted-foreground">{f.detalle}</TableCell>
+                      <TableCell className="text-muted-foreground max-w-md truncate" title={f.detalle ?? undefined}>{f.detalle}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

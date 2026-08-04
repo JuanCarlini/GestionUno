@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { PageHeader } from "@/components/page-header"
 import { Loader2 } from "lucide-react"
 import { showErrorToast } from "@/shared/toast-helpers"
 import { api } from "@/shared/api-client"
@@ -50,12 +51,10 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Administración de Usuarios</h1>
-        <p className="text-muted-foreground mt-2">
-          Alta, baja, roles y claves de los usuarios del sistema
-        </p>
-      </div>
+      <PageHeader
+        title="Administración de Usuarios"
+        description="Alta, baja, roles y claves de los usuarios del sistema"
+      />
 
       <Tabs defaultValue="usuarios">
         <TabsList>

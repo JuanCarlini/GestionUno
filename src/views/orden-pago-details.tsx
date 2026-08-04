@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { formatDateShort } from "@/shared/date-utils"
 import { formatCurrency } from "@/shared/format-utils"
 import { StatusBadge } from "@/components/status-badge"
@@ -61,6 +71,8 @@ export function OrdenPagoDetails() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
+  // Aprobar, rechazar y pagar son transiciones sin vuelta atrás: piden confirmación.
+  const [confirmAction, setConfirmAction] = useState<"aprobado" | "rechazado" | "pagado" | null>(null)
 
   const fetchOrden = useCallback(async () => {
     try {
@@ -139,13 +151,13 @@ export function OrdenPagoDetails() {
   return (
     <div className="space-y-6">
       {/* Header: volver + acciones según estado */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" size="sm" onClick={() => router.push("/ordenes-pago")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver
         </Button>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
             {orden.estado === "borrador" && puede("ordenes_pago", "crear") && (
               <Button onClick={() => cambiarEstado("en_aprobacion")} disabled={processing}>
                 {processing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle className="h-4 w-4 mr-2" />}
@@ -154,26 +166,18 @@ export function OrdenPagoDetails() {
             )}
             {orden.estado === "en_aprobacion" && puede("ordenes_pago", "aprobar") && (
               <>
-                <Button
-                  onClick={() => cambiarEstado("aprobado")}
-                  disabled={processing}
-                  className="bg-green-600 hover:bg-green-700"
-                >
+                <Button variant="success" onClick={() => setConfirmAction("aprobado")} disabled={processing}>
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Aprobar
                 </Button>
-                <Button variant="destructive" onClick={() => cambiarEstado("rechazado")} disabled={processing}>
+                <Button variant="destructive" onClick={() => setConfirmAction("rechazado")} disabled={processing}>
                   <XCircle className="h-4 w-4 mr-2" />
                   Rechazar
                 </Button>
               </>
             )}
             {orden.estado === "aprobado" && puede("ordenes_pago", "aprobar") && (
-              <Button
-                onClick={() => cambiarEstado("pagado")}
-                disabled={processing}
-                className="bg-green-600 hover:bg-green-700"
-              >
+              <Button variant="success" onClick={() => setConfirmAction("pagado")} disabled={processing}>
                 <DollarSign className="h-4 w-4 mr-2" />
                 Confirmar pago
               </Button>
@@ -184,13 +188,13 @@ export function OrdenPagoDetails() {
       {/* Cabecera */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex flex-wrap justify-between items-start gap-4">
             <div>
-              <CardTitle className="text-3xl mb-2">{orden.numero_op}</CardTitle>
+              <CardTitle className="text-2xl md:text-3xl mb-2">{orden.numero_op}</CardTitle>
               <StatusBadge estado={orden.estado} showIcon />
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-green-600">
+              <div className="text-2xl md:text-3xl font-bold tabular-nums">
                 {formatCurrency(orden.total_a_pagar, moneda)}
               </div>
               <div className="text-sm text-muted-foreground">Total a pagar</div>
@@ -221,7 +225,7 @@ export function OrdenPagoDetails() {
           {orden.observaciones && (
             <div>
               <div className="text-sm text-muted-foreground">Observaciones</div>
-              <div className="text-sm">{orden.observaciones}</div>
+              <div className="text-sm break-words">{orden.observaciones}</div>
             </div>
           )}
         </CardContent>
@@ -241,11 +245,11 @@ export function OrdenPagoDetails() {
           ) : (
             <div className="space-y-2">
               {facturas.map((f) => (
-                <div key={f.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="font-semibold">
+                <div key={f.id} className="flex items-center justify-between gap-3 p-4 border rounded-lg">
+                  <div className="font-semibold min-w-0 truncate">
                     {f.gu_facturas?.numero_factura ?? `Factura #${f.factura_id}`}
                   </div>
-                  <div className="font-medium">{formatCurrency(f.monto, f.gu_facturas?.moneda ?? moneda)}</div>
+                  <div className="font-medium shrink-0 tabular-nums whitespace-nowrap">{formatCurrency(f.monto, f.gu_facturas?.moneda ?? moneda)}</div>
                 </div>
               ))}
             </div>
@@ -267,20 +271,52 @@ export function OrdenPagoDetails() {
           ) : (
             <div className="space-y-2">
               {cajas.map((c) => (
-                <div key={c.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <div className="font-semibold">{c.gu_cajas?.nombre ?? `Caja #${c.caja_id}`}</div>
+                <div key={c.id} className="flex items-center justify-between gap-3 p-4 border rounded-lg">
+                  <div className="min-w-0">
+                    <div className="font-semibold truncate">{c.gu_cajas?.nombre ?? `Caja #${c.caja_id}`}</div>
                     {c.gu_cajas?.tipo && (
                       <div className="text-xs text-muted-foreground capitalize">{c.gu_cajas.tipo}</div>
                     )}
                   </div>
-                  <div className="font-medium">{formatCurrency(c.monto, c.gu_cajas?.moneda ?? moneda)}</div>
+                  <div className="font-medium shrink-0 tabular-nums whitespace-nowrap">{formatCurrency(c.monto, c.gu_cajas?.moneda ?? moneda)}</div>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={confirmAction !== null} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmAction === "pagado" && "¿Confirmar el pago?"}
+              {confirmAction === "aprobado" && "¿Aprobar la orden de pago?"}
+              {confirmAction === "rechazado" && "¿Rechazar la orden de pago?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction === "pagado"
+                ? `Vas a marcar como pagada la orden ${orden.numero_op ?? ""} por ${formatCurrency(orden.total_a_pagar, moneda)} a ${orden.proveedor_nombre ?? "el proveedor"}. Esta acción no se puede deshacer.`
+                : confirmAction === "aprobado"
+                  ? `Vas a aprobar la orden ${orden.numero_op ?? ""} por ${formatCurrency(orden.total_a_pagar, moneda)} a ${orden.proveedor_nombre ?? "el proveedor"}, dejándola lista para pagar.`
+                  : `Vas a rechazar la orden ${orden.numero_op ?? ""}. El circuito de esta orden termina acá.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={processing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={processing}
+              className={buttonVariants({ variant: confirmAction === "rechazado" ? "destructive" : "success" })}
+              onClick={() => {
+                if (confirmAction) cambiarEstado(confirmAction)
+                setConfirmAction(null)
+              }}
+            >
+              {confirmAction === "pagado" ? "Confirmar pago" : confirmAction === "aprobado" ? "Aprobar" : "Rechazar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

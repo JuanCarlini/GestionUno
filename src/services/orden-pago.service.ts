@@ -96,7 +96,14 @@ export class OrdenPagoService {
     return OrdenPagoRepository.updateEstado(id, destino)
   }
 
+  // Solo se borra un borrador o una rechazada: una OP pagada es el registro del pago y
+  // borrarla lo haría desaparecer de reportes y rollups (la baja con rastro es anular).
   static async delete(id: number): Promise<boolean> {
+    const op = await OrdenPagoRepository.findById(id)
+    if (!op) throw new HttpError(404, "Orden de pago no encontrada")
+    if (op.estado !== "borrador" && op.estado !== "rechazado") {
+      throw new HttpError(422, `No se puede eliminar una orden de pago en estado "${op.estado}": anulala en su lugar`)
+    }
     return OrdenPagoRepository.delete(id)
   }
 

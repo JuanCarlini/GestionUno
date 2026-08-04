@@ -27,6 +27,7 @@ export class CertificacionService {
       ...cert,
       proveedor_nombre: cert.gu_proveedores?.nombre,
       numero_oc: cert.gu_ordenesdecompra?.numero_oc,
+      moneda: cert.gu_ordenesdecompra?.moneda,
       estado_facturacion: porId.get(cert.id)?.estado_facturacion ?? "sin",
       monto_facturado: Number(porId.get(cert.id)?.monto_facturado ?? 0),
     }))
@@ -118,11 +119,25 @@ export class CertificacionService {
     return CertificacionRepository.updateEstado(id, destino)
   }
 
+  // El schema solo deja pasar fecha_devengado/observaciones (el devengado suele cargarse
+  // después de aprobar, por eso no se exige borrador). Una anulada sí queda congelada.
   static async update(id: number, data: TablesUpdate<"gu_certificaciones">) {
+    const cert = await CertificacionRepository.findByIdWithRelations(id)
+    if (!cert) throw new HttpError(404, "Certificación no encontrada")
+    if (cert.estado === "anulado") {
+      throw new HttpError(422, "No se puede editar una certificación anulada")
+    }
     return CertificacionRepository.update(id, data)
   }
 
+  // Solo se borra un borrador o una rechazada: una cert aprobada es historia del circuito y
+  // borrarla además liberaría el tope del 100% (fn_check_avance_100 solo cuenta líneas vivas).
   static async delete(id: number) {
+    const cert = await CertificacionRepository.findByIdWithRelations(id)
+    if (!cert) throw new HttpError(404, "Certificación no encontrada")
+    if (cert.estado !== "borrador" && cert.estado !== "rechazado") {
+      throw new HttpError(422, `No se puede eliminar una certificación en estado "${cert.estado}": anulala en su lugar`)
+    }
     return CertificacionRepository.deleteById(id)
   }
 

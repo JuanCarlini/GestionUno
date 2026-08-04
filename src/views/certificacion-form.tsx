@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { FormRootError } from "@/components/ui/form-root-error"
+import { FormRootError } from "@/components/form-root-error"
 import { Loader2 } from "lucide-react"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
@@ -171,7 +171,7 @@ export function CertificacionForm() {
                     <SelectContent>
                       {ordenes.map((o) => (
                         <SelectItem key={o.id} value={String(o.id)}>
-                          {o.numero_oc} — {formatCurrency(o.total_con_iva)} {o.moneda}
+                          {o.numero_oc} — {formatCurrency(o.total_con_iva, o.moneda)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -233,7 +233,7 @@ export function CertificacionForm() {
                       <p className="font-mono text-xs text-muted-foreground">{linea.numero_loc}</p>
                       <p className="font-medium">{linea.descripcion}</p>
                       <p className="text-xs text-muted-foreground">
-                        {formatCurrency(linea.precio_unitario_neto)} / {linea.unidad_medida ?? "u"} · IVA{" "}
+                        {formatCurrency(linea.precio_unitario_neto, ocElegida?.moneda)} / {linea.unidad_medida ?? "u"} · IVA{" "}
                         {linea.iva_porcentaje}%
                       </p>
                     </div>
@@ -259,7 +259,7 @@ export function CertificacionForm() {
                         placeholder="0"
                       />
                       {excede && (
-                        <p className="text-xs text-red-600">
+                        <p className="text-xs text-destructive">
                           Máximo {linea.cantidad_disponible} (el resto ya está certificado)
                         </p>
                       )}
@@ -268,12 +268,12 @@ export function CertificacionForm() {
                 )
               })}
 
-              <div className="flex justify-end gap-6 pt-2 text-sm">
+              <div className="flex flex-wrap justify-end gap-x-6 gap-y-1 pt-2 text-sm">
                 <span>
-                  Neto: <strong>{formatCurrency(totalNeto)}</strong>
+                  Neto: <strong>{formatCurrency(totalNeto, ocElegida?.moneda)}</strong>
                 </span>
                 <span>
-                  Total: <strong>{formatCurrency(totalConIva)}</strong> {ocElegida?.moneda}
+                  Total: <strong>{formatCurrency(totalConIva, ocElegida?.moneda)}</strong>
                 </span>
               </div>
             </CardContent>

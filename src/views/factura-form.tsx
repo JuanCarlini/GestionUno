@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { FormRootError } from "@/components/ui/form-root-error"
+import { FormRootError } from "@/components/form-root-error"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
@@ -22,6 +22,7 @@ import { formatCurrency } from "@/shared/format-utils"
 interface CertAprobada {
   id: number
   numero_cert: string
+  moneda: string | null
   total_con_iva: number
   saldo_facturable: number
 }
@@ -70,28 +71,17 @@ export function FacturaForm() {
       .catch(() => setProveedores([]))
   }, [])
 
-  // Certificaciones imputables: del proveedor, aprobadas y con SALDO facturable > 0
-  // (total_con_iva − monto_facturado). Las ya facturadas al 100% no se ofrecen.
+  // Certificaciones imputables: el server ya filtra por proveedor, estado aprobado y
+  // saldo facturable > 0, y trae la moneda de la OC.
   useEffect(() => {
     if (!proveedorId) {
       setCertificaciones([])
       setImputaciones({})
       return
     }
-    fetch(`/api/certificaciones`)
+    fetch(`/api/facturas/certificaciones-aprobadas?proveedorId=${proveedorId}`)
       .then((r) => (r.ok ? r.json() : []))
-      .then((todas: any[]) => {
-        const disponibles = (todas || [])
-          .filter((c) => c.estado === "aprobado" && String(c.proveedor_id) === proveedorId)
-          .map((c) => ({
-            id: c.id,
-            numero_cert: c.numero_cert,
-            total_con_iva: Number(c.total_con_iva ?? 0),
-            saldo_facturable: Number(c.total_con_iva ?? 0) - Number(c.monto_facturado ?? 0),
-          }))
-          .filter((c) => c.saldo_facturable > 0.01)
-        setCertificaciones(disponibles)
-      })
+      .then(setCertificaciones)
       .catch(() => setCertificaciones([]))
     setImputaciones({})
   }, [proveedorId])
@@ -297,9 +287,9 @@ export function FacturaForm() {
                   <div key={cert.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end border-b pb-2">
                     <div className="md:col-span-2">
                       <p className="font-mono text-sm">{cert.numero_cert}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Certificado: {formatCurrency(cert.total_con_iva)} · Saldo a facturar:{" "}
-                        <strong>{formatCurrency(cert.saldo_facturable)}</strong>
+                      <p className="text-xs text-muted-foreground break-words">
+                        Certificado: {formatCurrency(cert.total_con_iva, cert.moneda ?? "ARS")} · Saldo a facturar:{" "}
+                        <strong>{formatCurrency(cert.saldo_facturable, cert.moneda ?? "ARS")}</strong>
                       </p>
                     </div>
                     <div className="space-y-1">
@@ -316,14 +306,14 @@ export function FacturaForm() {
                         placeholder="0"
                       />
                       {excede && (
-                        <p className="text-xs text-red-600">Máximo {formatCurrency(cert.saldo_facturable)}</p>
+                        <p className="text-xs text-destructive">Máximo {formatCurrency(cert.saldo_facturable, cert.moneda ?? "ARS")}</p>
                       )}
                     </div>
                   </div>
                 )
               })}
               <div className="flex justify-end text-sm">
-                <span className={totalImputado > totalLineas + 0.01 ? "text-red-600" : ""}>
+                <span className={totalImputado > totalLineas + 0.01 ? "text-destructive" : ""}>
                   Total imputado: <strong>{formatCurrency(totalImputado)}</strong>
                 </span>
               </div>

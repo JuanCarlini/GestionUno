@@ -75,15 +75,15 @@ export function ProveedorEditarClient() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Button variant="outline" size="sm" asChild>
           <Link href={`/proveedores/${proveedor.id}`}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Editar Proveedor</h1>
-          <p className="text-muted-foreground">Modifica la información del proveedor {proveedor.nombre}</p>
+        <div className="min-w-0">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">Editar Proveedor</h1>
+          <p className="text-muted-foreground break-words">Modifica la información del proveedor {proveedor.nombre}</p>
         </div>
       </div>
 

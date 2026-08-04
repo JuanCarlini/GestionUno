@@ -11,7 +11,13 @@ function db(): UntypedClient {
 
 // CRUD genérico para tablas con PK `id`: findAll/insert tiran, findById/update devuelven
 // null, delete devuelve bool. Los repos con semántica distinta componen métodos custom aparte.
-export interface BaseRepositoryOptions {
+
+// PGRST116 = .single() sin filas: el único error que significa "no existe". Cualquier otro
+// (constraint, trigger, conexión) sube: tragarlo convertía un 409/422 real en un 404 mentiroso.
+export function esSinFilas(error: { code?: string }): boolean {
+  return error?.code === "PGRST116"
+}
+interface BaseRepositoryOptions {
   orderBy?: { column: string; ascending?: boolean }
 }
 
@@ -36,7 +42,10 @@ export function createBaseRepository<Row, Insert = Partial<Row>, Update = Partia
     async findById(id: number): Promise<Row | null> {
       const supabase = db()
       const { data, error } = await supabase.from(table).select("*").eq("id", id).single()
-      if (error) return null
+      if (error) {
+        if (esSinFilas(error)) return null
+        throw error
+      }
       return data as Row
     },
 
@@ -50,14 +59,18 @@ export function createBaseRepository<Row, Insert = Partial<Row>, Update = Partia
     async update(id: number, row: Update): Promise<Row | null> {
       const supabase = db()
       const { data, error } = await supabase.from(table).update(row).eq("id", id).select().single()
-      if (error) return null
+      if (error) {
+        if (esSinFilas(error)) return null
+        throw error
+      }
       return data as Row
     },
 
     async delete(id: number): Promise<boolean> {
       const supabase = db()
       const { error } = await supabase.from(table).delete().eq("id", id)
-      return !error
+      if (error) throw error
+      return true
     },
   }
 }

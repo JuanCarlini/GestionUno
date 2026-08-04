@@ -5,14 +5,11 @@ import { requirePermission } from "@/lib/auth/permissions-server"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { HttpError } from "@/lib/route/http-error"
-
-interface Params {
-  params: Promise<{ id: string }>
-}
+import type { IdParams } from "@/lib/route/params"
 
 // POST /api/facturas/[id]/imputaciones - Imputar certificaciones (con monto) a la factura.
 // Solo en borrador. 422 si la cert no está aprobada o si Σ supera el total de líneas.
-export async function POST(request: NextRequest, { params }: Params) {
+export async function POST(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError } = await requirePermission("facturas", "crear")
     if (authError) return authError
@@ -28,7 +25,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 }
 
 // DELETE /api/facturas/[id]/imputaciones?certificacionId=N - Quitar una imputación (borrador)
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError } = await requirePermission("facturas", "crear")
     if (authError) return authError

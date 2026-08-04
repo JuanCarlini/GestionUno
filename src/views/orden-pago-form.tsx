@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { FormRootError } from "@/components/ui/form-root-error"
+import { FormRootError } from "@/components/form-root-error"
 import { Loader2 } from "lucide-react"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
@@ -86,7 +86,7 @@ export function OrdenPagoForm() {
     // Pre-validación de la regla dura; el gate fn_op_gate es el que la garantiza.
     if (!sumasCoinciden) {
       return form.setError("root", {
-        message: `El total de las cajas (${formatCurrency(totalCajas)}) debe igualar el de las facturas (${formatCurrency(totalFacturas)})`,
+        message: `El total de las cajas (${formatCurrency(totalCajas, moneda)}) debe igualar el de las facturas (${formatCurrency(totalFacturas, moneda)})`,
       })
     }
 
@@ -209,7 +209,7 @@ export function OrdenPagoForm() {
                 <div key={f.id} className="grid grid-cols-1 md:grid-cols-3 gap-2 items-end border-b pb-2">
                   <div className="md:col-span-2">
                     <p className="font-mono text-sm">{f.numero_factura}</p>
-                    <p className="text-xs text-muted-foreground">Total: {formatCurrency(f.total_facturado)} {f.moneda}</p>
+                    <p className="text-xs text-muted-foreground">Total: {formatCurrency(f.total_facturado, f.moneda)}</p>
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor={`pago-${f.id}`}>Monto a pagar</Label>
@@ -218,7 +218,7 @@ export function OrdenPagoForm() {
                 </div>
               ))}
               <div className="flex justify-end text-sm">
-                Total facturas: <strong className="ml-2">{formatCurrency(totalFacturas)}</strong>
+                Total facturas: <strong className="ml-2">{formatCurrency(totalFacturas, moneda)}</strong>
               </div>
             </CardContent>
           </Card>
@@ -244,15 +244,15 @@ export function OrdenPagoForm() {
                 </div>
               ))}
               <div className="flex justify-end text-sm">
-                <span className={!sumasCoinciden && totalCajas > 0 ? "text-red-600" : ""}>
-                  Total cajas: <strong>{formatCurrency(totalCajas)}</strong>
+                <span className={!sumasCoinciden && totalCajas > 0 ? "text-destructive" : ""}>
+                  Total cajas: <strong>{formatCurrency(totalCajas, moneda)}</strong>
                 </span>
               </div>
             </CardContent>
           </Card>
         )}
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-wrap justify-end gap-3">
           <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
             Cancelar
           </Button>

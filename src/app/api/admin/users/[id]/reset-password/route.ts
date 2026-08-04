@@ -5,14 +5,11 @@ import { UsuarioService } from "@/services/usuario.service"
 import { AuditService } from "@/lib/audit/audit.service"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
-
-interface Params {
-  params: Promise<{ id: string }>
-}
+import type { IdParams } from "@/lib/route/params"
 
 // POST /api/admin/users/[id]/reset-password - Reset administrativo de clave.
 // Es también el "recuperar clave": sin servicio de email, el admin asigna una clave nueva.
-export async function POST(request: NextRequest, { params }: Params) {
+export async function POST(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError, user } = await requireAdmin()
     if (authError) return authError

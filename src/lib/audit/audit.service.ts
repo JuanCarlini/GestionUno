@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/service'
-import { getCurrentUser } from '@/lib/auth/auth.cookies'
 import { HttpError } from '@/lib/route/http-error'
 import { UsuarioRepository } from '@/repositories/usuario.repository'
 
@@ -7,7 +6,7 @@ import { UsuarioRepository } from '@/repositories/usuario.repository'
 // (gu_auditoria.accion) es texto libre y acepta cualquier filtro.
 const ACCIONES_CAMBIO = ['crear', 'actualizar', 'eliminar'] as const
 
-export interface ConsultaAuditoria {
+interface ConsultaAuditoria {
   fuente: 'bitacora' | 'cambios'
   usuarioId?: string | null
   tabla?: string | null
@@ -56,16 +55,6 @@ export class AuditService {
   }
 
   /**
-   * Atajo para rutas API: resuelve el usuario autenticado desde la cookie y
-   * registra la operación. Si no hay usuario, no registra (best-effort).
-   */
-  static async registrarDesdeRequest(params: Omit<RegistrarParams, 'usuarioId'>): Promise<void> {
-    const user = await getCurrentUser()
-    if (!user) return
-    await AuditService.registrar({ usuarioId: user.id, ...params })
-  }
-
-  /**
    * Registra un login fallido en la auditoría. Como gu_auditoria.usuario_id es NOT NULL, solo
    * persiste si el email existe; para uno inexistente queda un warn (señal de enumeración).
    */
@@ -73,7 +62,10 @@ export class AuditService {
     try {
       const usuario = await UsuarioRepository.findByEmail(email)
       if (!usuario) {
-        console.warn(`login_fallido email_inexistente=${email} ip=${ip}`)
+        // Enmascarado: la señal de enumeración (dominio + forma) se conserva sin volcar
+        // el email completo de un tercero al log.
+        const enmascarado = email.replace(/^(.).*?(@.*)$/, "$1***$2")
+        console.warn(`login_fallido email_inexistente=${enmascarado} ip=${ip}`)
         return
       }
       await AuditService.registrar({

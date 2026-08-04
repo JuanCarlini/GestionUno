@@ -16,7 +16,7 @@ export async function setAuthCookie(token: string) {
   })
 }
 
-export async function getAuthCookie(): Promise<string | undefined> {
+async function getAuthCookie(): Promise<string | undefined> {
   const cookieStore = await cookies()
   return cookieStore.get(COOKIE_NAME)?.value
 }
@@ -60,9 +60,4 @@ export async function getCurrentUser() {
     console.error('Error al obtener usuario actual:', error)
     return null
   }
-}
-
-export async function isAuthenticated(): Promise<boolean> {
-  const user = await getCurrentUser()
-  return user !== null
 }

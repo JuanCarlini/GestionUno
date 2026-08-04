@@ -1,4 +1,5 @@
 import { OrdenPagoForm } from "@/views/orden-pago-form"
+import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -8,17 +9,14 @@ export default async function NuevaOrdenPagoPage() {
   await requirePagePermission("ordenes_pago", "crear", "/ordenes-pago")
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-wrap items-center gap-4">
         <Button variant="outline" size="sm" asChild>
           <Link href="/ordenes-pago">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Link>
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Nueva Orden de Pago</h1>
-          <p className="text-muted-foreground">Crear una nueva orden de pago a proveedor</p>
-        </div>
+        <PageHeader title="Nueva Orden de Pago" description="Crear una nueva orden de pago a proveedor" />
       </div>
       <OrdenPagoForm />
     </div>

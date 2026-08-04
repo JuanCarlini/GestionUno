@@ -4,22 +4,19 @@ import { UsuarioRepository } from "@/repositories/usuario.repository"
 import { RolRepository } from "@/repositories/rol.repository"
 import { HttpError } from "@/lib/route/http-error"
 
-export interface CreateUsuarioData {
+interface CreateUsuarioData {
   nombre: string
   email: string
   password: string
   rol_id: number
 }
 
-export interface UpdateUsuarioData {
+interface UpdateUsuarioData {
   nombre?: string
   email?: string
   rol_id?: number
   estado?: "activo" | "inactivo"
 }
-
-// En la DB: 1=admin. El anti auto-lockout se apoya en este id.
-const ROL_ADMIN_ID = 1
 
 // Gestión de usuarios por administrador (I/O en UsuarioRepository). Reglas: unicidad de email,
 // hasheo de clave y baja lógica (estado = inactivo, que el login filtra).
@@ -57,14 +54,19 @@ export class UsuarioService {
   }
 
   // `actor` es el admin logueado. Guarda anti auto-lockout: no puede desactivarse ni quitarse
-  // el rol admin a sí mismo.
+  // el rol admin a sí mismo. El chequeo es por NOMBRE de rol (misma vara que updateRol y
+  // tienePermiso), no por un id hardcodeado que dependía del orden del seed.
   static async update(id: number, data: UpdateUsuarioData, actor?: { id: number }) {
-    if (
-      actor &&
-      actor.id === id &&
-      (data.estado === "inactivo" || (data.rol_id !== undefined && data.rol_id !== ROL_ADMIN_ID))
-    ) {
-      throw new HttpError(400, "No podés desactivarte ni quitarte el rol de administrador a vos mismo")
+    if (actor && actor.id === id) {
+      if (data.estado === "inactivo") {
+        throw new HttpError(400, "No podés desactivarte ni quitarte el rol de administrador a vos mismo")
+      }
+      if (data.rol_id !== undefined) {
+        const rolNuevo = await RolRepository.findById(data.rol_id)
+        if (rolNuevo?.nombre?.toLowerCase() !== "admin") {
+          throw new HttpError(400, "No podés desactivarte ni quitarte el rol de administrador a vos mismo")
+        }
+      }
     }
     // cast al borde de persistencia (el repo trabaja con columnas sueltas, sin tipar)
     return UsuarioRepository.update(id, { ...data } as Record<string, unknown>)

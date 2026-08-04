@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { use } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, FileText, Calendar, Building2, User, Check, X } from "lucide-react"
 import { showErrorToast, showSuccessToast } from "@/shared/toast-helpers"
@@ -47,6 +47,7 @@ interface CertDetalle {
   fecha_cert: string | null
   observaciones: string | null
   numero_oc: string | null
+  moneda: string | null
   proveedor_nombre: string | null
   proveedor_cuit: string | null
   estado_facturacion: string | null
@@ -134,13 +135,13 @@ export function CertificacionDetail({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" size="sm" onClick={() => router.push("/certificaciones")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver
         </Button>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {puedeMandarAAprobar && puede("certificaciones", "crear") && (
             <Button onClick={() => cambiarEstado("en_aprobacion")} disabled={updating}>
               <Check className="h-4 w-4 mr-2" />
@@ -152,7 +153,7 @@ export function CertificacionDetail({ params }: Props) {
             <Button
               onClick={() => setShowApproveDialog(true)}
               disabled={updating}
-              className="bg-green-600 hover:bg-green-700"
+              variant="success"
             >
               <Check className="h-4 w-4 mr-2" />
               Aprobar
@@ -174,23 +175,23 @@ export function CertificacionDetail({ params }: Props) {
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex flex-wrap justify-between items-start gap-4">
             <div>
-              <CardTitle className="text-3xl mb-2">
+              <CardTitle className="text-2xl md:text-3xl mb-2">
                 {cert.numero_cert ?? `CERT-${cert.id}`}
               </CardTitle>
               <StatusBadge estado={cert.estado} />
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-green-600">
-                {formatCurrency(Number(cert.total_con_iva ?? 0))}
+              <div className="text-2xl md:text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(Number(cert.total_con_iva ?? 0), cert.moneda ?? "ARS")}
               </div>
               <div className="text-sm text-muted-foreground">Total con IVA</div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -261,8 +262,8 @@ export function CertificacionDetail({ params }: Props) {
               const totalConIva = Number(linea.avance_monto ?? 0) * (1 + iva / 100)
               return (
                 <div key={linea.id} className="border rounded-lg p-4">
-                  <div className="grid grid-cols-12 gap-4">
-                    <div className="col-span-5">
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-12">
+                    <div className="col-span-2 md:col-span-5">
                       <div className="font-semibold">{ocLinea?.descripcion ?? linea.numero_lce}</div>
                       {linea.linea_oc_id && ocLinea?.numero_loc ? (
                         <div className="text-xs text-muted-foreground mt-1">Línea {ocLinea.numero_loc}</div>
@@ -270,21 +271,21 @@ export function CertificacionDetail({ params }: Props) {
                         <div className="text-xs text-muted-foreground mt-1">Línea libre (sin OC)</div>
                       )}
                     </div>
-                    <div className="col-span-2 text-right">
+                    <div className="md:col-span-2 md:text-right">
                       <div className="text-sm text-muted-foreground">Cantidad</div>
-                      <div>{Number(linea.avance_unidades ?? 0)}</div>
+                      <div className="tabular-nums">{Number(linea.avance_unidades ?? 0)}</div>
                     </div>
-                    <div className="col-span-2 text-right">
+                    <div className="text-right md:col-span-2">
                       <div className="text-sm text-muted-foreground">Precio Unit.</div>
-                      <div>{formatCurrency(Number(ocLinea?.precio_unitario_neto ?? 0))}</div>
+                      <div className="tabular-nums">{formatCurrency(Number(ocLinea?.precio_unitario_neto ?? 0), cert.moneda ?? "ARS")}</div>
                     </div>
-                    <div className="col-span-1 text-right">
+                    <div className="md:col-span-1 md:text-right">
                       <div className="text-sm text-muted-foreground">IVA</div>
-                      <div>{iva}%</div>
+                      <div className="tabular-nums">{iva}%</div>
                     </div>
-                    <div className="col-span-2 text-right">
+                    <div className="text-right md:col-span-2">
                       <div className="text-sm text-muted-foreground">Total</div>
-                      <div className="font-semibold">{formatCurrency(totalConIva)}</div>
+                      <div className="font-semibold tabular-nums">{formatCurrency(totalConIva, cert.moneda ?? "ARS")}</div>
                     </div>
                   </div>
                 </div>
@@ -293,17 +294,17 @@ export function CertificacionDetail({ params }: Props) {
           </div>
 
           <div className="mt-6 pt-4 border-t">
-            <div className="flex justify-end space-x-8">
+            <div className="flex flex-wrap justify-end gap-x-8 gap-y-3">
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Total Neto</div>
                 <div className="text-xl font-bold">
-                  {formatCurrency(Number(cert.total_neto ?? 0))}
+                  {formatCurrency(Number(cert.total_neto ?? 0), cert.moneda ?? "ARS")}
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Total con IVA</div>
-                <div className="text-2xl font-bold text-green-600">
-                  {formatCurrency(Number(cert.total_con_iva ?? 0))}
+                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {formatCurrency(Number(cert.total_con_iva ?? 0), cert.moneda ?? "ARS")}
                 </div>
               </div>
             </div>
@@ -326,7 +327,7 @@ export function CertificacionDetail({ params }: Props) {
             <AlertDialogAction
               onClick={() => cambiarEstado("aprobado")}
               disabled={updating}
-              className="bg-green-600 hover:bg-green-700"
+              className={buttonVariants({ variant: "success" })}
             >
               {updating ? "Aprobando..." : "Aprobar"}
             </AlertDialogAction>
@@ -349,7 +350,7 @@ export function CertificacionDetail({ params }: Props) {
             <AlertDialogAction
               onClick={() => cambiarEstado("rechazado")}
               disabled={updating}
-              className="bg-red-600 hover:bg-red-700"
+              className={buttonVariants({ variant: "destructive" })}
             >
               {updating ? "Rechazando..." : "Rechazar"}
             </AlertDialogAction>

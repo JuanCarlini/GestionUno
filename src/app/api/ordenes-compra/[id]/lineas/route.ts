@@ -4,13 +4,10 @@ import { CreateOrdenCompraLineaSchema } from "@/shared/validation/orden-compra-v
 import { requirePermission } from "@/lib/auth/permissions-server"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
-
-interface Params {
-  params: Promise<{ id: string }>
-}
+import type { IdParams } from "@/lib/route/params"
 
 // GET /api/ordenes-compra/[id]/lineas - Líneas con el item del catálogo y su avance certificado
-export async function GET(request: NextRequest, { params }: Params) {
+export async function GET(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError } = await requirePermission("ordenes_compra", "ver")
     if (authError) return authError
@@ -39,7 +36,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 // POST /api/ordenes-compra/[id]/lineas - Agregar línea eligiendo un item del catálogo.
 // Sin precio_unitario_neto se hereda el del proveedor; con precio, se guarda para él.
-export async function POST(request: NextRequest, { params }: Params) {
+export async function POST(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError } = await requirePermission("ordenes_compra", "crear")
     if (authError) return authError

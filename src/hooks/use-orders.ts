@@ -23,41 +23,6 @@ export function useOrders() {
     }
   }
 
-  const createOrder = async (orderData: any) => {
-    try {
-      const newOrder = await api("/api/ordenes-compra", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      })
-      setOrders(prev => [...prev, newOrder])
-      showSuccessToast(toastMessages.ordenCompra.created, `Orden #${newOrder.numero_oc}`)
-      return newOrder
-    } catch (err) {
-      showErrorToast(toastMessages.ordenCompra.error, err instanceof Error ? err.message : "Error desconocido")
-      throw err
-    }
-  }
-
-  // Edición de cabecera. El estado NO se cambia por acá: ver cambiarEstadoOrden.
-  const updateOrder = async (id: string | number, orderData: any) => {
-    try {
-      const updatedOrder = await api(`/api/ordenes-compra/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      })
-      if (updatedOrder) {
-        setOrders(prev => prev.map(order => order.id === Number(id) ? updatedOrder : order))
-        showSuccessToast(toastMessages.ordenCompra.updated, `Orden #${updatedOrder.numero_oc}`)
-      }
-      return updatedOrder
-    } catch (err) {
-      showErrorToast(toastMessages.ordenCompra.error, err instanceof Error ? err.message : "Error desconocido")
-      throw err
-    }
-  }
-
   // Transición de estado: ruta propia, gateada por rol y por los triggers de la DB.
   // Un 422 trae el mensaje del trigger en español (p.ej. la OC sin líneas).
   const cambiarEstadoOrden = async (id: string | number, estado: string) => {
@@ -81,17 +46,6 @@ export function useOrders() {
     }
   }
 
-  const deleteOrder = async (id: string | number) => {
-    try {
-      await api(`/api/ordenes-compra/${id}`, { method: "DELETE" })
-      setOrders(prev => prev.filter(order => order.id !== Number(id)))
-      showSuccessToast(toastMessages.ordenCompra.deleted)
-    } catch (err) {
-      showErrorToast(toastMessages.ordenCompra.error, err instanceof Error ? err.message : "Error desconocido")
-      throw err
-    }
-  }
-
   useEffect(() => {
     fetchOrders()
   }, [])
@@ -100,10 +54,6 @@ export function useOrders() {
     orders,
     loading,
     error,
-    refreshOrders: fetchOrders,
-    createOrder,
-    updateOrder,
     cambiarEstadoOrden,
-    deleteOrder
   }
 }

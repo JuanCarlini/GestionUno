@@ -3,18 +3,30 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { SearchBar } from "@/components/ui/search-bar"
-import { Eye, CheckCircle, XCircle, Loader2 } from "lucide-react"
-import { ListShell } from "@/components/ui/list-shell"
+import { SearchBar } from "@/components/search-bar"
+import { Eye, CheckCircle, XCircle, Loader2, ShoppingCart } from "lucide-react"
+import { EmptyState } from "@/components/empty-state"
+import { CrearButton } from "@/components/crear-button"
+import { ListShell } from "@/components/list-shell"
+import { SortControl, useSort, type SortField } from "@/components/sort-control"
+import { LABEL_ESTADO } from "@/models"
 import Link from "next/link"
 import { useOrders } from "@/hooks/use-orders"
 import { formatCurrency } from "@/shared/format-utils"
-import { SearchStats } from "@/components/ui/search-stats"
+import { SearchStats } from "@/components/search-stats"
 import { searchWithScore } from "@/shared/search-utils"
 import { showErrorToast } from "@/shared/toast-helpers"
 import { StatusBadge } from "@/components/status-badge"
 import { useAuth } from "@/components/auth-context"
 import { canAnularDocumento, stringToUserRole } from "@/shared/permissions"
+
+const SORT_FIELDS: SortField[] = [
+  { key: "numero_oc", label: "Número de OC" },
+  { key: "fecha_oc", label: "Fecha" },
+  { key: "total_con_iva", label: "Total" },
+  // Ordena por la etiqueta visible, no por el valor crudo del enum.
+  { key: "estado", label: "Estado", get: (i) => LABEL_ESTADO[i.estado as keyof typeof LABEL_ESTADO] ?? i.estado },
+]
 
 export function OrdenCompraList() {
   const { orders, loading, error, cambiarEstadoOrden } = useOrders()
@@ -24,6 +36,9 @@ export function OrdenCompraList() {
 
   const userRole = user ? stringToUserRole(user.rol) : null
   const canAnular = userRole ? canAnularDocumento(userRole) : false
+
+  const sort = useSort(SORT_FIELDS)
+
 
   const filteredOrders = searchWithScore(
     orders,
@@ -35,6 +50,8 @@ export function OrdenCompraList() {
       observaciones: 1,
     }
   )
+
+  const sorted = sort.apply(filteredOrders)
 
   // El circuito no saltea etapas: de borrador se manda a aprobar, y recién de
   // en_aprobacion se aprueba. Ir directo a 'aprobado' devuelve 409.
@@ -57,13 +74,13 @@ export function OrdenCompraList() {
     <ListShell loading={loading} error={error} loadingText="Cargando órdenes...">
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <CardTitle>Órdenes de Compra ({filteredOrders.length})</CardTitle>
           <SearchBar
             value={searchTerm}
             onChange={setSearchTerm}
             placeholder="Buscar por número, estado u observación..."
-            className="w-80"
+            className="w-full sm:w-80"
           />
         </div>
       </CardHeader>
@@ -75,17 +92,26 @@ export function OrdenCompraList() {
           entityName="orden"
         />
 
+        <div className="mb-4 flex justify-end">
+          <SortControl {...sort} />
+        </div>
+
         <div className="space-y-4">
           {filteredOrders.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                {searchTerm
+            <EmptyState
+              icon={ShoppingCart}
+              title={
+                searchTerm
                   ? `No se encontraron órdenes que coincidan con "${searchTerm}"`
-                  : "No hay órdenes de compra registradas"}
-              </p>
-            </div>
+                  : "No hay órdenes de compra registradas"
+              }
+            >
+              {!searchTerm && (
+                <CrearButton modulo="ordenes_compra" href="/ordenes-compra/nueva" label="Crear la primera orden" />
+              )}
+            </EmptyState>
           ) : (
-            filteredOrders.map((orden: any) => (
+            sorted.map((orden: any) => (
               <div
                 key={orden.id}
                 className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
@@ -94,7 +120,7 @@ export function OrdenCompraList() {
                   {/* columna 1: número y fecha */}
                   <div>
                     <p className="font-medium text-foreground">
-                      {orden.numero_oc ? `OC #${orden.numero_oc}` : `OC ID ${orden.id}`}
+                      {orden.numero_oc ?? `OC ID ${orden.id}`}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {/* en la tabla la fecha es fecha_oc (date), no fecha_creacion */}
@@ -119,8 +145,8 @@ export function OrdenCompraList() {
 
                   {/* columna 3: totales y estado */}
                   <div>
-                    <p className="font-medium text-foreground">
-                      {formatCurrency(orden.total_con_iva ?? orden.total_neto ?? 0)}
+                    <p className="font-medium text-foreground tabular-nums">
+                      {formatCurrency(orden.total_con_iva ?? orden.total_neto ?? 0, orden.moneda ?? "ARS")}
                     </p>
                     <StatusBadge estado={orden.estado} showIcon />
                   </div>
@@ -149,7 +175,7 @@ export function OrdenCompraList() {
                           {updatingId === orden.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                           )}
                         </Button>
                         <Button
@@ -163,7 +189,7 @@ export function OrdenCompraList() {
                           {updatingId === orden.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-red-600" />
+                            <XCircle className="h-4 w-4 text-destructive" />
                           )}
                         </Button>
                       </>

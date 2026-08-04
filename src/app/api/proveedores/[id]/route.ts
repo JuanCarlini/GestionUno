@@ -41,7 +41,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 export async function DELETE(request: NextRequest, { params }: Params) {
   try {
-    const { error: authError } = await requirePermission("proveedores", "crear")
+    const { error: authError } = await requirePermission("proveedores", "aprobar")
     if (authError) return authError
 
     const id = parseId((await params).id)

@@ -52,7 +52,10 @@ export class ItemService {
 
   static async getCategorias(): Promise<string[]> {
     const valores = await ItemRepository.findCategoriaValues()
-    // categorías únicas, sin vacíos, ordenadas
-    return [...new Set(valores.filter(Boolean) as string[])].sort()
+    // categorías únicas, sin vacíos, ordenadas con collator es-AR (el .sort() pelado
+    // ordena por code unit y manda "Áridos" después de "Zinc")
+    return [...new Set(valores.filter(Boolean) as string[])].sort((a, b) =>
+      a.localeCompare(b, "es-AR", { sensitivity: "base" })
+    )
   }
 }

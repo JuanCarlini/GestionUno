@@ -6,10 +6,7 @@ import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
-
-interface Params {
-  params: Promise<{ id: string }>
-}
+import type { IdParams } from "@/lib/route/params"
 
 // GET /api/cajas/[id] — autentica el middleware
 export const GET = getByIdRoute({
@@ -19,9 +16,9 @@ export const GET = getByIdRoute({
 })
 
 // PUT /api/cajas/[id] - Editar caja (solo admin). Cambiar la moneda devuelve 422.
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(request: NextRequest, { params }: IdParams) {
   try {
-    const { error: authError } = await requireAdmin()
+    const { error: authError, user } = await requireAdmin()
     if (authError) return authError
 
     const id = parseId((await params).id)
@@ -30,7 +27,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const actualizada = await CajaService.update(id, validatedData)
     if (!actualizada) return NextResponse.json({ error: "Caja no encontrada" }, { status: 404 })
 
-    await AuditService.registrarDesdeRequest({
+    await AuditService.registrar({
+      usuarioId: user!.id,
       tabla: "gu_cajas",
       registroId: id,
       accion: "actualizar",
@@ -44,15 +42,16 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 // DELETE /api/cajas/[id] - Baja lógica (las líneas de OP apuntan a la caja)
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: IdParams) {
   try {
-    const { error: authError } = await requireAdmin()
+    const { error: authError, user } = await requireAdmin()
     if (authError) return authError
 
     const id = parseId((await params).id)
     await CajaService.delete(id)
 
-    await AuditService.registrarDesdeRequest({
+    await AuditService.registrar({
+      usuarioId: user!.id,
       tabla: "gu_cajas",
       registroId: id,
       accion: "eliminar",

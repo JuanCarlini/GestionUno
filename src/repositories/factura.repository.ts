@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/service"
+import { esSinFilas } from "./base.repository"
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/database.types"
 import type { Factura, FacturaRollup, EstadoFactura } from "@/models"
 
@@ -58,12 +59,13 @@ export class FacturaRepository {
     return data || []
   }
 
-  // Certificaciones aprobadas del proveedor, para elegir a cuáles imputar.
+  // Certificaciones aprobadas del proveedor, para elegir a cuáles imputar. La moneda
+  // viene de la OC (la cert no tiene columna propia).
   static async findCertificacionesAprobadas(proveedorId: number): Promise<any[]> {
     const supabase = createClient()
     const { data, error } = await supabase
       .from("gu_certificaciones")
-      .select("id, numero_cert, fecha_devengado, total_neto, total_con_iva")
+      .select("id, numero_cert, fecha_devengado, total_neto, total_con_iva, gu_ordenesdecompra(moneda)")
       .eq("proveedor_id", proveedorId)
       .eq("estado", "aprobado")
       .order("fecha_cert", { ascending: false })
@@ -104,13 +106,17 @@ export class FacturaRepository {
       .delete()
       .eq("factura_id", facturaId)
       .eq("certificacion_id", certificacionId)
-    return !error
+    if (error) throw error
+    return true
   }
 
   static async update(id: number, factura: TablesUpdate<"gu_facturas">): Promise<Factura | null> {
     const supabase = createClient()
     const { data, error } = await supabase.from(TABLE).update(factura).eq("id", id).select().single()
-    if (error) return null
+    if (error) {
+      if (esSinFilas(error)) return null
+      throw error
+    }
     return data
   }
 
@@ -133,6 +139,7 @@ export class FacturaRepository {
   static async deleteById(id: number): Promise<boolean> {
     const supabase = createClient()
     const { error } = await supabase.from(TABLE).delete().eq("id", id)
-    return !error
+    if (error) throw error
+    return true
   }
 }

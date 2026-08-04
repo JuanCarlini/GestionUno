@@ -4,8 +4,8 @@ import { getCurrentUser } from "@/lib/auth/auth.cookies"
 import { isAdmin, stringToUserRole, tienePermiso } from "@/shared/permissions"
 import { RolRepository } from "@/repositories/rol.repository"
 
-// Usuario autenticado desde el servidor. Solo para Server Components y API Routes.
-export async function getAuthenticatedUser() {
+// Usuario autenticado desde el servidor: base interna de los require* de este archivo.
+async function getAuthenticatedUser() {
   const user = await getCurrentUser()
 
   if (!user) {

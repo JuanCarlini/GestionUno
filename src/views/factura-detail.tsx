@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { use } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Building2, Calendar, FileCheck, Check, X } from "lucide-react"
 import { showErrorToast, showSuccessToast } from "@/shared/toast-helpers"
@@ -41,6 +41,7 @@ interface FacturaLineaDetalle {
 interface FacturaDetalle {
   numero_factura: string | null
   estado: string
+  moneda: string | null
   total_neto: Num
   total_iva: Num
   total_con_iva: Num
@@ -120,19 +121,19 @@ export function FacturaDetail({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" size="sm" onClick={() => router.push("/facturas")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver
         </Button>
 
         {factura.estado === "borrador" && (
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {puede("facturas", "crear") && (
               <Button
                 onClick={() => setShowApproveDialog(true)}
                 disabled={updating}
-                className="bg-green-600 hover:bg-green-700"
+                variant="success"
               >
                 <Check className="h-4 w-4 mr-2" />
                 Finalizar
@@ -150,23 +151,23 @@ export function FacturaDetail({ params }: Props) {
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex flex-wrap justify-between items-start gap-4">
             <div>
-              <CardTitle className="text-3xl mb-2">
+              <CardTitle className="text-2xl md:text-3xl mb-2">
                 {factura.numero_factura}
               </CardTitle>
               <StatusBadge estado={factura.estado} />
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-green-600">
-                {formatCurrency(Number(factura.total_con_iva ?? 0))}
+              <div className="text-2xl md:text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                {formatCurrency(Number(factura.total_con_iva ?? 0), factura.moneda ?? "ARS")}
               </div>
               <div className="text-sm text-muted-foreground">Total con IVA</div>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <Building2 className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -179,10 +180,10 @@ export function FacturaDetail({ params }: Props) {
                     </Badge>
                   )}
                   {factura.proveedor_email && (
-                    <div className="text-sm text-muted-foreground mt-1">{factura.proveedor_email}</div>
+                    <div className="text-sm text-muted-foreground mt-1 break-all">{factura.proveedor_email}</div>
                   )}
                   {factura.proveedor_direccion && (
-                    <div className="text-sm text-muted-foreground">{factura.proveedor_direccion}</div>
+                    <div className="text-sm text-muted-foreground break-words">{factura.proveedor_direccion}</div>
                   )}
                 </div>
               </div>
@@ -209,19 +210,19 @@ export function FacturaDetail({ params }: Props) {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal (Neto)</span>
                 <span className="font-semibold">
-                  {formatCurrency(Number(factura.total_neto ?? 0))}
+                  {formatCurrency(Number(factura.total_neto ?? 0), factura.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">IVA</span>
                 <span className="font-semibold">
-                  {formatCurrency(Number(factura.total_iva ?? 0))}
+                  {formatCurrency(Number(factura.total_iva ?? 0), factura.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between text-lg font-bold border-t pt-2">
                 <span>Total con IVA</span>
-                <span className="text-green-600">
-                  {formatCurrency(Number(factura.total_con_iva ?? 0))}
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {formatCurrency(Number(factura.total_con_iva ?? 0), factura.moneda ?? "ARS")}
                 </span>
               </div>
             </div>
@@ -242,19 +243,19 @@ export function FacturaDetail({ params }: Props) {
               {factura.imputaciones.map((imp) => (
                 <div
                   key={imp.certificacion_id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent cursor-pointer"
+                  className="flex items-center justify-between gap-3 p-4 border rounded-lg hover:bg-accent cursor-pointer"
                   onClick={() => router.push(`/certificaciones/${imp.certificacion_id}`)}
                 >
-                  <div>
-                    <div className="font-semibold">{imp.gu_certificaciones?.numero_cert}</div>
+                  <div className="min-w-0">
+                    <div className="font-semibold truncate">{imp.gu_certificaciones?.numero_cert}</div>
                     <div className="text-sm text-muted-foreground">
-                      Certificado: {formatCurrency(Number(imp.gu_certificaciones?.total_con_iva ?? 0))}
+                      Certificado: {formatCurrency(Number(imp.gu_certificaciones?.total_con_iva ?? 0), factura.moneda ?? "ARS")}
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <div className="text-xs text-muted-foreground">Imputado</div>
-                    <div className="text-sm font-medium mt-1">
-                      {formatCurrency(Number(imp.monto_asignado ?? 0))}
+                    <div className="text-sm font-medium mt-1 tabular-nums whitespace-nowrap">
+                      {formatCurrency(Number(imp.monto_asignado ?? 0), factura.moneda ?? "ARS")}
                     </div>
                   </div>
                 </div>
@@ -275,7 +276,7 @@ export function FacturaDetail({ params }: Props) {
             <div className="space-y-4">
               {factura.lineas.map((linea, index) => (
                 <div key={linea.id ?? index} className="border rounded-lg p-4 bg-muted">
-                  <div className="grid grid-cols-5 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <div className="col-span-2">
                       <div className="text-sm text-muted-foreground">Descripción</div>
                       <div className="font-medium">{linea.descripcion}</div>
@@ -287,13 +288,13 @@ export function FacturaDetail({ params }: Props) {
                     <div>
                       <div className="text-sm text-muted-foreground">Precio Unitario</div>
                       <div className="font-medium">
-                        {formatCurrency(Number(linea.precio_unitario ?? 0))}
+                        {formatCurrency(Number(linea.precio_unitario ?? 0), factura.moneda ?? "ARS")}
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="col-span-2 text-right md:col-span-1">
                       <div className="text-sm text-muted-foreground">Total</div>
-                      <div className="font-bold text-green-600">
-                        {formatCurrency(Number(linea.total_con_iva ?? 0))}
+                      <div className="font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                        {formatCurrency(Number(linea.total_con_iva ?? 0), factura.moneda ?? "ARS")}
                       </div>
                       <div className="text-xs text-muted-foreground">IVA: {linea.iva_porcentaje}%</div>
                     </div>
@@ -318,7 +319,7 @@ export function FacturaDetail({ params }: Props) {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => cambiarEstado("finalizado")}
-              className="bg-green-600 hover:bg-green-700"
+              className={buttonVariants({ variant: "success" })}
             >
               Finalizar
             </AlertDialogAction>
@@ -338,7 +339,7 @@ export function FacturaDetail({ params }: Props) {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => cambiarEstado("anulado")}
-              className="bg-red-600 hover:bg-red-700"
+              className={buttonVariants({ variant: "destructive" })}
             >
               Anular
             </AlertDialogAction>

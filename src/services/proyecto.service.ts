@@ -19,8 +19,4 @@ export class ProyectoService {
   static update(id: number, proyecto: TablesUpdate<"gu_proyectos">) {
     return ProyectoRepository.update(id, proyecto)
   }
-
-  static delete(id: number) {
-    return ProyectoRepository.delete(id)
-  }
 }

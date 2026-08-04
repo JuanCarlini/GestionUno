@@ -3,7 +3,6 @@ import type { Database } from "@/lib/supabase/database.types"
 type T = Database["public"]["Tables"]
 
 export type Factura = T["gu_facturas"]["Row"]
-export type FacturaImputacion = T["gu_facturas_certificaciones"]["Row"]
 
 // numero_factura (FACT-N) lo genera la DB. numero_comprobante/punto_venta son del proveedor.
 export type CreateFacturaData = Omit<

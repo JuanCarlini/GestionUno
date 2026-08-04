@@ -37,8 +37,8 @@ export const roleIcons: Record<string, any> = {
 }
 
 export const roleColors: Record<string, string> = {
-  admin: "text-red-600",
-  supervisor: "text-blue-600",
-  usuario: "text-green-600",
+  admin: "text-primary",
+  supervisor: "text-muted-foreground",
+  usuario: "text-muted-foreground",
   readonly: "text-muted-foreground",
 }

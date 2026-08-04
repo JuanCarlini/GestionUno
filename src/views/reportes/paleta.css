@@ -1,0 +1,59 @@
+/* Paleta propia del módulo de reportes, validada para daltonismo. No deriva de los
+   tokens de marca: así un cambio de tema no obliga a revalidar los gráficos. */
+.reportes-viz {
+  --rep-serie-1: #2a78d6;
+  --rep-serie-2: #eb6834;
+  --rep-serie-3: #1baf7a;
+  --rep-serie-4: #eda100;
+  --rep-serie-5: #e87ba4;
+  --rep-serie-6: #008300;
+
+  /* Rampa ordinal del embudo: progresión ordenada, no identidades. Va de la etapa 1
+     (más magnitud, más peso visual) a la 4. Validada con --ordinal contra #ffffff. */
+  --rep-ordinal-1: #104281;
+  --rep-ordinal-2: #256abf;
+  --rep-ordinal-3: #3987e5;
+  --rep-ordinal-4: #86b6ef;
+
+  /* Estado: severidad real del aging, nunca identidad de serie. */
+  --rep-estado-bueno: #0ca30c;
+  --rep-estado-aviso: #fab219;
+  --rep-estado-grave: #ec835a;
+  --rep-estado-critico: #d03b3b;
+
+  --rep-grid: #e1e0d9;
+  --rep-eje: #c3c2b7;
+  --rep-tinta: #0b0b0b;
+  --rep-tinta-suave: #52514e;
+  --rep-tinta-mutada: #898781;
+
+  /* Color de superficie de la tarjeta (--card de globals.css). Separa marcas
+     apiladas con un hueco real, nunca con un borde dibujado. */
+  --rep-superficie: #ffffff;
+}
+
+.dark .reportes-viz {
+  --rep-serie-1: #3987e5;
+  --rep-serie-2: #d95926;
+  --rep-serie-3: #199e70;
+  --rep-serie-4: #c98500;
+  --rep-serie-5: #d55181;
+  --rep-serie-6: #008300;
+
+  /* En oscuro la progresión se invierte: sobre fondo negro, más claro es más peso
+     visual. Mismos pasos del azul, validados contra #0a0a0a. */
+  --rep-ordinal-1: #86b6ef;
+  --rep-ordinal-2: #3987e5;
+  --rep-ordinal-3: #256abf;
+  --rep-ordinal-4: #184f95;
+
+  --rep-grid: #2c2c2a;
+  --rep-eje: #383835;
+  --rep-tinta: #ffffff;
+  --rep-tinta-suave: #c3c2b7;
+  --rep-tinta-mutada: #898781;
+
+  /* Color de superficie de la tarjeta (--card de globals.css). Separa marcas
+     apiladas con un hueco real, nunca con un borde dibujado. */
+  --rep-superficie: #0a0a0a;
+}

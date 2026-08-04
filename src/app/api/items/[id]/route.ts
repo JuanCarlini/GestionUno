@@ -5,20 +5,18 @@ import { requirePermission } from "@/lib/auth/permissions-server"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
-
-interface Params {
-  params: Promise<{ id: string }>
-}
+import type { IdParams } from "@/lib/route/params"
 
 // GET /api/items/[id] - Obtener un item por ID
 export const GET = getByIdRoute({
+  autorizar: () => requirePermission("items", "ver"),
   getById: (id) => ItemService.getById(id),
   noEncontrado: "Item no encontrado",
   contexto: "GET /api/items/[id]",
 })
 
 // PUT /api/items/[id] - Actualizar un item
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError } = await requirePermission("items", "crear")
     if (authError) return authError
@@ -38,7 +36,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 // DELETE /api/items/[id] - Soft delete de un item
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError } = await requirePermission("items", "crear")
     if (authError) return authError

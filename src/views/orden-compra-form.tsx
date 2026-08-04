@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { FormRootError } from "@/components/ui/form-root-error"
+import { FormRootError } from "@/components/form-root-error"
 import { Loader2, Plus, Trash2, ShoppingCart } from "lucide-react"
 import { Proveedor, Item } from "@/models"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
@@ -57,6 +57,7 @@ export function OrdenCompraForm() {
     },
   })
   const isLoading = form.formState.isSubmitting
+  const monedaElegida = form.watch("moneda")
 
   const [proveedores, setProveedores] = useState<Proveedor[]>([])
   const [loadingProveedores, setLoadingProveedores] = useState(true)
@@ -395,7 +396,7 @@ export function OrdenCompraForm() {
               {/* lista de items */}
               {items.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-muted rounded-t font-medium text-sm">
+                  <div className="hidden md:grid grid-cols-12 gap-2 px-4 py-2 bg-muted rounded-t font-medium text-sm">
                     <div className="col-span-4">Producto</div>
                     <div className="col-span-2 text-right">Cantidad</div>
                     <div className="col-span-2 text-right">P. Unitario</div>
@@ -404,16 +405,16 @@ export function OrdenCompraForm() {
                     <div className="col-span-1" />
                   </div>
                   {items.map((item) => (
-                    <div key={item.id} className="grid grid-cols-12 gap-2 px-4 py-3 border rounded hover:bg-accent">
-                      <div className="col-span-4">
-                        <p className="font-medium">{item.producto}</p>
-                        {item.descripcion && <p className="text-sm text-muted-foreground">{item.descripcion}</p>}
+                    <div key={item.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 px-4 py-3 border rounded hover:bg-accent">
+                      <div className="col-span-2 md:col-span-4">
+                        <p className="font-medium break-words">{item.producto}</p>
+                        {item.descripcion && <p className="text-sm text-muted-foreground break-words">{item.descripcion}</p>}
                       </div>
-                      <div className="col-span-2 text-right">{item.cantidad}</div>
-                      <div className="col-span-2 text-right">{formatCurrency(item.precio_unitario)}</div>
-                      <div className="col-span-1 text-right">{item.iva_porcentaje}%</div>
-                      <div className="col-span-2 text-right font-medium">{formatCurrency(item.subtotal)}</div>
-                      <div className="col-span-1 flex justify-end">
+                      <div className="md:col-span-2 md:text-right tabular-nums"><span className="md:hidden text-sm text-muted-foreground">Cantidad: </span>{item.cantidad}</div>
+                      <div className="text-right md:col-span-2 tabular-nums"><span className="md:hidden text-sm text-muted-foreground">P. Unit.: </span>{formatCurrency(item.precio_unitario, monedaElegida)}</div>
+                      <div className="md:col-span-1 md:text-right tabular-nums"><span className="md:hidden text-sm text-muted-foreground">IVA: </span>{item.iva_porcentaje}%</div>
+                      <div className="text-right md:col-span-2 font-medium tabular-nums"><span className="md:hidden text-sm text-muted-foreground font-normal">Subtotal: </span>{formatCurrency(item.subtotal, monedaElegida)}</div>
+                      <div className="col-span-2 md:col-span-1 flex justify-end">
                         <Button
                           type="button"
                           variant="ghost"
@@ -422,7 +423,7 @@ export function OrdenCompraForm() {
                           onClick={() => eliminarItem(item.id)}
                           disabled={isLoading}
                         >
-                          <Trash2 className="h-4 w-4 text-red-600" />
+                          <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </div>
                     </div>
@@ -441,15 +442,15 @@ export function OrdenCompraForm() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Total Neto:</span>
-                    <span className="font-medium">{formatCurrency(calcularSubtotal())}</span>
+                    <span className="font-medium">{formatCurrency(calcularSubtotal(), monedaElegida)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>IVA:</span>
-                    <span className="font-medium">{formatCurrency(calcularImpuestos())}</span>
+                    <span className="font-medium">{formatCurrency(calcularImpuestos(), monedaElegida)}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t text-lg font-bold">
                     <span>Total con IVA:</span>
-                    <span className="text-green-600">{formatCurrency(calcularTotal())}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(calcularTotal(), monedaElegida)}</span>
                   </div>
                 </div>
               </div>

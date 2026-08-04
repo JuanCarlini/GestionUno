@@ -1,43 +1,26 @@
-"use client"
+import { requirePagePermission } from "@/lib/auth/permissions-server"
+import { PageHeader } from "@/components/page-header"
+import { ReportesShell } from "@/views/reportes/reportes-shell"
+import { ProveedorService } from "@/services/proveedor.service"
+import { ProyectoService } from "@/services/proyecto.service"
 
-import { useReportes } from "@/hooks/use-reportes"
-import { ReportesDashboard } from "@/views/reportes-dashboard"
-import { Card, CardContent } from "@/components/ui/card"
-import { Loader2 } from "lucide-react"
+// Guarda en el servidor: el redireccionamiento ocurre antes de enviar HTML, igual
+// que en el resto de las paginas del dashboard.
+export default async function ReportesPage() {
+  await requirePagePermission("reportes", "ver")
 
-// /reportes = dashboard de indicadores reales (calculados desde OC + proveedores).
-export default function ReportesPage() {
-  const { estadisticas, loading, error } = useReportes()
+  const [proveedores, proyectos] = await Promise.all([
+    ProveedorService.getAll(),
+    ProyectoService.getAll(),
+  ])
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Reportes</h1>
-        <p className="text-muted-foreground">Indicadores y métricas del sistema</p>
-      </div>
-
-      {loading ? (
-        <Card>
-          <CardContent className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin" />
-            <span className="ml-2">Cargando estadísticas...</span>
-          </CardContent>
-        </Card>
-      ) : error ? (
-        <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-destructive">Error: {error}</p>
-          </CardContent>
-        </Card>
-      ) : !estadisticas ? (
-        <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-muted-foreground">No hay estadísticas disponibles</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <ReportesDashboard />
-      )}
+      <PageHeader title="Reportes" description="Indicadores del circuito de compras" />
+      <ReportesShell
+        proveedores={proveedores.map((p) => ({ id: p.id, nombre: p.nombre }))}
+        proyectos={proyectos.map((p) => ({ id: p.id, nombre: p.nombre }))}
+      />
     </div>
   )
 }

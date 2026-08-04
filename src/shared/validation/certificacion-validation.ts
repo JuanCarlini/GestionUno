@@ -3,7 +3,7 @@ import { ESTADOS_APROBACION } from "@/models/enums"
 
 // El ÚNICO input de una línea de certificación es avance_unidades: avance_monto,
 // avance_porcentaje, iva_porcentaje y numero_lce los deriva el trigger fn_lce_derive.
-export const CreateCertificacionLineaSchema = z.object({
+const CreateCertificacionLineaSchema = z.object({
   linea_oc_id: z.number().int().positive("La línea de OC es requerida"),
   avance_unidades: z.number().positive("El avance debe ser mayor a 0"),
 })

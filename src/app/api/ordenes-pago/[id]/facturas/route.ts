@@ -5,14 +5,11 @@ import { requirePermission } from "@/lib/auth/permissions-server"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { HttpError } from "@/lib/route/http-error"
-
-interface Params {
-  params: Promise<{ id: string }>
-}
+import type { IdParams } from "@/lib/route/params"
 
 // POST /api/ordenes-pago/[id]/facturas - Agregar una factura a pagar.
 // 422 si la factura no está finalizada o no es del mismo proveedor/moneda (fn_lop_factura_pagable).
-export async function POST(request: NextRequest, { params }: Params) {
+export async function POST(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError } = await requirePermission("ordenes_pago", "crear")
     if (authError) return authError
@@ -28,7 +25,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 }
 
 // DELETE /api/ordenes-pago/[id]/facturas?facturaId=N
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError } = await requirePermission("ordenes_pago", "crear")
     if (authError) return authError

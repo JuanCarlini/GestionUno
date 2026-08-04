@@ -7,8 +7,8 @@ type Enums = Database["public"]["Enums"]
 export type EstadoAprobacion = Enums["estado_aprobacion"] // OC y CE
 export type EstadoFactura = Enums["estado_factura"]
 export type EstadoOp = Enums["estado_op"]
-export type EstadoRollup = Enums["estado_rollup"]
-export type CajaTipo = Enums["caja_tipo"]
+type EstadoRollup = Enums["estado_rollup"]
+type CajaTipo = Enums["caja_tipo"]
 export type Moneda = Enums["moneda_enum"]
 
 export const ESTADOS_APROBACION = [

@@ -6,7 +6,7 @@ import { AuditService, type AccionAuditoria } from "@/lib/audit/audit.service"
 // Template Method de las rutas PATCH /[id]/estado (OC/CE/FACT/OP): algoritmo fijo, cada ruta
 // rellena los huecos. `autorizar` es función (no rol) para mezclar RBAC y grupo de rol sin ramificar.
 
-// Shape mínimo que devuelven requireRole/requirePermission: alcanza con user.id para auditar.
+// Shape mínimo que devuelven requirePermission/requireAdmin: alcanza con user.id para auditar.
 type Autorizacion = Promise<{ error: NextResponse | null; user: { id: number } | null }>
 
 interface EstadoRouteConfig<E extends string, T> {

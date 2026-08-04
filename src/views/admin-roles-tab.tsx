@@ -89,9 +89,9 @@ export function RolesTab({ roles, refetchRoles }: RolesTabProps) {
         <CardContent>
           <div className="space-y-3">
             {roles.map((rol) => (
-              <div key={rol.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                <div>
-                  <div className="flex items-center gap-2">
+              <div key={rol.id} className="flex items-center justify-between gap-3 p-3 border border-border rounded-lg">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
                     <p className="font-medium text-foreground">{rol.nombre}</p>
                     {rol.es_sistema && <Badge variant="outline">sistema</Badge>}
                     <Badge variant="secondary">{rol.usuarios} usuario(s)</Badge>
@@ -116,7 +116,7 @@ export function RolesTab({ roles, refetchRoles }: RolesTabProps) {
                     disabled={rol.es_sistema || rol.usuarios > 0}
                     onClick={() => handleEliminarRol(rol)}
                   >
-                    <Trash2 className="h-4 w-4 text-red-600" />
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
               </div>

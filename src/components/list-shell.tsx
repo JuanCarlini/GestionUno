@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Loader2 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 // Estados uniformes de las listas del circuito (loading / error). El resto — título,
 // buscador, filas, empty-state — diverge por dominio y va como children.
@@ -20,9 +20,12 @@ export function ListShell({
   if (loading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">{loadingText}</span>
+        <CardContent className="space-y-3 py-6" role="status" aria-busy="true" aria-label={loadingText}>
+          <Skeleton className="h-9 w-64" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
         </CardContent>
       </Card>
     )

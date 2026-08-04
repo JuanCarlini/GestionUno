@@ -1,12 +1,10 @@
 import { DashboardOverview } from "@/views/dashboard-overview"
+import { PageHeader } from "@/components/page-header"
 
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Resumen general del sistema</p>
-      </div>
+      <PageHeader title="Inicio" description="Resumen general del sistema" />
       <DashboardOverview />
     </div>
   )

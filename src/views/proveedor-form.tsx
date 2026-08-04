@@ -114,7 +114,7 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
                   placeholder="Nombre de la empresa"
                 />
                 {form.formState.errors.nombre && (
-                  <p className="text-sm text-red-600">{form.formState.errors.nombre.message}</p>
+                  <p className="text-sm text-destructive">{form.formState.errors.nombre.message}</p>
                 )}
               </div>
               
@@ -126,7 +126,7 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
                   placeholder="20-12345678-9"
                 />
                 {form.formState.errors.cuit && (
-                  <p className="text-sm text-red-600">{form.formState.errors.cuit.message}</p>
+                  <p className="text-sm text-destructive">{form.formState.errors.cuit.message}</p>
                 )}
               </div>
             </div>
@@ -144,7 +144,7 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
                   placeholder="contacto@empresa.com"
                 />
                 {form.formState.errors.email && (
-                  <p className="text-sm text-red-600">{form.formState.errors.email.message}</p>
+                  <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
                 )}
               </div>
               
@@ -156,7 +156,7 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
                   placeholder="+54 341 1234567"
                 />
                 {form.formState.errors.telefono && (
-                  <p className="text-sm text-red-600">{form.formState.errors.telefono.message}</p>
+                  <p className="text-sm text-destructive">{form.formState.errors.telefono.message}</p>
                 )}
               </div>
             </div>
@@ -173,12 +173,12 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
                 rows={3}
               />
               {form.formState.errors.direccion && (
-                <p className="text-sm text-red-600">{form.formState.errors.direccion.message}</p>
+                <p className="text-sm text-destructive">{form.formState.errors.direccion.message}</p>
               )}
             </div>
           </div>
 
-          <div className="flex gap-4 pt-6 border-t">
+          <div className="flex flex-wrap gap-4 pt-6 border-t">
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {isLoading ? "Guardando..." : (isEditing ? "Actualizar Proveedor" : "Crear Proveedor")}

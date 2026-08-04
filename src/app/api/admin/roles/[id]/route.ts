@@ -4,13 +4,10 @@ import { RolService } from "@/services/rol.service"
 import { AuditService } from "@/lib/audit/audit.service"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
-
-interface Params {
-  params: Promise<{ id: string }>
-}
+import type { IdParams } from "@/lib/route/params"
 
 // PUT /api/admin/roles/[id] - Editar rol (los del sistema no se renombran)
-export async function PUT(request: NextRequest, { params }: Params) {
+export async function PUT(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError, user } = await requireAdmin()
     if (authError) return authError
@@ -39,7 +36,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 // DELETE /api/admin/roles/[id] - Eliminar rol (bloqueado si es del sistema o tiene usuarios)
-export async function DELETE(request: NextRequest, { params }: Params) {
+export async function DELETE(request: NextRequest, { params }: IdParams) {
   try {
     const { error: authError, user } = await requireAdmin()
     if (authError) return authError

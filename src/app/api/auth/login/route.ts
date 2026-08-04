@@ -7,9 +7,11 @@ import { handleRouteError } from '@/lib/route/handle-route-error'
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, password } = body
-    
+    // Un body no-JSON o no-objeto cae al 400 de abajo, no a un 500 por destructuring.
+    const body = await request.json().catch(() => null)
+    const { email, password } = body ?? {}
+
+
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email y contraseña son requeridos" },
