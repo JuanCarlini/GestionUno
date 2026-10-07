@@ -22,7 +22,7 @@ export async function GET() {
 export const POST = createRoute({
   autorizar: () => requirePermission("ordenes_compra", "crear"),
   schema: CreateOrdenCompraSchema,
-  crear: (data) => OrdenCompraService.create(data),
+  crear: (data, user) => OrdenCompraService.create(data, user.id),
   audit: { tabla: "gu_ordenesdecompra", detalle: (oc) => `Orden de compra ${oc.numero_oc} creada` },
   contexto: "POST /api/ordenes-compra",
 })
