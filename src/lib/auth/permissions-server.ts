@@ -87,6 +87,19 @@ export async function requirePermission(modulo: string, accion: string) {
 }
 
 /**
+ * Pregunta puntual, sin cortar la request: ¿este usuario ya autenticado tiene `modulo:accion`?
+ * La usan las reglas por dueño para decidir si alguien puede tocar registros ajenos.
+ */
+export async function usuarioTienePermiso(
+  user: { rol: string },
+  modulo: string,
+  accion: string
+): Promise<boolean> {
+  const permisos = await RolRepository.findPermisosByNombre(user.rol)
+  return tienePermiso(user.rol, permisos, modulo, accion)
+}
+
+/**
  * Guarda de PÁGINA (Server Components): sin usuario redirige a /login, sin permiso al fallback.
  * La autorización real vive en la API; esto solo bloquea el acceso por URL directa.
  */

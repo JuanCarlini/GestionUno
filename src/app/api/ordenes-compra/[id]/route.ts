@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { OrdenCompraService } from "@/services"
 import { UpdateOrdenCompraSchema } from "@/shared/validation/orden-compra-validation"
-import { requirePermission } from "@/lib/auth/permissions-server"
+import { requirePermission, usuarioTienePermiso } from "@/lib/auth/permissions-server"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
@@ -27,7 +27,8 @@ export async function PUT(
     const id = parseId((await params).id)
     const validatedData = UpdateOrdenCompraSchema.parse(await request.json())
 
-    const ordenActualizada = await OrdenCompraService.update(id, validatedData)
+    const actor = { id: user!.id, puedeAjenas: await usuarioTienePermiso(user!, "ordenes_compra", "aprobar") }
+    const ordenActualizada = await OrdenCompraService.update(id, validatedData, actor)
     if (!ordenActualizada) {
       return NextResponse.json({ error: "Orden de compra no encontrada" }, { status: 404 })
     }
@@ -57,7 +58,8 @@ export async function DELETE(
 
     const id = parseId((await params).id)
 
-    const eliminada = await OrdenCompraService.delete(id)
+    const actor = { id: user!.id, puedeAjenas: await usuarioTienePermiso(user!, "ordenes_compra", "aprobar") }
+    const eliminada = await OrdenCompraService.delete(id, actor)
     if (!eliminada) {
       return NextResponse.json({ error: "Orden de compra no encontrada" }, { status: 404 })
     }

@@ -19,6 +19,13 @@ import { ItemService } from "./item.service"
 // tras aprobarla falsearía el avance certificado y dejaría v_loc_rollup en negativo.
 const ESTADOS_EDITABLES: EstadoAprobacion[] = ["borrador", "rechazado"]
 
+// Quién pide el cambio. puedeAjenas = tiene 'ordenes_compra:aprobar' (supervisor/admin): puede
+// corregir OCs de otros. El resto solo toca las que creó (created_by sale del JWT, no del body).
+export interface Actor {
+  id: number
+  puedeAjenas: boolean
+}
+
 // Reglas de negocio de órdenes de compra (I/O en OrdenCompraRepository). Numeración, gate de
 // ≥1 línea y rollups (v_oc_rollup / v_loc_rollup) viven en la DB.
 export class OrdenCompraService {
@@ -44,11 +51,12 @@ export class OrdenCompraService {
   // Crea la OC (cabecera + líneas opcionales). numero_oc lo genera la DB; el estado lo
   // fija el server; los totales los calcula la app (la DB no los mantiene).
   static async create(
-    payload: CreateOrdenCompraData & { lineas?: CreateLineaFromItem[] }
+    payload: CreateOrdenCompraData & { lineas?: CreateLineaFromItem[] },
+    createdBy: number
   ): Promise<OrdenCompra> {
     const { lineas, ...ocData } = payload
 
-    const oc = await OrdenCompraRepository.insert({ ...ocData, estado: "borrador" })
+    const oc = await OrdenCompraRepository.insert({ ...ocData, estado: "borrador", created_by: createdBy })
 
     if (lineas && lineas.length > 0) {
       try {
@@ -184,14 +192,30 @@ export class OrdenCompraService {
 
   // La cabecera se protege como las líneas: sin esta guarda se podría reasignar el proveedor o la
   // moneda de una OC ya aprobada, y acá la app es el único control (la DB no lo cubre).
-  static async update(id: number, payload: TablesUpdate<"gu_ordenesdecompra">): Promise<OrdenCompra | null> {
-    await OrdenCompraService.getEditable(id)
+  static async update(
+    id: number,
+    payload: TablesUpdate<"gu_ordenesdecompra">,
+    actor: Actor
+  ): Promise<OrdenCompra | null> {
+    const oc = await OrdenCompraService.getEditable(id)
+    OrdenCompraService.verificarDueno(oc, actor)
     return OrdenCompraRepository.update(id, payload)
   }
 
-  static async delete(id: number): Promise<boolean> {
-    await OrdenCompraService.getEditable(id)
+  static async delete(id: number, actor: Actor): Promise<boolean> {
+    const oc = await OrdenCompraService.getEditable(id)
+    OrdenCompraService.verificarDueno(oc, actor)
     return OrdenCompraRepository.deleteById(id)
+  }
+
+  // Autorización por DUEÑO (además del permiso por rol que ya cortó la ruta): una OC ajena
+  // no se modifica ni se borra salvo que el actor pueda aprobar. 403 y no 404: el usuario
+  // tiene 'ordenes_compra:ver', así que la OC ya la ve; ocultar que existe no protege nada.
+  static verificarDueno(oc: OrdenCompra, actor: Actor): void {
+    if (actor.puedeAjenas) return
+    if (oc.created_by !== actor.id) {
+      throw new HttpError(403, "Solo quien creó la orden de compra puede modificarla o borrarla")
+    }
   }
 
   static async getLinesByOrdenId(ordenId: number) {
