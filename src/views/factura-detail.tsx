@@ -11,6 +11,7 @@ import { showErrorToast, showSuccessToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
 import { useAuth } from "@/components/auth-context"
 import { StatusBadge } from "@/components/status-badge"
+import { FacturaComprobante } from "@/views/factura-comprobante"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -264,6 +265,8 @@ export function FacturaDetail({ params }: Props) {
           </CardContent>
         </Card>
       )}
+
+      <FacturaComprobante facturaId={id} puedeSubir={puede("facturas", "crear")} />
 
       <Card>
         <CardHeader>
