@@ -40,9 +40,19 @@ jobs:
       - name: Type check
         run: npx tsc --noEmit
 
-      # Backstop de dependencias. Hoy el proyecto está en 0 vulnerabilidades; este step
-      # existe para que un advisory nuevo se vea el día que sale y no meses después
+      # Antes del audit porque es la red que cubre las reglas de negocio: si una se rompio,
+      # queremos verlo antes que un advisory de dependencias.
+      - name: Tests
+        run: npm test
+
+      # Backstop de dependencias: un advisory nuevo se ve el día que sale y no meses después
       # (fue exactamente lo que pasó: 29 advisories de Next acumulados en silencio).
+      #
+      # HOY ESTE STEP FALLA, y no por nada que se haya agregado acá: son 20 advisories
+      # acumulados (12 moderate, 7 high, 1 critical) que ya estaban en main. El critical es
+      # GHSA-p293-qw3h-jr36 (RCE sin autenticar en Next sobre Windows) y afecta a todo next
+      # <= 16.3.0-preview.10, asi que salir de ahi es un major: next 15 -> 16. Queda como
+      # tarea aparte; bajar el audit-level para pintar el CI de verde seria taparlo.
       - name: Audit de dependencias
         run: npm audit --audit-level=high
 
