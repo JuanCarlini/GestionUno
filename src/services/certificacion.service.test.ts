@@ -117,10 +117,20 @@ describe("CertificacionService.cambiarEstado", () => {
     expect(repo.updateEstado).not.toHaveBeenCalled()
   })
 
-  it("borrador -> en_aprobacion pasa", async () => {
+  it("borrador -> en_aprobacion pasa, y manda el estado leído para el update condicional", async () => {
     repo.updateEstado.mockResolvedValue({ id: 7, estado: "en_aprobacion" } as never)
     await CertificacionService.cambiarEstado(7, "en_aprobacion")
-    expect(repo.updateEstado).toHaveBeenCalledWith(7, "en_aprobacion")
+    expect(repo.updateEstado).toHaveBeenCalledWith(7, "en_aprobacion", "borrador")
+  })
+
+  // Escritura concurrente: dos supervisores sobre la misma CE. El segundo leyó "borrador",
+  // validó la transición y cuando fue a escribir el documento ya estaba en otro estado, así
+  // que el update condicional no afectó ninguna fila.
+  it("409 si otro ya cambió el estado entre la lectura y el update", async () => {
+    repo.updateEstado.mockResolvedValue(null)
+    await expect(CertificacionService.cambiarEstado(7, "en_aprobacion")).rejects.toMatchObject({
+      status: 409,
+    })
   })
 
   it("404 si la certificación no existe", async () => {

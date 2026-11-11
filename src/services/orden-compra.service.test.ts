@@ -233,7 +233,7 @@ describe("Guarda: la cabecera solo se modifica con la OC editable", () => {
     repo.findById.mockResolvedValue({ id: 55, proveedor_id: 2, estado: "en_aprobacion" } as never)
     repo.updateEstado.mockResolvedValue({ id: 55, estado: "aprobado" } as never)
     await expect(OrdenCompraService.cambiarEstado(55, "aprobado")).resolves.toBeDefined()
-    expect(repo.updateEstado).toHaveBeenCalledWith(55, "aprobado")
+    expect(repo.updateEstado).toHaveBeenCalledWith(55, "aprobado", "en_aprobacion")
   })
 
   it("recalcularCabecera sigue funcionando sobre una OC no editable (va directo al repo)", async () => {
@@ -288,7 +288,16 @@ describe("OrdenCompraService.cambiarEstado", () => {
   it("deja pasar borrador -> en_aprobacion (el gate de >=1 línea lo aplica el trigger)", async () => {
     repo.updateEstado.mockResolvedValue({ id: 55, estado: "en_aprobacion" } as never)
     await OrdenCompraService.cambiarEstado(55, "en_aprobacion")
-    expect(repo.updateEstado).toHaveBeenCalledWith(55, "en_aprobacion")
+    // El tercer argumento es el estado leído: sin él, dos supervisores simultáneos pisaban
+    // el cambio del otro y ganaba el último en escribir.
+    expect(repo.updateEstado).toHaveBeenCalledWith(55, "en_aprobacion", "borrador")
+  })
+
+  it("409 si otro ya cambió el estado entre la lectura y el update", async () => {
+    repo.updateEstado.mockResolvedValue(null)
+    await expect(OrdenCompraService.cambiarEstado(55, "en_aprobacion")).rejects.toMatchObject({
+      status: 409,
+    })
   })
 
   it("propaga el error del trigger sin reinterpretarlo (la ruta lo hace 422)", async () => {

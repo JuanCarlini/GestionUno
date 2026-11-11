@@ -2,6 +2,7 @@ import type { TablesUpdate } from "@/lib/supabase/database.types"
 import { CertificacionRepository } from "@/repositories/certificacion.repository"
 import { OrdenCompraRepository } from "@/repositories/orden-compra.repository"
 import { HttpError } from "@/lib/route/http-error"
+import { exigirCambioAplicado } from "@/lib/route/estado-route"
 import { puedeTransicionar, TRANSICIONES_APROBACION } from "@/services/transiciones"
 import type { CreateCertificacionLinea, EstadoAprobacion } from "@/models"
 
@@ -95,7 +96,8 @@ export class CertificacionService {
       throw new HttpError(409, `No se puede pasar de ${cert.estado} a ${destino}`)
     }
 
-    return CertificacionRepository.updateEstado(id, destino)
+    // El estado leído arriba viaja al update: si cambió en el medio, 409.
+    return exigirCambioAplicado(await CertificacionRepository.updateEstado(id, destino, cert.estado))
   }
 
   // El schema solo deja pasar fecha_devengado/observaciones (el devengado suele cargarse

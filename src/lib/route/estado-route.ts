@@ -1,7 +1,20 @@
 import { NextRequest, NextResponse } from "next/server"
 import { parseId } from "./parse-id"
 import { handleRouteError } from "./handle-route-error"
+import { HttpError } from "./http-error"
 import { AuditService, type AccionAuditoria } from "@/lib/audit/audit.service"
+
+// Escritura concurrente: los cuatro cambiarEstado leen el documento, validan la transicion
+// contra el estado leido y despues actualizan. Entre la lectura y el update otro usuario pudo
+// mover el documento, y el update a secas pisaba ese cambio (ganaba el ultimo en escribir,
+// aunque su transicion ya no fuera valida). Los repos hacen el update condicionado al estado
+// leido; si no afecto ninguna fila, el cambio se perdio la carrera y esto lo corta en 409.
+export const MENSAJE_ESTADO_DESACTUALIZADO = "El documento cambió mientras lo editabas, recargá"
+
+export function exigirCambioAplicado<T>(fila: T | null): T {
+  if (fila === null) throw new HttpError(409, MENSAJE_ESTADO_DESACTUALIZADO)
+  return fila
+}
 
 // Template Method de las rutas PATCH /[id]/estado (OC/CE/FACT/OP): algoritmo fijo, cada ruta
 // rellena los huecos. `autorizar` es función (no rol) para mezclar RBAC y grupo de rol sin ramificar.

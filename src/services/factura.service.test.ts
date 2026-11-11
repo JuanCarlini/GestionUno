@@ -114,14 +114,22 @@ describe("FacturaService.cambiarEstado", () => {
     repo.findImputaciones.mockResolvedValue([{ certificacion_id: 3, monto_asignado: 500 }] as never)
     repo.updateEstado.mockResolvedValue({ id: 1, estado: "finalizado" } as never)
     await FacturaService.cambiarEstado(1, "finalizado")
-    expect(repo.updateEstado).toHaveBeenCalledWith(1, "finalizado")
+    expect(repo.updateEstado).toHaveBeenCalledWith(1, "finalizado", "borrador")
+  })
+
+  // Escritura concurrente: el update condicional no afectó filas porque otro ya movió la
+  // factura entre la lectura y la escritura.
+  it("409 si otro ya cambió el estado entre la lectura y el update", async () => {
+    repo.findImputaciones.mockResolvedValue([{ certificacion_id: 3, monto_asignado: 500 }] as never)
+    repo.updateEstado.mockResolvedValue(null)
+    await expect(FacturaService.cambiarEstado(1, "finalizado")).rejects.toMatchObject({ status: 409 })
   })
 
   it("borrador -> anulado no exige imputaciones", async () => {
     repo.updateEstado.mockResolvedValue({ id: 1, estado: "anulado" } as never)
     await FacturaService.cambiarEstado(1, "anulado")
     expect(repo.findImputaciones).not.toHaveBeenCalled()
-    expect(repo.updateEstado).toHaveBeenCalledWith(1, "anulado")
+    expect(repo.updateEstado).toHaveBeenCalledWith(1, "anulado", "borrador")
   })
 
   it("rechaza una transición imposible con 409 (borrador -> aprobado no existe en FACT)", async () => {

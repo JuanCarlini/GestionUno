@@ -79,9 +79,22 @@ export class OrdenCompraRepository {
 
   // Transición de estado. El gate (fn_oc_gate: >=1 línea) es un trigger: si rebota,
   // el error sube como P0001 y la ruta lo traduce a 422 con el mensaje de la DB.
-  static async updateEstado(id: number, estado: EstadoAprobacion): Promise<OrdenCompra> {
+  // Update CONDICIONAL: filtra también por el estado que la app leyó antes de validar la
+  // transición. Si otro usuario ya movió el documento, no afecta ninguna fila y devuelve
+  // null; el service lo convierte en 409 en vez de pisar el cambio del otro.
+  static async updateEstado(
+    id: number,
+    estado: EstadoAprobacion,
+    estadoEsperado: EstadoAprobacion
+  ): Promise<OrdenCompra | null> {
     const supabase = createClient()
-    const { data, error } = await supabase.from(TABLE).update({ estado }).eq("id", id).select().single()
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update({ estado })
+      .eq("id", id)
+      .eq("estado", estadoEsperado)
+      .select()
+      .maybeSingle()
     if (error) throw error
     return data as OrdenCompra
   }

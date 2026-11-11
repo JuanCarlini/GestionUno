@@ -1,6 +1,7 @@
 import { FacturaRepository, type LineaNuevaFactura } from "@/repositories/factura.repository"
 import { CertificacionRepository } from "@/repositories/certificacion.repository"
 import { HttpError } from "@/lib/route/http-error"
+import { exigirCambioAplicado } from "@/lib/route/estado-route"
 import { totalesDeLinea, IVA_DEFAULT } from "@/services/totales"
 import { puedeTransicionar, TRANSICIONES_FACTURA } from "@/services/transiciones"
 import type { CreateFacturaData, CreateFacturaLinea, CreateImputacion, EstadoFactura } from "@/models"
@@ -155,7 +156,8 @@ export class FacturaService {
       }
     }
 
-    return FacturaRepository.updateEstado(id, destino)
+    // El estado leído arriba viaja al update: si cambió en el medio, 409.
+    return exigirCambioAplicado(await FacturaRepository.updateEstado(id, destino, factura.estado))
   }
 
   // Solo se borra un borrador: una factura finalizada o anulada es historia contable y se

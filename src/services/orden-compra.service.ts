@@ -2,6 +2,7 @@ import type { TablesUpdate } from "@/lib/supabase/database.types"
 import { OrdenCompraRepository, type LineaNueva } from "@/repositories/orden-compra.repository"
 import { ItemPrecioRepository } from "@/repositories/item-precio.repository"
 import { HttpError } from "@/lib/route/http-error"
+import { exigirCambioAplicado } from "@/lib/route/estado-route"
 import { totalesDeLinea, totalesDeCabecera, IVA_DEFAULT } from "@/services/totales"
 import { puedeTransicionar, TRANSICIONES_APROBACION } from "@/services/transiciones"
 import {
@@ -183,7 +184,8 @@ export class OrdenCompraService {
       throw new HttpError(409, `No se puede pasar de ${oc.estado} a ${destino}`)
     }
 
-    return OrdenCompraRepository.updateEstado(id, destino)
+    // El estado leído arriba viaja al update: si cambió en el medio, 409.
+    return exigirCambioAplicado(await OrdenCompraRepository.updateEstado(id, destino, oc.estado))
   }
 
   // La cabecera se protege como las líneas: sin esta guarda se podría reasignar el proveedor o la
