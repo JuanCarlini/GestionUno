@@ -33,10 +33,7 @@ const ALLOWLIST = [
 // como gate válido sería aceptar algo que ya no existe.
 // Se exige la LLAMADA (`nombre(`), no la mención: con el regex a secas, un archivo que
 // importa el gate y no lo invoca pasaba el test. Verificado en negativo saboteando una ruta.
-// patchEstadoProveedor entra por el mismo criterio que las route-factories: es un handler
-// parametrizado que lleva requirePermission("proveedores", "aprobar") adentro
-// (proveedores/[id]/cambio-estado.ts) y activar/ y suspender/ solo lo invocan.
-const GATE = /(requirePermission|requireAdmin|createRoute|estadoRoute|getByIdRoute|patchEstadoProveedor)\s*\(/
+const GATE = /(requirePermission|requireAdmin|createRoute|estadoRoute|getByIdRoute)\s*\(/
 const MUTATING = /export\s+(async\s+function|const)\s+(POST|PUT|PATCH|DELETE)\b/
 
 const files = routeFiles(API_DIR).map((f) => [relative(API_DIR, f), f] as const)

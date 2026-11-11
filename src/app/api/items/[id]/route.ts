@@ -44,17 +44,9 @@ export async function DELETE(request: NextRequest, { params }: IdParams) {
 
     const itemId = parseId((await params).id)
 
-    // Un item usado en alguna OC no se borra: se marca inactivo
-    if (await ItemService.isInUse(itemId)) {
-      return respuestaError(
-        409,
-        "No se puede eliminar el item porque está siendo utilizado en órdenes de compra",
-        { detalles: { sugerencia: "Podés marcarlo como inactivo en su lugar" } }
-      )
-    }
-
-    const success = await ItemService.softDelete(itemId)
-    if (!success) {
+    // Soft delete: el 409 de "está en uso" lo tira el service, igual que en PATCH /estado.
+    const item = await ItemService.setActivo(itemId, false)
+    if (!item) {
       return respuestaError(404, "Item no encontrado")
     }
 

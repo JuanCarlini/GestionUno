@@ -45,11 +45,18 @@ export const ItemRepository = {
     return data || []
   },
 
-  async setActive(id: number, isActive: boolean): Promise<boolean> {
+  // Devuelve la fila actualizada, o null si el id no existe: la ruta responde el recurso y
+  // puede distinguir el 404 (maybeSingle y no single: cero filas no es un error de la base).
+  async setActive(id: number, isActive: boolean): Promise<Item | null> {
     const supabase = createClient()
-    const { error } = await supabase.from(TABLE).update({ is_active: isActive }).eq("id", id)
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update({ is_active: isActive })
+      .eq("id", id)
+      .select()
+      .maybeSingle()
     if (error) throw error
-    return true
+    return (data as Item | null) ?? null
   },
 
   // ¿el item aparece en alguna línea de OC? (existencia; error se trata como "no en uso")

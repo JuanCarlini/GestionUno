@@ -7,6 +7,8 @@ vi.mock("@/repositories/item.repository", () => ({
     insert: vi.fn(),
     search: vi.fn(),
     findCategoriaValues: vi.fn(),
+    setActive: vi.fn(),
+    existsInLineasOC: vi.fn(),
   },
 }))
 
@@ -67,5 +69,40 @@ describe("ItemService.getCategorias", () => {
   it("deduplica, saca vacíos y ordena", async () => {
     repo.findCategoriaValues.mockResolvedValue(["Servicios", null, "Materiales", "Servicios", ""])
     expect(await ItemService.getCategorias()).toEqual(["Materiales", "Servicios"])
+  })
+})
+
+// Un solo método para los dos sentidos, que consumen PATCH /items/[id]/estado y el DELETE del
+// recurso. La regla de "en uso" está acá a propósito: en la ruta, cada camino tenía que
+// acordarse de chequearla (y el DELETE era el único que lo hacía).
+describe("ItemService.setActivo", () => {
+  it("desactiva un item que no está en uso", async () => {
+    repo.existsInLineasOC.mockResolvedValue(false)
+    repo.setActive.mockResolvedValue({ id: 5, is_active: false } as never)
+
+    expect(await ItemService.setActivo(5, false)).toMatchObject({ is_active: false })
+    expect(repo.setActive).toHaveBeenCalledWith(5, false)
+  })
+
+  it("409 si el item está usado en alguna línea de OC, y no lo toca", async () => {
+    repo.existsInLineasOC.mockResolvedValue(true)
+
+    await expect(ItemService.setActivo(5, false)).rejects.toMatchObject({ status: 409 })
+    expect(repo.setActive).not.toHaveBeenCalled()
+  })
+
+  // Reactivar nunca se bloquea: el chequeo es solo para el sentido que saca el item del
+  // catálogo. Un item en uso que está inactivo tiene que poder volver.
+  it("activar no consulta el uso y siempre pasa", async () => {
+    repo.setActive.mockResolvedValue({ id: 5, is_active: true } as never)
+
+    expect(await ItemService.setActivo(5, true)).toMatchObject({ is_active: true })
+    expect(repo.existsInLineasOC).not.toHaveBeenCalled()
+  })
+
+  it("null si el id no existe", async () => {
+    repo.existsInLineasOC.mockResolvedValue(false)
+    repo.setActive.mockResolvedValue(null)
+    expect(await ItemService.setActivo(999, false)).toBeNull()
   })
 })
