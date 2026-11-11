@@ -43,23 +43,20 @@ export class OrdenPagoService {
   }
 
   // Agrega una factura a pagar. fn_lop_factura_pagable valida que sea finalizada y del mismo
-  // proveedor/moneda; si rebota, sube como P0001 -> 422. total_a_pagar = Σ de las líneas.
+  // proveedor/moneda; si rebota, sube como P0001 -> 422. total_a_pagar = Σ de las líneas, y lo
+  // mantiene trg_recalc_op_total en la misma transacción.
   static async agregarFactura(opId: number, input: CreateLineaFactura) {
     await OrdenPagoService.getEditable(opId)
-    const linea = await OrdenPagoRepository.insertLineaFactura({
+    return OrdenPagoRepository.insertLineaFactura({
       orden_pago_id: opId,
       factura_id: input.factura_id,
       monto: input.monto,
     })
-    await OrdenPagoService.recalcularTotal(opId)
-    return linea
   }
 
   static async quitarFactura(opId: number, facturaId: number): Promise<boolean> {
     await OrdenPagoService.getEditable(opId)
-    const ok = await OrdenPagoRepository.deleteLineaFactura(opId, facturaId)
-    if (ok) await OrdenPagoService.recalcularTotal(opId)
-    return ok
+    return OrdenPagoRepository.deleteLineaFactura(opId, facturaId)
   }
 
   // Reparte el pago en una caja. NO se valida la moneda ni la suma acá: eso lo hace
@@ -78,12 +75,9 @@ export class OrdenPagoService {
     return OrdenPagoRepository.deleteLineaCaja(opId, cajaId)
   }
 
-  // total_a_pagar = Σ monto de las líneas de factura (lo que hay que pagar).
-  private static async recalcularTotal(opId: number): Promise<void> {
-    const lineas = await OrdenPagoRepository.findLineasFactura(opId)
-    const total = lineas.reduce((a: number, l: any) => a + Number(l.monto), 0)
-    await OrdenPagoRepository.update(opId, { total_a_pagar: Math.round(total * 100) / 100 })
-  }
+  // total_a_pagar = Σ monto de las líneas de factura (lo que hay que pagar). Lo calcula
+  // trg_recalc_op_total sobre gu_lineasdeordenesdepago, dentro de la misma transacción que
+  // agregó o quitó la línea (ver la migración totales_01_triggers_cabecera).
 
   // Pre-chequeo del grafo (409). El gate de negocio (Σ, moneda) es fn_op_gate y devuelve 422.
   static async cambiarEstado(id: number, destino: EstadoOp): Promise<OrdenPago> {
