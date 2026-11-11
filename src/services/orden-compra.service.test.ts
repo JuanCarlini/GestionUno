@@ -311,6 +311,73 @@ describe("OrdenCompraService.cambiarEstado", () => {
   })
 })
 
+// Regla de dueño (commit 8ccb575): además del permiso por rol que ya cortó la ruta, una OC
+// ajena no se modifica ni se borra salvo que el actor pueda aprobar. puedeAjenas lo resuelve
+// la ruta con usuarioTienePermiso(user, "ordenes_compra", "aprobar"), así que acá se prueba
+// la decisión, no cómo se obtiene.
+//
+// 403 y no 404 a propósito: el usuario tiene ordenes_compra:ver, así que la OC ya la ve en el
+// listado; devolver 404 no esconde nada y confunde el diagnóstico.
+describe("OrdenCompraService.verificarDueno — solo el creador edita su OC", () => {
+  const DUENO = { id: 1, puedeAjenas: false }
+  const OTRO = { id: 2, puedeAjenas: false }
+  const SUPERVISOR = { id: 9, puedeAjenas: true }
+
+  // OC_BORRADOR tiene created_by: 1.
+  it("el dueño puede editar y borrar su OC", async () => {
+    repo.update.mockResolvedValue({ ...OC_BORRADOR, tarea: "x" } as never)
+    repo.deleteById.mockResolvedValue(true)
+
+    await expect(OrdenCompraService.update(55, { tarea: "x" }, DUENO)).resolves.toBeDefined()
+    await expect(OrdenCompraService.delete(55, DUENO)).resolves.toBe(true)
+  })
+
+  it("otro usuario recibe 403 al editar, y no se toca la fila", async () => {
+    await expect(OrdenCompraService.update(55, { tarea: "x" }, OTRO)).rejects.toMatchObject({
+      status: 403,
+    })
+    expect(repo.update).not.toHaveBeenCalled()
+  })
+
+  it("otro usuario recibe 403 al borrar, y no se toca la fila", async () => {
+    await expect(OrdenCompraService.delete(55, OTRO)).rejects.toMatchObject({ status: 403 })
+    expect(repo.deleteById).not.toHaveBeenCalled()
+  })
+
+  it("un supervisor puede editar y borrar OCs ajenas", async () => {
+    repo.update.mockResolvedValue({ ...OC_BORRADOR, tarea: "x" } as never)
+    repo.deleteById.mockResolvedValue(true)
+
+    await expect(OrdenCompraService.update(55, { tarea: "x" }, SUPERVISOR)).resolves.toBeDefined()
+    await expect(OrdenCompraService.delete(55, SUPERVISOR)).resolves.toBe(true)
+  })
+
+  it("la guarda de estado corre antes que la de dueño: una OC aprobada da 422 incluso al dueño", async () => {
+    repo.findById.mockResolvedValue({ ...OC_BORRADOR, estado: "aprobado" } as never)
+    await expect(OrdenCompraService.update(55, { tarea: "x" }, DUENO)).rejects.toMatchObject({
+      status: 422,
+    })
+  })
+
+  // Llamada directa: es la que usan update y delete, y el mensaje viaja al usuario.
+  it("verificarDueno deja pasar al dueño y corta al resto con un mensaje explícito", () => {
+    const oc = { id: 55, created_by: 1 } as never
+    expect(() => OrdenCompraService.verificarDueno(oc, DUENO)).not.toThrow()
+    expect(() => OrdenCompraService.verificarDueno(oc, SUPERVISOR)).not.toThrow()
+    expect(() => OrdenCompraService.verificarDueno(oc, OTRO)).toThrowError(
+      /Solo quien creó la orden de compra/
+    )
+  })
+
+  // created_by es nullable en gu_ordenesdecompra (OCs anteriores a la regla). Sin dueño
+  // conocido, nadie que no pueda aprobar la toca: falla cerrado.
+  it("una OC sin created_by solo la toca quien puede aprobar", () => {
+    const sinDueno = { id: 55, created_by: null } as never
+    expect(() => OrdenCompraService.verificarDueno(sinDueno, DUENO)).toThrowError(/Solo quien creó/)
+    expect(() => OrdenCompraService.verificarDueno(sinDueno, SUPERVISOR)).not.toThrow()
+  })
+})
+
 describe("OrdenCompraService.getAll — rollup leído de la vista", () => {
   it("mergea estado_certificacion y monto_pendiente_certificar por id", async () => {
     repo.findAll.mockResolvedValue([{ id: 1 }, { id: 2 }] as never)
