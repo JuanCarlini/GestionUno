@@ -27,9 +27,17 @@ NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 JWT_SECRET
+UPSTASH_REDIS_REST_URL      # opcional en desarrollo, necesario en producción
+UPSTASH_REDIS_REST_TOKEN    # opcional en desarrollo, necesario en producción
 ```
 
 `JWT_SECRET` debe ser una cadena aleatoria de al menos 32 caracteres.
+
+Las dos de `UPSTASH_` son el contador de intentos de login. Sin ellas la app arranca igual,
+pero el contador queda en memoria y en Vercel cada lambda tiene el suyo: el límite real pasa
+de "5 intentos cada 15 minutos" a "5 por instancia". Cuando faltan, queda un warning en el log
+al primer login. En producción tienen que estar.
+
 El esquema de la base de datos está en `supabase/migrations/`, en orden cronológico.
 
 ## Uso
@@ -39,6 +47,8 @@ npm run dev      # servidor de desarrollo
 npm run build    # compilación de producción
 npm start        # servidor de producción
 npm run lint     # análisis estático
+npm test         # suite de vitest (lógica + componentes)
+npm run test:watch
 ```
 
 ## Estructura
