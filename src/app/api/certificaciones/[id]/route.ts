@@ -8,6 +8,7 @@ import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
 import type { IdParams } from "@/lib/route/params"
 import { respuestaError } from "@/lib/route/respuesta-error"
+import { CACHE_NUNCA } from "@/lib/route/cache"
 
 // GET /api/certificaciones/[id] - Cabecera + líneas derivadas + rollup de facturación
 export const GET = getByIdRoute({
@@ -15,6 +16,7 @@ export const GET = getByIdRoute({
   getById: (id) => CertificacionService.getById(id),
   noEncontrado: "Certificación no encontrada",
   contexto: "GET /api/certificaciones/[id]",
+  cache: CACHE_NUNCA,
 })
 
 // PUT /api/certificaciones/[id] - Editar la cabecera (el estado va por PATCH /estado)

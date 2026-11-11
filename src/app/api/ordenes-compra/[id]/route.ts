@@ -7,6 +7,7 @@ import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
 import { respuestaError } from "@/lib/route/respuesta-error"
+import { CACHE_NUNCA } from "@/lib/route/cache"
 
 // GET /api/ordenes-compra/[id] - Obtener una orden específica
 export const GET = getByIdRoute({
@@ -14,6 +15,7 @@ export const GET = getByIdRoute({
   getById: (id) => OrdenCompraService.getById(id),
   noEncontrado: "Orden de compra no encontrada",
   contexto: "GET /api/ordenes-compra/[id]",
+  cache: CACHE_NUNCA,
 })
 
 // PUT /api/ordenes-compra/[id] - Editar la cabecera (el estado va por PATCH /estado)

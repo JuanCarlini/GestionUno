@@ -4,13 +4,14 @@ import { CreateOrdenPagoSchema } from "@/shared/validation/orden-pago-validation
 import { requirePermission } from "@/lib/auth/permissions-server"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { createRoute } from "@/lib/route/crud-route"
+import { CACHE_NUNCA, headersCache } from "@/lib/route/cache"
 
 // GET /api/ordenes-pago - Lista (con el nombre del proveedor aplanado)
 export async function GET() {
   try {
     const { error: authError } = await requirePermission("ordenes_pago", "ver")
     if (authError) return authError
-    return NextResponse.json(await OrdenPagoService.getAll())
+    return NextResponse.json(await OrdenPagoService.getAll(), { headers: headersCache(CACHE_NUNCA) })
   } catch (error) {
     return handleRouteError(error, "GET /api/ordenes-pago")
   }

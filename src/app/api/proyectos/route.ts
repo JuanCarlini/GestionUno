@@ -4,6 +4,7 @@ import { CreateProyectoSchema } from "@/shared/validation/proyecto-validation"
 import { requirePermission } from "@/lib/auth/permissions-server"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { createRoute } from "@/lib/route/crud-route"
+import { CACHE_CATALOGO, headersCache } from "@/lib/route/cache"
 
 // GET /api/proyectos - Listar proyectos, autorizado contra la matriz como el resto del circuito.
 export async function GET() {
@@ -12,7 +13,7 @@ export async function GET() {
     if (error) return error
 
     const proyectos = await ProyectoService.getAll()
-    return NextResponse.json(proyectos)
+    return NextResponse.json(proyectos, { headers: headersCache(CACHE_CATALOGO) })
   } catch (error) {
     return handleRouteError(error, "GET /api/proyectos")
   }

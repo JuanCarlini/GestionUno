@@ -7,6 +7,7 @@ import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
 import type { IdParams } from "@/lib/route/params"
 import { respuestaError } from "@/lib/route/respuesta-error"
+import { CACHE_NUNCA } from "@/lib/route/cache"
 
 // GET /api/ordenes-pago/[id] - Cabecera + facturas + cajas
 export const GET = getByIdRoute({
@@ -14,6 +15,7 @@ export const GET = getByIdRoute({
   getById: (id) => OrdenPagoService.getById(id),
   noEncontrado: "Orden de pago no encontrada",
   contexto: "GET /api/ordenes-pago/[id]",
+  cache: CACHE_NUNCA,
 })
 
 // DELETE /api/ordenes-pago/[id]

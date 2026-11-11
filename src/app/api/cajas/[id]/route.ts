@@ -8,12 +8,14 @@ import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
 import type { IdParams } from "@/lib/route/params"
 import { respuestaError } from "@/lib/route/respuesta-error"
+import { CACHE_CATALOGO } from "@/lib/route/cache"
 
 // GET /api/cajas/[id] — autentica el middleware
 export const GET = getByIdRoute({
   getById: (id) => CajaService.getById(id),
   noEncontrado: "Caja no encontrada",
   contexto: "GET /api/cajas/[id]",
+  cache: CACHE_CATALOGO,
 })
 
 // PUT /api/cajas/[id] - Editar caja (solo admin). Cambiar la moneda devuelve 422.

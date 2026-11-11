@@ -4,6 +4,7 @@ import { CreateOrdenCompraSchema } from "@/shared/validation/orden-compra-valida
 import { requirePermission } from "@/lib/auth/permissions-server"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { createRoute } from "@/lib/route/crud-route"
+import { CACHE_NUNCA, headersCache } from "@/lib/route/cache"
 
 // GET /api/ordenes-compra - Lista con el rollup de certificación (leído de v_oc_rollup).
 // Gateado por permiso: 'ordenes_compra:ver' (los 4 roles del sistema lo tienen por el seed).
@@ -12,7 +13,7 @@ export async function GET() {
     const { error: authError } = await requirePermission("ordenes_compra", "ver")
     if (authError) return authError
 
-    return NextResponse.json(await OrdenCompraService.getAll())
+    return NextResponse.json(await OrdenCompraService.getAll(), { headers: headersCache(CACHE_NUNCA) })
   } catch (error) {
     return handleRouteError(error, "GET /api/ordenes-compra")
   }
