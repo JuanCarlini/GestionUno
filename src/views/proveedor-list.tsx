@@ -14,7 +14,6 @@ import { searchWithScore } from "@/shared/search-utils"
 import { SearchStats } from "@/components/search-stats"
 import { StatusBadge } from "@/components/status-badge"
 import { useAuth } from "@/components/auth-context"
-import { canModificarProveedor, stringToUserRole } from "@/shared/permissions"
 import { showErrorToast } from "@/shared/toast-helpers"
 import { EmptyState } from "@/components/empty-state"
 import { CrearButton } from "@/components/crear-button"
@@ -27,12 +26,13 @@ const SORT_FIELDS: SortField[] = [
 
 export function ProveedorList() {
   const { proveedores, loading, error, activarProveedor, suspenderProveedor } = useProveedores()
-  const { user } = useAuth()
+  const { puede } = useAuth()
   const [processingId, setProcessingId] = useState<number | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
 
-  const userRole = user ? stringToUserRole(user.rol) : null
-  const canModify = userRole ? canModificarProveedor(userRole) : false
+  // proveedores:aprobar es el permiso que cubre suspender, activar y borrar; es el mismo
+  // que exige patchEstadoProveedor en el server.
+  const canModify = puede("proveedores", "aprobar")
 
   const sort = useSort(SORT_FIELDS)
 

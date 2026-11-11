@@ -18,7 +18,6 @@ import { searchWithScore } from "@/shared/search-utils"
 import { showErrorToast } from "@/shared/toast-helpers"
 import { StatusBadge } from "@/components/status-badge"
 import { useAuth } from "@/components/auth-context"
-import { canAnularDocumento, stringToUserRole } from "@/shared/permissions"
 
 const SORT_FIELDS: SortField[] = [
   { key: "numero_oc", label: "Número de OC" },
@@ -30,12 +29,15 @@ const SORT_FIELDS: SortField[] = [
 
 export function OrdenCompraList() {
   const { orders, loading, error, cambiarEstadoOrden } = useOrders()
-  const { user } = useAuth()
+  const { puede } = useAuth()
   const [searchTerm, setSearchTerm] = useState("")
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
-  const userRole = user ? stringToUserRole(user.rol) : null
-  const canAnular = userRole ? canAnularDocumento(userRole) : false
+  // La matriz de permisos, no el rol: canAnularDocumento mapeaba cualquier rol custom a
+  // "usuario", asi que un rol con ordenes_compra:aprobar podia anular por la API y no veia
+  // el boton. puede() lee los permisos reales del usuario, los mismos que chequea
+  // requirePermission en el server.
+  const canAnular = puede("ordenes_compra", "aprobar")
 
   const sort = useSort(SORT_FIELDS)
 

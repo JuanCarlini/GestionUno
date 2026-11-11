@@ -18,7 +18,6 @@ import { searchWithScore } from "@/shared/search-utils"
 import { SearchStats } from "@/components/search-stats"
 import { StatusBadge } from "@/components/status-badge"
 import { useAuth } from "@/components/auth-context"
-import { canAnularDocumento, stringToUserRole } from "@/shared/permissions"
 
 const SORT_FIELDS: SortField[] = [
   { key: "numero_op", label: "Número de OP" },
@@ -30,12 +29,12 @@ const SORT_FIELDS: SortField[] = [
 
 export function OrdenPagoList() {
   const { orders, loading, error, cambiarEstado, aprobarOrden, pagarOrden, rechazarOrden } = useOrdenesPago()
-  const { user } = useAuth()
+  const { puede } = useAuth()
   const [processingId, setProcessingId] = useState<number | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
 
-  const userRole = user ? stringToUserRole(user.rol) : null
-  const canModify = userRole ? canAnularDocumento(userRole) : false
+  // Ver el comentario de orden-compra-list: la decision sale de la matriz, no del rol.
+  const canModify = puede("ordenes_pago", "aprobar")
 
   const sort = useSort(SORT_FIELDS)
 
