@@ -1,0 +1,3 @@
+# Validación local: lint y tests solo de lo que se está commiteando (ver
+# lint-staged.config.mjs). La corrida completa la hace el CI.
+npx lint-staged
