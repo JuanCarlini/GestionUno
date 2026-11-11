@@ -33,9 +33,8 @@ export async function POST(request: NextRequest) {
     const ip = resolverIp(request.headers)
     const { porEmail, porIpEmail } = clavesDeLogin(ip, email)
 
-    const rl = estaBloqueado(porEmail, now).bloqueado
-      ? estaBloqueado(porEmail, now)
-      : estaBloqueado(porIpEmail, now)
+    const porCuenta = await estaBloqueado(porEmail, now)
+    const rl = porCuenta.bloqueado ? porCuenta : await estaBloqueado(porIpEmail, now)
     if (rl.bloqueado) {
       return NextResponse.json(
         { error: "Demasiados intentos fallidos. Probá de nuevo más tarde." },
@@ -46,8 +45,8 @@ export async function POST(request: NextRequest) {
     const result = await AuthService.login(email, password)
 
     if (!result) {
-      registrarFallo(porEmail, now)
-      registrarFallo(porIpEmail, now)
+      await registrarFallo(porEmail, now)
+      await registrarFallo(porIpEmail, now)
       // Bitácora: el intento fallido queda registrado y es investigable.
       await AuditService.registrarLoginFallido(String(email), ip)
       return NextResponse.json(
@@ -56,8 +55,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    limpiarIntentos(porEmail)
-    limpiarIntentos(porIpEmail)
+    await limpiarIntentos(porEmail)
+    await limpiarIntentos(porIpEmail)
 
     await setAuthCookie(result.token)
 

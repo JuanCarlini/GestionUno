@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     // contraseña ACTUAL a ritmo ilimitado (el 400 de "incorrecta" es un oráculo perfecto).
     const now = Date.now()
     const rlKey = `chpw:${user!.id}`
-    const rl = estaBloqueado(rlKey, now)
+    const rl = await estaBloqueado(rlKey, now)
     if (rl.bloqueado) {
       return NextResponse.json(
         { error: "Demasiados intentos fallidos. Probá de nuevo más tarde." },
@@ -41,13 +41,13 @@ export async function POST(request: NextRequest) {
     const ok = await AuthService.changePassword(user!.id, oldPassword, newPassword)
 
     if (!ok) {
-      registrarFallo(rlKey, now)
+      await registrarFallo(rlKey, now)
       return NextResponse.json(
         { error: "La contraseña actual es incorrecta" },
         { status: 400 }
       )
     }
-    limpiarIntentos(rlKey)
+    await limpiarIntentos(rlKey)
 
     // El cambio de clave invalida TODAS las sesiones previas; se emite una cookie fresca
     // para que sobreviva solo la sesión desde la que se hizo el cambio.
