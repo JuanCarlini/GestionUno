@@ -17,6 +17,7 @@ vi.mock("@/repositories/usuario.repository", () => ({
 vi.mock("@/repositories/rol.repository", () => ({
   RolRepository: {
     findByNombre: vi.fn(),
+    findById: vi.fn(),
   },
 }))
 // bcrypt mockeado: determinístico y rápido (no queremos hashear de verdad en el test).
@@ -127,14 +128,16 @@ describe("UsuarioService.update (anti auto-lockout)", () => {
     expect(repo.update).not.toHaveBeenCalled()
   })
 
-  it("impide que un admin se quite el rol admin a sí mismo (rol_id != 1)", async () => {
+  it("impide que un admin se quite el rol admin a sí mismo (rol nuevo != admin)", async () => {
+    rolRepo.findById.mockResolvedValue({ id: 2, nombre: "usuario" })
     await expect(
       UsuarioService.update(7, { rol_id: 2 }, { id: 7 })
     ).rejects.toMatchObject({ status: 400 })
     expect(repo.update).not.toHaveBeenCalled()
   })
 
-  it("permite editarse a sí mismo si mantiene el rol admin (rol_id = 1)", async () => {
+  it("permite editarse a sí mismo si el rol nuevo sigue siendo admin", async () => {
+    rolRepo.findById.mockResolvedValue({ id: 1, nombre: "admin" })
     repo.update.mockResolvedValue({ id: 7 })
     await UsuarioService.update(7, { rol_id: 1, nombre: "Yo" }, { id: 7 })
     expect(repo.update).toHaveBeenCalled()

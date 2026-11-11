@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { NextResponse } from "next/server"
 
-const registrarDesdeRequest = vi.fn()
+const registrar = vi.fn()
 vi.mock("@/lib/audit/audit.service", () => ({
-  AuditService: { registrarDesdeRequest: (...a: unknown[]) => registrarDesdeRequest(...a) },
+  AuditService: { registrar: (...a: unknown[]) => registrar(...a) },
 }))
 
 import { getByIdRoute, createRoute } from "./crud-route"
@@ -11,7 +11,7 @@ import { getByIdRoute, createRoute } from "./crud-route"
 const req = (body?: unknown) => ({ json: async () => body }) as any
 const ctx = (id: string) => ({ params: Promise.resolve({ id }) })
 
-beforeEach(() => registrarDesdeRequest.mockClear())
+beforeEach(() => registrar.mockClear())
 
 describe("getByIdRoute", () => {
   it("devuelve la entidad con 200", async () => {
@@ -70,7 +70,8 @@ describe("createRoute", () => {
     const res = await POST(req({ nombre: "y" }))
     expect(res.status).toBe(201)
     expect(await res.json()).toEqual({ id: 99, nombre: "y" })
-    expect(registrarDesdeRequest).toHaveBeenCalledWith({
+    expect(registrar).toHaveBeenCalledWith({
+      usuarioId: 7,
       tabla: "gu_test",
       registroId: 99,
       accion: "crear",
@@ -82,7 +83,7 @@ describe("createRoute", () => {
     const POST = createRoute(base)
     const res = await POST(req({ nombre: "y" }))
     expect(res.status).toBe(201)
-    expect(registrarDesdeRequest).not.toHaveBeenCalled()
+    expect(registrar).not.toHaveBeenCalled()
   })
 
   it("pasa el user a crear (para created_by) y corta si autorizar falla", async () => {
