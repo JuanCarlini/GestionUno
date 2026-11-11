@@ -1,7 +1,7 @@
 import { BCRYPT_ROUNDS } from "@/shared/validation/password-validation"
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
-import { createClient } from '@/lib/supabase/service'
+import { UsuarioRepository } from '@/repositories/usuario.repository'
 import { getJwtSecret } from '@/lib/auth/jwt-secret'
 
 const JWT_EXPIRES_IN = '7d'
@@ -39,31 +39,15 @@ interface JWTPayload {
   iat?: number
 }
 
+// Reglas de autenticación. El I/O vive en UsuarioRepository: este módulo no habla con la base.
 export class AuthService {
   static async login(email: string, password: string): Promise<{ user: AuthUser; token: string } | null> {
     try {
-      const supabase = createClient()
+      const usuario = await UsuarioRepository.findActivoParaLogin(email)
 
-      const { data: usuario, error } = await supabase
-        .from('gu_usuario')
-        .select(`
-          id,
-          email,
-          nombre,
-          password_hash,
-          rol_id,
-          estado,
-          gu_roles (
-            nombre
-          )
-        `)
-        .eq('email', email)
-        .eq('estado', 'activo')
-        .single()
-
-      if (error || !usuario) {
+      if (!usuario) {
         await bcrypt.compare(password, HASH_RELLENO)
-        console.error('Usuario no encontrado:', error)
+        console.error('Usuario no encontrado:', email)
         return null
       }
 
@@ -130,37 +114,17 @@ export class AuthService {
 
   static async getUserById(userId: number): Promise<AuthUser | null> {
     try {
-      const supabase = createClient()
-
-      const { data: usuario, error } = await supabase
-        .from('gu_usuario')
-        .select(`
-          id,
-          email,
-          nombre,
-          rol_id,
-          estado,
-          updated_at,
-          gu_roles (
-            nombre
-          )
-        `)
-        .eq('id', userId)
-        .eq('estado', 'activo')
-        .single()
-
-      if (error || !usuario) {
-        return null
-      }
+      const usuario = await UsuarioRepository.findActivoConRol(userId)
+      if (!usuario) return null
 
       return {
-        id: usuario.id,
-        email: usuario.email,
-        nombre: usuario.nombre,
-        rol_id: usuario.rol_id,
+        id: usuario.id as number,
+        email: usuario.email as string,
+        nombre: usuario.nombre as string,
+        rol_id: usuario.rol_id as number,
         rol_nombre: rolNombreDe(usuario.gu_roles),
-        estado: usuario.estado ?? 'inactivo',
-        updated_at: usuario.updated_at
+        estado: (usuario.estado as 'activo' | 'inactivo' | null) ?? 'inactivo',
+        updated_at: usuario.updated_at as string | null
       }
     } catch (error) {
       console.error('Error al obtener usuario:', error)
@@ -170,35 +134,15 @@ export class AuthService {
 
   static async changePassword(userId: number, oldPassword: string, newPassword: string): Promise<boolean> {
     try {
-      const supabase = createClient()
+      const hashActual = await UsuarioRepository.findHashById(userId)
+      if (!hashActual) return false
 
-      const { data: usuario, error } = await supabase
-        .from('gu_usuario')
-        .select('password_hash')
-        .eq('id', userId)
-        .single()
+      const passwordMatch = await bcrypt.compare(oldPassword, hashActual)
+      if (!passwordMatch) return false
 
-      if (error || !usuario) {
-        return false
-      }
-
-      const passwordMatch = await bcrypt.compare(oldPassword, usuario.password_hash)
-
-      if (!passwordMatch) {
-        return false
-      }
-
-      const newPasswordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS)
-
-      const { error: updateError } = await supabase
-        .from('gu_usuario')
-        .update({
-          password_hash: newPasswordHash,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId)
-
-      return !updateError
+      // updatePassword estampa updated_at, que es lo que invalida las sesiones viejas.
+      await UsuarioRepository.updatePassword(userId, await bcrypt.hash(newPassword, BCRYPT_ROUNDS))
+      return true
     } catch (error) {
       console.error('Error al cambiar contraseña:', error)
       return false

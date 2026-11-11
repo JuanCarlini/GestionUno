@@ -1,4 +1,23 @@
 {
   "extends": "next/core-web-vitals",
-  "ignorePatterns": ["node_modules/", ".next/", "next-env.d.ts"]
+  "ignorePatterns": ["node_modules/", ".next/", "next-env.d.ts"],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "@/lib/supabase/service",
+            "message": "El cliente de Supabase se usa SOLO en src/repositories (y src/lib/storage, que habla con Storage y no con la base). Si un service necesita datos, va por un repositorio: así el acceso a la base queda en un solo lugar y se puede mockear de a uno en los tests."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/repositories/**", "src/lib/storage/**"],
+      "rules": { "no-restricted-imports": "off" }
+    }
+  ]
 }
