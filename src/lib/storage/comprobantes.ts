@@ -36,6 +36,25 @@ function servicioCaido(contexto: string, causa: unknown): HttpError {
   )
 }
 
+// El SDK de Storage trae el código HTTP del error en `status` (number) y, según la versión,
+// también en `statusCode` (string). Decidir por el MENSAJE era frágil en los dos sentidos: un
+// cambio de wording del lado de Supabase convierte un "no existe" en 503, y un mensaje de otro
+// error que casualmente diga "not found" se traga como "la factura no tiene PDF".
+function codigoDe(error: unknown): number | undefined {
+  const e = error as { status?: unknown; statusCode?: unknown } | null
+  const crudo = e?.status ?? e?.statusCode
+  const n = typeof crudo === "string" ? Number(crudo) : crudo
+  return typeof n === "number" && Number.isFinite(n) ? n : undefined
+}
+
+// `respaldo` es la regex que se usaba antes. Queda solo para cuando el error no trae código:
+// un error de red envuelto, o una versión del SDK que no lo exponga.
+function esCodigo(error: unknown, codigo: number, respaldo: RegExp): boolean {
+  const c = codigoDe(error)
+  if (c !== undefined) return c === codigo
+  return respaldo.test((error as { message?: string } | null)?.message ?? "")
+}
+
 let bucketListo = false
 
 async function asegurarBucket(): Promise<void> {
@@ -45,7 +64,8 @@ async function asegurarBucket(): Promise<void> {
   if (error) {
     // Bucket PRIVADO: solo se lee con URL firmada que emite esta API después del permiso.
     const creado = await conTimeout(storage.createBucket(BUCKET, { public: false }))
-    if (creado.error && !/already exists/i.test(creado.error.message)) throw creado.error
+    // 409: otra request lo creó primero. Cualquier otro error sí es una falla real.
+    if (creado.error && !esCodigo(creado.error, 409, /already exists/i)) throw creado.error
   }
   bucketListo = true
 }
@@ -72,7 +92,8 @@ export async function urlComprobante(facturaId: number): Promise<string | null> 
       createClient().storage.from(BUCKET).createSignedUrl(rutaDe(facturaId), 300)
     )
     if (error) {
-      if (/not found|does not exist/i.test(error.message)) return null
+      // 404: la factura todavía no tiene PDF, que es un caso normal y no un fallo.
+      if (esCodigo(error, 404, /not found|does not exist/i)) return null
       throw error
     }
     return data.signedUrl
