@@ -7,12 +7,14 @@ import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import type { IdParams } from "@/lib/route/params"
 import { respuestaError } from "@/lib/route/respuesta-error"
+import { CACHE_CATALOGO } from "@/lib/route/cache"
 
 export const GET = getByIdRoute({
   autorizar: () => requirePermission("proyectos", "ver"),
   getById: (id) => ProyectoService.getById(id),
   noEncontrado: "Proyecto no encontrado",
   contexto: "GET /api/proyectos/[id]",
+  cache: CACHE_CATALOGO,
 })
 
 export async function PUT(request: NextRequest, { params }: IdParams) {

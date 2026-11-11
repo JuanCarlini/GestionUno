@@ -4,13 +4,14 @@ import { CreateCertificacionSchema } from "@/shared/validation/certificacion-val
 import { requirePermission } from "@/lib/auth/permissions-server"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { createRoute } from "@/lib/route/crud-route"
+import { CACHE_NUNCA, headersCache } from "@/lib/route/cache"
 
 // GET /api/certificaciones - Lista con el rollup de facturación (v_cert_rollup)
 export async function GET() {
   try {
     const { error: authError } = await requirePermission("certificaciones", "ver")
     if (authError) return authError
-    return NextResponse.json(await CertificacionService.getAll())
+    return NextResponse.json(await CertificacionService.getAll(), { headers: headersCache(CACHE_NUNCA) })
   } catch (error) {
     return handleRouteError(error, "GET /api/certificaciones")
   }

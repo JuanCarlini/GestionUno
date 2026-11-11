@@ -7,6 +7,7 @@ import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import type { IdParams } from "@/lib/route/params"
 import { respuestaError } from "@/lib/route/respuesta-error"
+import { CACHE_CATALOGO } from "@/lib/route/cache"
 
 // GET /api/items/[id] - Obtener un item por ID
 export const GET = getByIdRoute({
@@ -14,6 +15,7 @@ export const GET = getByIdRoute({
   getById: (id) => ItemService.getById(id),
   noEncontrado: "Item no encontrado",
   contexto: "GET /api/items/[id]",
+  cache: CACHE_CATALOGO,
 })
 
 // PUT /api/items/[id] - Actualizar un item

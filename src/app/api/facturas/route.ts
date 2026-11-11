@@ -4,13 +4,14 @@ import { CreateFacturaSchema } from "@/shared/validation/factura-validation"
 import { requirePermission } from "@/lib/auth/permissions-server"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { createRoute } from "@/lib/route/crud-route"
+import { CACHE_NUNCA, headersCache } from "@/lib/route/cache"
 
 // GET /api/facturas - Lista con el rollup de pago (v_factura_rollup)
 export async function GET() {
   try {
     const { error: authError } = await requirePermission("facturas", "ver")
     if (authError) return authError
-    return NextResponse.json(await FacturaService.getAll())
+    return NextResponse.json(await FacturaService.getAll(), { headers: headersCache(CACHE_NUNCA) })
   } catch (error) {
     return handleRouteError(error, "GET /api/facturas")
   }

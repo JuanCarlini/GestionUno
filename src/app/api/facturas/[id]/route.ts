@@ -7,6 +7,7 @@ import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
 import type { IdParams } from "@/lib/route/params"
 import { respuestaError } from "@/lib/route/respuesta-error"
+import { CACHE_NUNCA } from "@/lib/route/cache"
 
 // GET /api/facturas/[id] - Cabecera + líneas + imputaciones + rollup de pago
 export const GET = getByIdRoute({
@@ -14,6 +15,7 @@ export const GET = getByIdRoute({
   getById: (id) => FacturaService.getById(id),
   noEncontrado: "Factura no encontrada",
   contexto: "GET /api/facturas/[id]",
+  cache: CACHE_NUNCA,
 })
 
 // DELETE /api/facturas/[id]

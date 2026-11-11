@@ -102,3 +102,42 @@ describe("createRoute", () => {
     expect(crear).toHaveBeenCalledWith({ nombre: "z" }, { id: 7 })
   })
 })
+
+// La politica de cache de las lecturas vive en lib/route/cache.ts y entra por el factory: si
+// no se pasa, la respuesta no lleva el header y queda sin cachear, que es el default seguro.
+describe("getByIdRoute — Cache-Control", () => {
+  it("sin cache configurado no manda el header", async () => {
+    const GET = getByIdRoute({
+      getById: async (id) => ({ id }),
+      noEncontrado: "no está",
+      contexto: "T",
+    })
+    const res = await GET(req(), ctx("5"))
+    expect(res.headers.get("Cache-Control")).toBeNull()
+  })
+
+  it("con cache configurado lo manda en el 200", async () => {
+    const GET = getByIdRoute({
+      getById: async (id) => ({ id }),
+      noEncontrado: "no está",
+      contexto: "T",
+      cache: "private, max-age=60",
+    })
+    const res = await GET(req(), ctx("5"))
+    expect(res.headers.get("Cache-Control")).toBe("private, max-age=60")
+  })
+
+  // Un 404 cacheado es una mentira con fecha de vencimiento: el recurso puede existir un
+  // segundo despues.
+  it("el 404 nunca lleva el header, aunque haya cache configurado", async () => {
+    const GET = getByIdRoute({
+      getById: async () => null,
+      noEncontrado: "no está",
+      contexto: "T",
+      cache: "private, max-age=60",
+    })
+    const res = await GET(req(), ctx("5"))
+    expect(res.status).toBe(404)
+    expect(res.headers.get("Cache-Control")).toBeNull()
+  })
+})

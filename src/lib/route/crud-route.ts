@@ -16,6 +16,9 @@ interface GetByIdConfig<T> {
   getById: (id: number) => Promise<T | null>
   noEncontrado: string
   contexto: string
+  // Cache-Control de la respuesta 200 (ver lib/route/cache.ts). El 404 nunca se cachea: el
+  // recurso puede aparecer un segundo después.
+  cache?: string
 }
 
 export function getByIdRoute<T>(cfg: GetByIdConfig<T>) {
@@ -31,7 +34,10 @@ export function getByIdRoute<T>(cfg: GetByIdConfig<T>) {
       const id = parseId((await params).id)
       const entidad = await cfg.getById(id)
       if (!entidad) return respuestaError(404, cfg.noEncontrado)
-      return NextResponse.json(entidad)
+      return NextResponse.json(
+        entidad,
+        cfg.cache ? { headers: { "Cache-Control": cfg.cache } } : undefined
+      )
     } catch (error) {
       return handleRouteError(error, cfg.contexto)
     }
