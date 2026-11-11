@@ -76,9 +76,22 @@ export class CertificacionRepository {
   }
 
   // Transición de estado. Si un trigger la rechaza, el error sube como P0001 -> 422.
-  static async updateEstado(id: number, estado: EstadoAprobacion): Promise<Certificacion> {
+  // Update CONDICIONAL: filtra también por el estado que la app leyó antes de validar la
+  // transición. Si otro usuario ya movió el documento, no afecta ninguna fila y devuelve
+  // null; el service lo convierte en 409 en vez de pisar el cambio del otro.
+  static async updateEstado(
+    id: number,
+    estado: EstadoAprobacion,
+    estadoEsperado: EstadoAprobacion
+  ): Promise<Certificacion | null> {
     const supabase = createClient()
-    const { data, error } = await supabase.from(TABLE).update({ estado }).eq("id", id).select().single()
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update({ estado })
+      .eq("id", id)
+      .eq("estado", estadoEsperado)
+      .select()
+      .maybeSingle()
     if (error) throw error
     return data
   }

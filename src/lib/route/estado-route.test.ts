@@ -7,7 +7,7 @@ vi.mock("@/lib/audit/audit.service", () => ({
   AuditService: { registrar: (...a: unknown[]) => registrar(...a) },
 }))
 
-import { estadoRoute } from "./estado-route"
+import { estadoRoute, exigirCambioAplicado, MENSAJE_ESTADO_DESACTUALIZADO } from "./estado-route"
 
 // Config mínima con huecos espiables. El schema acepta cualquier {estado}.
 function makeRoute(overrides: Partial<Parameters<typeof estadoRoute>[0]> = {}) {
@@ -72,5 +72,21 @@ describe("estadoRoute (Template Method de rutas de estado)", () => {
     const { handler, autorizar } = makeRoute()
     await handler(req({ estado: "anulado" }), ctx("9"))
     expect(autorizar).toHaveBeenCalledWith("anulado")
+  })
+})
+
+// Los cuatro services hacen el update condicionado al estado que leyeron. Cero filas
+// afectadas significa que otro usuario movio el documento en el medio, y eso es un 409 con
+// un mensaje accionable, no un 500 ni un exito silencioso.
+describe("exigirCambioAplicado", () => {
+  it("devuelve la fila cuando el update si afecto", () => {
+    const fila = { id: 1, estado: "aprobado" }
+    expect(exigirCambioAplicado(fila)).toBe(fila)
+  })
+
+  it("409 con el mensaje de recargar cuando el update no afecto ninguna fila", () => {
+    expect(() => exigirCambioAplicado(null)).toThrowError(
+      expect.objectContaining({ status: 409, message: MENSAJE_ESTADO_DESACTUALIZADO })
+    )
   })
 })

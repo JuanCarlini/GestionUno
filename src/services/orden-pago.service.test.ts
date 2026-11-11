@@ -105,7 +105,14 @@ describe("OrdenPagoService.cambiarEstado", () => {
   it("borrador -> en_aprobacion pasa (el gate Σcajas=Σfacturas=total lo aplica fn_op_gate)", async () => {
     repo.updateEstado.mockResolvedValue({ id: 1, estado: "en_aprobacion" } as never)
     await OrdenPagoService.cambiarEstado(1, "en_aprobacion")
-    expect(repo.updateEstado).toHaveBeenCalledWith(1, "en_aprobacion")
+    expect(repo.updateEstado).toHaveBeenCalledWith(1, "en_aprobacion", "borrador")
+  })
+
+  it("409 si otro ya cambió el estado entre la lectura y el update", async () => {
+    repo.updateEstado.mockResolvedValue(null)
+    await expect(OrdenPagoService.cambiarEstado(1, "en_aprobacion")).rejects.toMatchObject({
+      status: 409,
+    })
   })
 
   it("no permite pagar directo desde en_aprobacion (409: falta aprobar)", async () => {
@@ -117,7 +124,7 @@ describe("OrdenPagoService.cambiarEstado", () => {
     repo.findById.mockResolvedValue({ ...OP_BORRADOR, estado: "aprobado" } as never)
     repo.updateEstado.mockResolvedValue({ id: 1, estado: "pagado" } as never)
     await OrdenPagoService.cambiarEstado(1, "pagado")
-    expect(repo.updateEstado).toHaveBeenCalledWith(1, "pagado")
+    expect(repo.updateEstado).toHaveBeenCalledWith(1, "pagado", "aprobado")
   })
 
   it("propaga el error del gate (Σ no coincide) sin reinterpretarlo", async () => {

@@ -1,5 +1,6 @@
 import { OrdenPagoRepository } from "@/repositories/orden-pago.repository"
 import { HttpError } from "@/lib/route/http-error"
+import { exigirCambioAplicado } from "@/lib/route/estado-route"
 import { puedeTransicionar, TRANSICIONES_OP } from "@/services/transiciones"
 import type {
   CreateOrdenPagoData,
@@ -93,7 +94,8 @@ export class OrdenPagoService {
       throw new HttpError(409, `No se puede pasar de ${op.estado} a ${destino}`)
     }
 
-    return OrdenPagoRepository.updateEstado(id, destino)
+    // El estado leído arriba viaja al update: si cambió en el medio, 409.
+    return exigirCambioAplicado(await OrdenPagoRepository.updateEstado(id, destino, op.estado))
   }
 
   // Solo se borra un borrador o una rechazada: una OP pagada es el registro del pago y
