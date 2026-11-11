@@ -69,9 +69,16 @@ describe("createBaseRepository.findById", () => {
     expect(calls.single).toHaveLength(1)
   })
 
-  it("devuelve null si hay error (no encontrado)", async () => {
-    mockClient({ data: null, error: new Error("no rows") })
+  // PGRST116 (.single() sin filas) es el unico error que significa "no existe". Cualquier
+  // otro sube: tragarlo convertia un 409/422 real en un 404 mentiroso.
+  it("devuelve null si .single() no trajo filas (PGRST116)", async () => {
+    mockClient({ data: null, error: { code: "PGRST116", message: "no rows" } })
     expect(await repo.findById(999)).toBeNull()
+  })
+
+  it("lanza si el error no es PGRST116", async () => {
+    mockClient({ data: null, error: { code: "08006", message: "conexion caida" } })
+    await expect(repo.findById(999)).rejects.toMatchObject({ code: "08006" })
   })
 })
 
@@ -98,9 +105,14 @@ describe("createBaseRepository.update", () => {
     expect(calls.eq).toEqual([["id", 5]])
   })
 
-  it("devuelve null si hay error", async () => {
-    mockClient({ data: null, error: new Error("not found") })
+  it("devuelve null si .single() no trajo filas (PGRST116)", async () => {
+    mockClient({ data: null, error: { code: "PGRST116", message: "not found" } })
     expect(await repo.update(5, { nombre: "x" })).toBeNull()
+  })
+
+  it("lanza si el error no es PGRST116 (constraint, trigger)", async () => {
+    mockClient({ data: null, error: { code: "23503", message: "fk violation" } })
+    await expect(repo.update(5, { nombre: "x" })).rejects.toMatchObject({ code: "23503" })
   })
 })
 
@@ -112,8 +124,8 @@ describe("createBaseRepository.delete", () => {
     expect(calls.eq).toEqual([["id", 4]])
   })
 
-  it("devuelve false si hay error", async () => {
+  it("lanza si hay error (ya no devuelve false)", async () => {
     mockClient({ error: new Error("fk violation") })
-    expect(await repo.delete(4)).toBe(false)
+    await expect(repo.delete(4)).rejects.toThrow("fk violation")
   })
 })

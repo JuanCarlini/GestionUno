@@ -32,7 +32,12 @@ const repo = vi.mocked(OrdenCompraRepository)
 const precios = vi.mocked(ItemPrecioRepository)
 const itemSvc = vi.mocked(ItemService)
 
-const OC_BORRADOR = { id: 55, proveedor_id: 2, estado: "borrador" }
+const OC_BORRADOR = { id: 55, proveedor_id: 2, estado: "borrador", created_by: 1 }
+
+// update/delete reciben un actor desde 8ccb575: ademas del permiso por rol, una OC ajena no
+// se toca salvo que el actor pueda aprobar. Este bloque mide la guarda de ESTADO, asi que usa
+// un actor con puedeAjenas para no mezclar las dos reglas; la guarda de dueno se prueba aparte.
+const ACTOR = { id: 1, puedeAjenas: true }
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -40,25 +45,28 @@ beforeEach(() => {
   repo.findById.mockResolvedValue(OC_BORRADOR as never)
   repo.insertLineas.mockResolvedValue(undefined)
   repo.findLineasByOrdenId.mockResolvedValue([])
-  repo.insertLinea.mockImplementation(async (l: never) => l)
+  repo.insertLinea.mockImplementation(async (l) => l as never)
   itemSvc.getById.mockResolvedValue({ id: 9, nombre: "Cemento" } as never)
 })
 
 describe("OrdenCompraService.create", () => {
   it("fuerza estado 'borrador' y no manda numero_oc (lo genera la DB)", async () => {
-    await OrdenCompraService.create({ proveedor_id: 2, estado: "aprobado" } as never)
+    await OrdenCompraService.create({ proveedor_id: 2, estado: "aprobado" } as never, 7)
     const arg = repo.insert.mock.calls[0][0]
-    expect(arg).toMatchObject({ estado: "borrador" })
+    expect(arg).toMatchObject({ estado: "borrador", created_by: 7 })
     expect(arg).not.toHaveProperty("numero_oc")
   })
 
   it("compensa borrando la cabecera si fallan las líneas", async () => {
     repo.insertLineas.mockRejectedValue(new Error("trigger"))
     await expect(
-      OrdenCompraService.create({
-        proveedor_id: 2,
-        lineas: [{ item_id: 9, cantidad: 1, precio_unitario_neto: 1 }],
-      } as never)
+      OrdenCompraService.create(
+        {
+          proveedor_id: 2,
+          lineas: [{ item_id: 9, cantidad: 1, precio_unitario_neto: 1 }],
+        } as never,
+        7
+      )
     ).rejects.toThrow("trigger")
     expect(repo.deleteById).toHaveBeenCalledWith(55)
   })
@@ -69,13 +77,16 @@ describe("OrdenCompraService.create", () => {
       { total_neto: 5000, total_con_iva: 5000 },
     ] as never)
 
-    await OrdenCompraService.create({
-      proveedor_id: 2,
-      lineas: [
-        { item_id: 9, cantidad: 10, precio_unitario_neto: 9500 },
-        { item_id: 8, cantidad: 1, precio_unitario_neto: 5000, iva_porcentaje: 0 },
-      ],
-    } as never)
+    await OrdenCompraService.create(
+      {
+        proveedor_id: 2,
+        lineas: [
+          { item_id: 9, cantidad: 10, precio_unitario_neto: 9500 },
+          { item_id: 8, cantidad: 1, precio_unitario_neto: 5000, iva_porcentaje: 0 },
+        ],
+      } as never,
+      7
+    )
 
     expect(repo.update).toHaveBeenCalledTimes(1)
     expect(repo.update).toHaveBeenCalledWith(55, {
@@ -170,7 +181,9 @@ describe("Guarda: la cabecera solo se modifica con la OC editable", () => {
     "update de cabecera en una OC %s devuelve 422",
     async (estado) => {
       repo.findById.mockResolvedValue({ id: 55, proveedor_id: 2, estado } as never)
-      await expect(OrdenCompraService.update(55, { proveedor_id: 99 })).rejects.toMatchObject({ status: 422 })
+      await expect(
+        OrdenCompraService.update(55, { proveedor_id: 99 }, ACTOR)
+      ).rejects.toMatchObject({ status: 422 })
       expect(repo.update).not.toHaveBeenCalled()
     }
   )
@@ -179,7 +192,7 @@ describe("Guarda: la cabecera solo se modifica con la OC editable", () => {
     "delete de una OC %s devuelve 422",
     async (estado) => {
       repo.findById.mockResolvedValue({ id: 55, proveedor_id: 2, estado } as never)
-      await expect(OrdenCompraService.delete(55)).rejects.toMatchObject({ status: 422 })
+      await expect(OrdenCompraService.delete(55, ACTOR)).rejects.toMatchObject({ status: 422 })
       expect(repo.deleteById).not.toHaveBeenCalled()
     }
   )
@@ -187,7 +200,7 @@ describe("Guarda: la cabecera solo se modifica con la OC editable", () => {
   it("update en borrador sí pasa", async () => {
     repo.findById.mockResolvedValue(OC_BORRADOR as never)
     repo.update.mockResolvedValue({ ...OC_BORRADOR, proveedor_id: 99 } as never)
-    await expect(OrdenCompraService.update(55, { proveedor_id: 99 })).resolves.toBeDefined()
+    await expect(OrdenCompraService.update(55, { proveedor_id: 99 }, ACTOR)).resolves.toBeDefined()
     expect(repo.update).toHaveBeenCalledWith(55, { proveedor_id: 99 })
   })
 
@@ -195,13 +208,15 @@ describe("Guarda: la cabecera solo se modifica con la OC editable", () => {
     repo.findById.mockResolvedValue({ id: 55, proveedor_id: 2, estado: "rechazado" } as never)
     repo.update.mockResolvedValue({ id: 55 } as never)
     repo.deleteById.mockResolvedValue(true)
-    await expect(OrdenCompraService.update(55, { tarea: "x" })).resolves.toBeDefined()
-    await expect(OrdenCompraService.delete(55)).resolves.toBe(true)
+    await expect(OrdenCompraService.update(55, { tarea: "x" }, ACTOR)).resolves.toBeDefined()
+    await expect(OrdenCompraService.delete(55, ACTOR)).resolves.toBe(true)
   })
 
   it("update de una OC inexistente devuelve 404", async () => {
     repo.findById.mockResolvedValue(null as never)
-    await expect(OrdenCompraService.update(404, { tarea: "x" })).rejects.toMatchObject({ status: 404 })
+    await expect(
+      OrdenCompraService.update(404, { tarea: "x" }, ACTOR)
+    ).rejects.toMatchObject({ status: 404 })
   })
 
   // REGRESIÓN: la guarda va en update(), NO en el repositorio. Si se pusiera abajo,
@@ -226,7 +241,7 @@ describe("OrdenCompraService.updateLine / deleteLine — recálculo de cabecera"
     repo.findLineaById.mockResolvedValue({
       id: 3, orden_compra_id: 55, cantidad: 1, precio_unitario_neto: 100, iva_porcentaje: 21,
     })
-    repo.updateLinea.mockImplementation(async (_id: number, u: never) => u)
+    repo.updateLinea.mockImplementation(async (_id, u) => u as never)
     repo.deleteLinea.mockResolvedValue(true)
   })
 

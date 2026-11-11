@@ -27,8 +27,8 @@ describe("RolService — protección de roles del sistema", () => {
   })
 
   it("permite editar la descripción de un rol del sistema (mismo nombre)", async () => {
-    repo.findById.mockResolvedValue({ id: 1, nombre: "admin" })
-    repo.update.mockResolvedValue({ id: 1 })
+    repo.findById.mockResolvedValue({ id: 1, nombre: "admin" } as never)
+    repo.update.mockResolvedValue({ id: 1 } as never)
     await RolService.update(1, { descripcion: "Administrador del sistema" })
     expect(repo.update).toHaveBeenCalledWith(1, { descripcion: "Administrador del sistema" })
   })
@@ -85,7 +85,7 @@ describe("RolService — validación de permisos (RBAC)", () => {
 
   it("create persiste un rol con permisos válidos", async () => {
     repo.findByNombre.mockResolvedValue(null)
-    repo.insert.mockResolvedValue({ id: 7, nombre: "auditor" })
+    repo.insert.mockResolvedValue({ id: 7, nombre: "auditor" } as never)
     await RolService.create({ nombre: "auditor", permisos: ["ordenes_compra:ver"] })
     expect(repo.insert).toHaveBeenCalledWith({
       nombre: "auditor",
@@ -101,8 +101,8 @@ describe("RolService — validación de permisos (RBAC)", () => {
   })
 
   it("update ignora los permisos entrantes para el rol admin (anti auto-lockout)", async () => {
-    repo.findById.mockResolvedValue({ id: 1, nombre: "admin" })
-    repo.update.mockResolvedValue({ id: 1 })
+    repo.findById.mockResolvedValue({ id: 1, nombre: "admin" } as never)
+    repo.update.mockResolvedValue({ id: 1 } as never)
     await RolService.update(1, { permisos: ["ordenes_compra:ver"] })
     // el payload NO incluye permisos para admin
     expect(repo.update).toHaveBeenCalledWith(1, {})
