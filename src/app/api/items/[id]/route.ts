@@ -6,6 +6,7 @@ import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import type { IdParams } from "@/lib/route/params"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // GET /api/items/[id] - Obtener un item por ID
 export const GET = getByIdRoute({
@@ -26,7 +27,7 @@ export async function PUT(request: NextRequest, { params }: IdParams) {
 
     const itemActualizado = await ItemService.update(itemId, validatedData)
     if (!itemActualizado) {
-      return NextResponse.json({ error: "Item no encontrado" }, { status: 404 })
+      return respuestaError(404, "Item no encontrado")
     }
 
     return NextResponse.json(itemActualizado)
@@ -45,18 +46,16 @@ export async function DELETE(request: NextRequest, { params }: IdParams) {
 
     // Un item usado en alguna OC no se borra: se marca inactivo
     if (await ItemService.isInUse(itemId)) {
-      return NextResponse.json(
-        {
-          error: "No se puede eliminar el item porque está siendo utilizado en órdenes de compra",
-          suggestion: "Puedes marcarlo como inactivo en su lugar",
-        },
-        { status: 409 }
+      return respuestaError(
+        409,
+        "No se puede eliminar el item porque está siendo utilizado en órdenes de compra",
+        { detalles: { sugerencia: "Podés marcarlo como inactivo en su lugar" } }
       )
     }
 
     const success = await ItemService.softDelete(itemId)
     if (!success) {
-      return NextResponse.json({ error: "Item no encontrado" }, { status: 404 })
+      return respuestaError(404, "Item no encontrado")
     }
 
     return NextResponse.json({ message: "Item marcado como inactivo correctamente" })

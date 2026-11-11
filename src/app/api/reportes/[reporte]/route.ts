@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { requirePermission } from "@/lib/auth/permissions-server"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { REPORTES } from "@/services/reporte.service"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 interface Params {
   params: Promise<{
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     // hasOwn y no un truthy check: REPORTES["constructor"] devolvería el constructor
     // de Object y la llamada terminaría en un 500 en vez de un 404.
     if (!Object.hasOwn(REPORTES, nombre)) {
-      return NextResponse.json({ error: "Reporte no encontrado" }, { status: 404 })
+      return respuestaError(404, "Reporte no encontrado")
     }
 
     // Los filtros se pasan crudos: el servicio los valida con Zod y un rango inválido

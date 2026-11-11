@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { showErrorToast } from "@/shared/toast-helpers"
+import { mensajeDeError } from "@/shared/api-client"
 
 export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
@@ -26,7 +27,7 @@ export function LoginForm() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Error al iniciar sesión")
+        throw new Error(mensajeDeError(data, "Error al iniciar sesión"))
       }
       
       // Recarga completa: el middleware y los server components releen la cookie de sesión.

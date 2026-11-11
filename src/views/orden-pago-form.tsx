@@ -15,6 +15,7 @@ import { FormRootError } from "@/components/form-root-error"
 import { Loader2 } from "lucide-react"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
+import { mensajeDeError } from "@/shared/api-client"
 
 // La OP paga N facturas FINALIZADAS del mismo proveedor y reparte el total en N cajas de la
 // misma moneda. Regla dura (fn_op_gate): Σcajas = Σfacturas = total_a_pagar; se valida al aprobar.
@@ -98,7 +99,7 @@ export function OrdenPagoForm() {
         body: JSON.stringify({ proveedor_id: Number(data.proveedor_id), fecha_op: data.fecha_op, moneda: data.moneda }),
       })
       const body = await res.json()
-      if (!res.ok) throw new Error(body.error || "Error al crear la orden de pago")
+      if (!res.ok) throw new Error(mensajeDeError(body, "Error al crear la orden de pago"))
       const opId = body.id
 
       // 2) agregar facturas (fn_lop_factura_pagable valida cada una)
@@ -108,7 +109,7 @@ export function OrdenPagoForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ factura_id: Number(facturaId), monto: Number(monto) }),
         })
-        if (!res.ok) throw new Error((await res.json()).error || "Error al agregar una factura")
+        if (!res.ok) throw new Error(mensajeDeError(await res.json(), "Error al agregar una factura"))
       }
 
       // 3) repartir en cajas
@@ -118,7 +119,7 @@ export function OrdenPagoForm() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ caja_id: Number(cajaId), monto: Number(monto) }),
         })
-        if (!res.ok) throw new Error((await res.json()).error || "Error al agregar una caja")
+        if (!res.ok) throw new Error(mensajeDeError(await res.json(), "Error al agregar una caja"))
       }
 
       showSuccessToast("Orden de pago creada", body.numero_op)

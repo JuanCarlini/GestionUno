@@ -18,6 +18,7 @@ import { Proveedor, Item } from "@/models"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
 import { ItemSelector } from "@/views/item-selector"
+import { mensajeDeError } from "@/shared/api-client"
 
 // La CABECERA va por react-hook-form + zodResolver; los items se agregan por un mini-form de
 // staging y viven en una lista de solo lectura → estado controlado (useFieldArray no aporta acá).
@@ -189,7 +190,7 @@ export function OrdenCompraForm() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        throw new Error(body.error || `Error ${res.status}`)
+        throw new Error(mensajeDeError(body, `Error ${res.status}`))
       }
 
       showSuccessToast("Orden de compra creada exitosamente")

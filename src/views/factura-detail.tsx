@@ -12,6 +12,7 @@ import { formatCurrency } from "@/shared/format-utils"
 import { useAuth } from "@/components/auth-context"
 import { StatusBadge } from "@/components/status-badge"
 import { FacturaComprobante } from "@/views/factura-comprobante"
+import { mensajeDeError } from "@/shared/api-client"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -98,7 +99,7 @@ export function FacturaDetail({ params }: Props) {
       })
 
       const updated = await response.json()
-      if (!response.ok) throw new Error(updated.error || "Error al actualizar factura")
+      if (!response.ok) throw new Error(mensajeDeError(updated, "Error al actualizar factura"))
 
       // El PATCH /estado devuelve solo la cabecera (sin lineas ni imputaciones).
       // Reconsultamos el detalle completo para no borrar esas secciones.

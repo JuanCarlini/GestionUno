@@ -6,6 +6,7 @@ import { AuditService } from "@/lib/audit/audit.service"
 import { estaBloqueado, registrarFallo, limpiarIntentos } from "@/lib/auth/rate-limit"
 import { PasswordSchema } from "@/shared/validation/password-validation"
 import { handleRouteError } from "@/lib/route/handle-route-error"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // POST /api/auth/change-password - El usuario autenticado cambia su propia clave
 // (distinto del reset administrativo: acá se exige la clave actual)
@@ -17,10 +18,7 @@ export async function POST(request: NextRequest) {
     const { oldPassword, newPassword } = await request.json()
 
     if (!oldPassword || !newPassword) {
-      return NextResponse.json(
-        { error: "La contraseña actual y la nueva son requeridas" },
-        { status: 400 }
-      )
+      return respuestaError(400, "La contraseña actual y la nueva son requeridas")
     }
     // Política única y compartida: antes era un `length < 6` inline.
     // handleRouteError traduce el ZodError a 400 con el detalle.
@@ -32,20 +30,14 @@ export async function POST(request: NextRequest) {
     const rlKey = `chpw:${user!.id}`
     const rl = await estaBloqueado(rlKey, now)
     if (rl.bloqueado) {
-      return NextResponse.json(
-        { error: "Demasiados intentos fallidos. Probá de nuevo más tarde." },
-        { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
-      )
+      return respuestaError(429, "Demasiados intentos fallidos. Probá de nuevo más tarde.", { headers: { "Retry-After": String(rl.retryAfterSec) } })
     }
 
     const ok = await AuthService.changePassword(user!.id, oldPassword, newPassword)
 
     if (!ok) {
       await registrarFallo(rlKey, now)
-      return NextResponse.json(
-        { error: "La contraseña actual es incorrecta" },
-        { status: 400 }
-      )
+      return respuestaError(400, "La contraseña actual es incorrecta")
     }
     await limpiarIntentos(rlKey)
 

@@ -1,16 +1,14 @@
 import { NextResponse } from "next/server"
 import { getCurrentUser } from '@/lib/auth/auth.cookies'
 import { RolRepository } from '@/repositories/rol.repository'
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 export async function GET() {
   try {
     const user = await getCurrentUser()
 
     if (!user) {
-      return NextResponse.json(
-        { error: "No autenticado" },
-        { status: 401 }
-      )
+      return respuestaError(401, "No autenticado")
     }
 
     const rol = user.rol_nombre?.toLowerCase() || 'usuario'
@@ -24,9 +22,6 @@ export async function GET() {
     
   } catch (error) {
     console.error('Error al obtener usuario:', error)
-    return NextResponse.json(
-      { error: "Error al obtener usuario" },
-      { status: 500 }
-    )
+    return respuestaError(500, "Error al obtener usuario")
   }
 }

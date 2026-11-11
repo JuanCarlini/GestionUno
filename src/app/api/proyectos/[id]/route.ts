@@ -6,6 +6,7 @@ import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import type { IdParams } from "@/lib/route/params"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 export const GET = getByIdRoute({
   autorizar: () => requirePermission("proyectos", "ver"),
@@ -24,7 +25,7 @@ export async function PUT(request: NextRequest, { params }: IdParams) {
     const proyecto = await ProyectoService.update(id, data)
 
     if (!proyecto) {
-      return NextResponse.json({ error: "Proyecto no encontrado" }, { status: 404 })
+      return respuestaError(404, "Proyecto no encontrado")
     }
 
     return NextResponse.json(proyecto)

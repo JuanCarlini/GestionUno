@@ -3,6 +3,7 @@ import { ItemService } from "@/services"
 import { requirePermission } from "@/lib/auth/permissions-server"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 interface Params {
   params: Promise<{
@@ -21,10 +22,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     const success = await ItemService.reactivate(itemId)
 
     if (!success) {
-      return NextResponse.json(
-        { error: "Item no encontrado" },
-        { status: 404 }
-      )
+      return respuestaError(404, "Item no encontrado")
     }
 
     return NextResponse.json({

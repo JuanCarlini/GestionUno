@@ -28,6 +28,7 @@ import {
   type UpdateProyecto,
 } from "@/shared/validation/proyecto-validation"
 import type { Proyecto } from "@/models/proyecto.model"
+import { mensajeDeError } from "@/shared/api-client"
 
 type Props = { proyecto?: Proyecto }
 
@@ -64,7 +65,7 @@ export function ProyectoForm({ proyecto }: Props) {
 
       if (!res.ok) {
         const cuerpo = await res.json().catch(() => ({}))
-        throw new Error(cuerpo.error ?? `Error ${res.status}`)
+        throw new Error(mensajeDeError(cuerpo, `Error ${res.status}`))
       }
 
       showSuccessToast(isEditing ? "Proyecto actualizado" : "Proyecto creado")

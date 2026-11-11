@@ -6,6 +6,7 @@ import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { HttpError } from "@/lib/route/http-error"
 import type { IdParams } from "@/lib/route/params"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // POST /api/facturas/[id]/imputaciones - Imputar certificaciones (con monto) a la factura.
 // Solo en borrador. 422 si la cert no está aprobada o si Σ supera el total de líneas.
@@ -35,7 +36,7 @@ export async function DELETE(request: NextRequest, { params }: IdParams) {
     if (!certParam) throw new HttpError(400, "Falta el parámetro certificacionId")
 
     const ok = await FacturaService.desimputar(facturaId, parseId(certParam))
-    if (!ok) return NextResponse.json({ error: "Imputación no encontrada" }, { status: 404 })
+    if (!ok) return respuestaError(404, "Imputación no encontrada")
 
     return NextResponse.json({ message: "Imputación eliminada" })
   } catch (error) {

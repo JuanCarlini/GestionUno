@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { parseId } from "./parse-id"
 import { handleRouteError } from "./handle-route-error"
 import { AuditService } from "@/lib/audit/audit.service"
+import { respuestaError } from "./respuesta-error"
 
 // Factories de los dos CRUD uniformes (GET /[id] y POST de colección). NO cubren PUT/DELETE:
 // esos divergen (audit condicional, DELETE con isInUse→409) y forzarlos sería una sopa de flags.
@@ -29,7 +30,7 @@ export function getByIdRoute<T>(cfg: GetByIdConfig<T>) {
       }
       const id = parseId((await params).id)
       const entidad = await cfg.getById(id)
-      if (!entidad) return NextResponse.json({ error: cfg.noEncontrado }, { status: 404 })
+      if (!entidad) return respuestaError(404, cfg.noEncontrado)
       return NextResponse.json(entidad)
     } catch (error) {
       return handleRouteError(error, cfg.contexto)

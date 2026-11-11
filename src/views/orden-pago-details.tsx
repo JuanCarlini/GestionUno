@@ -19,6 +19,7 @@ import { formatCurrency } from "@/shared/format-utils"
 import { StatusBadge } from "@/components/status-badge"
 import { useAuth } from "@/components/auth-context"
 import { showErrorToast } from "@/shared/toast-helpers"
+import { mensajeDeError } from "@/shared/api-client"
 import {
   Loader2,
   ArrowLeft,
@@ -106,7 +107,7 @@ export function OrdenPagoDetails() {
         body: JSON.stringify({ estado: nuevoEstado }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Error al cambiar el estado")
+      if (!res.ok) throw new Error(mensajeDeError(data, "Error al cambiar el estado"))
       // El PATCH /estado devuelve solo la cabecera; reconsultamos facturas + cajas.
       await fetchOrden()
     } catch (error) {
