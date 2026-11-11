@@ -3,7 +3,7 @@ import { OrdenCompraRepository, type LineaNueva } from "@/repositories/orden-com
 import { ItemPrecioRepository } from "@/repositories/item-precio.repository"
 import { HttpError } from "@/lib/route/http-error"
 import { exigirCambioAplicado } from "@/lib/route/estado-route"
-import { totalesDeLinea, totalesDeCabecera, IVA_DEFAULT } from "@/services/totales"
+import { totalesDeLinea, IVA_DEFAULT } from "@/services/totales"
 import { puedeTransicionar, TRANSICIONES_APROBACION } from "@/services/transiciones"
 import {
   CreateOrdenCompraData,
@@ -71,18 +71,12 @@ export class OrdenCompraService {
     return OrdenCompraRepository.crearConLineas({ ...ocData, created_by: createdBy }, armadas)
   }
 
-  // Agrega una línea eligiendo un item del catálogo.
-  static async addLinea(
-    ocId: number,
-    input: CreateLineaFromItem,
-    opts = { recalcular: true }
-  ): Promise<OrdenCompraLinea> {
+  // Agrega una línea eligiendo un item del catálogo. Los totales de la cabecera los recalcula
+  // trg_recalc_oc_cabecera en la misma transacción (migración totales_01_triggers_cabecera).
+  static async addLinea(ocId: number, input: CreateLineaFromItem): Promise<OrdenCompraLinea> {
     const oc = await OrdenCompraService.getEditable(ocId)
     const armada = await OrdenCompraService.armarLinea(oc.proveedor_id, input)
-    const creada = await OrdenCompraRepository.insertLinea({ ...armada, orden_compra_id: ocId })
-
-    if (opts.recalcular) await OrdenCompraService.recalcularCabecera(ocId)
-    return creada
+    return OrdenCompraRepository.insertLinea({ ...armada, orden_compra_id: ocId })
   }
 
   // Alias histórico: la ruta POST /[id]/lineas lo llama así.
@@ -129,7 +123,8 @@ export class OrdenCompraService {
     }
   }
 
-  // Actualizar una línea; si cambia cantidad/precio/IVA, recalcula sus totales y los de la cabecera.
+  // Actualizar una línea; si cambia cantidad/precio/IVA, recalcula sus totales. Los de la
+  // cabecera los pone el trigger.
   static async updateLine(
     lineaId: number,
     updates: Partial<CreateOrdenCompraLinea>
@@ -153,9 +148,7 @@ export class OrdenCompraService {
       )
     }
 
-    const actualizada = await OrdenCompraRepository.updateLinea(lineaId, updates)
-    await OrdenCompraService.recalcularCabecera(actual.orden_compra_id)
-    return actualizada
+    return OrdenCompraRepository.updateLinea(lineaId, updates)
   }
 
   static async deleteLine(lineaId: number): Promise<boolean> {
@@ -163,16 +156,13 @@ export class OrdenCompraService {
     if (!actual) throw new HttpError(404, "Línea no encontrada")
     await OrdenCompraService.getEditable(actual.orden_compra_id)
 
-    const ok = await OrdenCompraRepository.deleteLinea(lineaId)
-    if (ok) await OrdenCompraService.recalcularCabecera(actual.orden_compra_id)
-    return ok
+    return OrdenCompraRepository.deleteLinea(lineaId)
   }
 
-  // La DB no mantiene los totales de cabecera: tras tocar líneas, la app los reescribe.
-  static async recalcularCabecera(ocId: number): Promise<void> {
-    const lineas = await OrdenCompraRepository.findLineasByOrdenId(ocId)
-    await OrdenCompraRepository.update(ocId, totalesDeCabecera(lineas))
-  }
+  // Los totales de cabecera ya no se reescriben desde acá: los recalcula
+  // trg_recalc_oc_cabecera sobre gu_lineasdeordenesdecompra, dentro de la misma transacción
+  // que cambió la línea (ver supabase/migrations/..._totales_01_triggers_cabecera.sql). Dos
+  // ediciones simultáneas se intercalaban entre el read y el write y dejaban el total viejo.
 
   // Pre-chequeo del grafo de estados (409). Los gates de negocio son triggers y devuelven 422:
   // acá no se reimplementan.

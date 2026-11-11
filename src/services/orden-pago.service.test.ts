@@ -45,14 +45,16 @@ describe("OrdenPagoService.create", () => {
 })
 
 describe("OrdenPagoService.agregarFactura", () => {
-  it("inserta la línea y recalcula total_a_pagar = Σ de las líneas de factura", async () => {
+  // total_a_pagar lo mantiene trg_recalc_op_total sobre las líneas de factura, en la misma
+  // transacción: la app ya no lo lee ni lo escribe.
+  it("inserta la línea y no toca total_a_pagar (lo hace el trigger)", async () => {
     repo.insertLineaFactura.mockResolvedValue({ id: 9 } as never)
-    repo.findLineasFactura.mockResolvedValue([{ monto: 300000 }, { monto: 270000 }] as never)
 
     await OrdenPagoService.agregarFactura(1, { factura_id: 9, monto: 270000 })
 
     expect(repo.insertLineaFactura).toHaveBeenCalledWith({ orden_pago_id: 1, factura_id: 9, monto: 270000 })
-    expect(repo.update).toHaveBeenCalledWith(1, { total_a_pagar: 570000 })
+    expect(repo.update).not.toHaveBeenCalled()
+    expect(repo.findLineasFactura).not.toHaveBeenCalled()
   })
 
   it("404 si la OP no existe", async () => {
@@ -78,12 +80,11 @@ describe("OrdenPagoService.agregarFactura", () => {
 })
 
 describe("OrdenPagoService.quitarFactura", () => {
-  it("borra la línea y recalcula total_a_pagar", async () => {
+  it("borra la línea y no toca total_a_pagar (lo hace el trigger)", async () => {
     repo.deleteLineaFactura.mockResolvedValue(true)
-    repo.findLineasFactura.mockResolvedValue([{ monto: 300000 }] as never)
     await OrdenPagoService.quitarFactura(1, 9)
     expect(repo.deleteLineaFactura).toHaveBeenCalledWith(1, 9)
-    expect(repo.update).toHaveBeenCalledWith(1, { total_a_pagar: 300000 })
+    expect(repo.update).not.toHaveBeenCalled()
   })
 })
 

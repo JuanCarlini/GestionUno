@@ -145,11 +145,11 @@ describe("OrdenCompraService.addLinea — precio por proveedor (alta al vuelo)",
     ).rejects.toMatchObject({ status: 404 })
   })
 
-  it("recalcula la cabecera después de insertar", async () => {
+  it("no reescribe la cabecera despues de insertar (lo hace el trigger)", async () => {
     precios.findPrecio.mockResolvedValue(100)
-    repo.findLineasByOrdenId.mockResolvedValue([{ total_neto: 100, total_con_iva: 121 }] as never)
     await OrdenCompraService.addLinea(55, { item_id: 9, cantidad: 1 })
-    expect(repo.update).toHaveBeenCalledWith(55, { total_neto: 100, total_iva: 21, total_con_iva: 121 })
+    expect(repo.update).not.toHaveBeenCalled()
+    expect(repo.findLineasByOrdenId).not.toHaveBeenCalled()
   })
 })
 
@@ -236,15 +236,9 @@ describe("Guarda: la cabecera solo se modifica con la OC editable", () => {
     expect(repo.updateEstado).toHaveBeenCalledWith(55, "aprobado", "en_aprobacion")
   })
 
-  it("recalcularCabecera sigue funcionando sobre una OC no editable (va directo al repo)", async () => {
-    repo.findById.mockResolvedValue({ id: 55, proveedor_id: 2, estado: "aprobado" } as never)
-    repo.findLineasByOrdenId.mockResolvedValue([{ total_neto: 100, total_con_iva: 121 }] as never)
-    await expect(OrdenCompraService.recalcularCabecera(55)).resolves.toBeUndefined()
-    expect(repo.update).toHaveBeenCalled()
-  })
 })
 
-describe("OrdenCompraService.updateLine / deleteLine — recálculo de cabecera", () => {
+describe("OrdenCompraService.updateLine / deleteLine", () => {
   beforeEach(() => {
     repo.findLineaById.mockResolvedValue({
       id: 3, orden_compra_id: 55, cantidad: 1, precio_unitario_neto: 100, iva_porcentaje: 21,
@@ -261,16 +255,19 @@ describe("OrdenCompraService.updateLine / deleteLine — recálculo de cabecera"
     )
   })
 
-  it("recalcula la cabecera tras actualizar la línea", async () => {
-    repo.findLineasByOrdenId.mockResolvedValue([{ total_neto: 500, total_con_iva: 605 }] as never)
+  // Los totales de cabecera los recalcula trg_recalc_oc_cabecera en la misma transacción que
+  // cambió la línea: la app ya no los lee ni los escribe. Antes eran dos round-trips, y dos
+  // ediciones simultáneas se intercalaban entre ellos y dejaban el total viejo.
+  it("no reescribe la cabecera tras actualizar la línea (lo hace el trigger)", async () => {
     await OrdenCompraService.updateLine(3, { cantidad: 5 })
-    expect(repo.update).toHaveBeenCalledWith(55, { total_neto: 500, total_iva: 105, total_con_iva: 605 })
+    expect(repo.update).not.toHaveBeenCalled()
+    expect(repo.findLineasByOrdenId).not.toHaveBeenCalled()
   })
 
-  it("recalcula la cabecera tras borrar la línea", async () => {
-    repo.findLineasByOrdenId.mockResolvedValue([])
+  it("no reescribe la cabecera tras borrar la línea (lo hace el trigger)", async () => {
     await OrdenCompraService.deleteLine(3)
-    expect(repo.update).toHaveBeenCalledWith(55, { total_neto: 0, total_iva: 0, total_con_iva: 0 })
+    expect(repo.update).not.toHaveBeenCalled()
+    expect(repo.findLineasByOrdenId).not.toHaveBeenCalled()
   })
 
   it("404 si la línea no existe", async () => {
