@@ -1,27 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { OrdenCompra } from "@/models"
 import { showSuccessToast, showErrorToast, toastMessages } from "@/shared/toast-helpers"
 import { api } from "@/shared/api-client"
+import { useListado } from "./use-listado"
 
+// Listado paginado de OC + la transición de estado. El estado del listado (página, filtros,
+// orden, sincronía con la URL) vive en useListado; acá queda lo del dominio.
 export function useOrders() {
-  const [orders, setOrders] = useState<OrdenCompra[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true)
-      const data = await api("/api/ordenes-compra")
-      setOrders(data)
-      setError(null)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido")
-    } finally {
-      setLoading(false)
-    }
-  }
+  const listado = useListado<OrdenCompra>("/api/ordenes-compra", {
+    ordenInicial: "created_at.desc",
+  })
 
   // Transición de estado: ruta propia, gateada por rol y por los triggers de la DB.
   // Un 422 trae el mensaje del trigger en español (p.ej. la OC sin líneas).
@@ -32,7 +21,11 @@ export function useOrders() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ estado }),
       })
-      setOrders(prev => prev.map(order => order.id === Number(id) ? updatedOrder : order))
+      // Se reemplaza la fila en memoria en vez de re-pedir la página: el usuario no pierde
+      // la posición ni ve parpadear la tabla.
+      listado.setItems((prev) =>
+        prev.map((order) => (order.id === Number(id) ? updatedOrder : order))
+      )
 
       const mensaje =
         estado === "aprobado" ? toastMessages.ordenCompra.approved
@@ -46,14 +39,5 @@ export function useOrders() {
     }
   }
 
-  useEffect(() => {
-    fetchOrders()
-  }, [])
-
-  return {
-    orders,
-    loading,
-    error,
-    cambiarEstadoOrden,
-  }
+  return { ...listado, orders: listado.items, cambiarEstadoOrden }
 }

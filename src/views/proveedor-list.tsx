@@ -5,13 +5,12 @@ import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/search-bar"
 import { Eye, Edit, CheckCircle, XCircle, Building2, Mail, Phone, MapPin } from "lucide-react"
 import { ListShell } from "@/components/list-shell"
-import { SortControl, useSort, type SortField } from "@/components/sort-control"
+import { SortControl, useSortRemoto, type SortField } from "@/components/sort-control"
+import { Paginador } from "@/components/paginador"
 import Link from "next/link"
 import { useState } from "react"
 import { useProveedores } from "@/hooks/use-proveedores"
 import { EstadoProveedor } from "@/models"
-import { searchWithScore } from "@/shared/search-utils"
-import { SearchStats } from "@/components/search-stats"
 import { StatusBadge } from "@/components/status-badge"
 import { useAuth } from "@/components/auth-context"
 import { showErrorToast } from "@/shared/toast-helpers"
@@ -25,31 +24,34 @@ const SORT_FIELDS: SortField[] = [
 ]
 
 export function ProveedorList() {
-  const { proveedores, loading, error, activarProveedor, suspenderProveedor } = useProveedores()
+  const {
+    proveedores,
+    loading,
+    error,
+    total,
+    page,
+    paginas,
+    limit,
+    refrescando,
+    q,
+    setQ,
+    orden,
+    setOrden,
+    irA,
+    activarProveedor,
+    suspenderProveedor,
+  } = useProveedores()
   const { puede } = useAuth()
   const [processingId, setProcessingId] = useState<number | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
 
   // proveedores:aprobar es el permiso que cubre suspender, activar y borrar; es el mismo
-  // que exige patchEstadoProveedor en el server.
+  // que exige PATCH /api/proveedores/[id]/estado en el server.
   const canModify = puede("proveedores", "aprobar")
 
-  const sort = useSort(SORT_FIELDS)
+  // La búsqueda y el orden los hace la base: con la lista paginada, filtrar en el cliente
+  // filtraría solo dentro de la página visible.
+  const sort = useSortRemoto(SORT_FIELDS, orden, setOrden)
 
-  // buscamos solo por los campos que realmente existen en el formulario/base
-  const filteredProveedores = searchWithScore(
-    proveedores,
-    searchTerm,
-    ["nombre", "cuit", "email", "telefono", "direccion"],
-    {
-      nombre: 3,
-      cuit: 3,
-      email: 2,
-      telefono: 1,
-      direccion: 1,
-    }
-  )
-  const sorted = sort.apply(filteredProveedores)
 
   const handleActivar = async (id: number) => {
     try {
@@ -84,43 +86,37 @@ export function ProveedorList() {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Lista de Proveedores ({filteredProveedores.length})</CardTitle>
+          <CardTitle>Lista de Proveedores ({total})</CardTitle>
           <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
+            value={q}
+            onChange={setQ}
             placeholder="Buscar por nombre, CUIT, email..."
             className="w-full sm:w-80"
           />
         </div>
       </CardHeader>
       <CardContent>
-        <SearchStats
-          totalItems={proveedores.length}
-          filteredItems={filteredProveedores.length}
-          searchTerm={searchTerm}
-          entityName="proveedor"
-        />
 
         <div className="mb-4 flex justify-end">
           <SortControl {...sort} />
         </div>
 
         <div className="space-y-4">
-          {filteredProveedores.length === 0 ? (
+          {proveedores.length === 0 ? (
             <EmptyState
               icon={Building2}
               title={
-                searchTerm
-                  ? `No se encontraron proveedores que coincidan con "${searchTerm}"`
+                q
+                  ? `No se encontraron proveedores que coincidan con "${q}"`
                   : "No hay proveedores registrados"
               }
             >
-              {!searchTerm && (
+              {!q && (
                 <CrearButton modulo="proveedores" href="/proveedores/nuevo" label="Registrar el primer proveedor" />
               )}
             </EmptyState>
           ) : (
-            sorted.map((proveedor) => (
+            proveedores.map((proveedor) => (
               <div
                 key={proveedor.id}
                 className="border border-border rounded-lg p-4 hover:bg-accent transition-colors"
@@ -213,6 +209,17 @@ export function ProveedorList() {
               </div>
             ))
           )}
+        </div>
+
+        <div className="mt-4">
+          <Paginador
+            page={page}
+            paginas={paginas}
+            total={total}
+            limit={limit}
+            refrescando={refrescando}
+            onIrA={irA}
+          />
         </div>
       </CardContent>
     </Card>

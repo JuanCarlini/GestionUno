@@ -4,15 +4,15 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/search-bar"
-import { SearchStats } from "@/components/search-stats"
 import { Eye, Receipt } from "lucide-react"
 import { EmptyState } from "@/components/empty-state"
 import { CrearButton } from "@/components/crear-button"
 import Link from "next/link"
 import { ListShell } from "@/components/list-shell"
-import { SortControl, useSort, type SortField } from "@/components/sort-control"
+import { SortControl, useSortRemoto, type SortField } from "@/components/sort-control"
+import { Paginador } from "@/components/paginador"
+import { useListado } from "@/hooks/use-listado"
 import { LABEL_ESTADO } from "@/models"
-import { searchWithScore } from "@/shared/search-utils"
 import { formatCurrency } from "@/shared/format-utils"
 import { showErrorToast } from "@/shared/toast-helpers"
 import { StatusBadge } from "@/components/status-badge"
@@ -26,85 +26,64 @@ const SORT_FIELDS: SortField[] = [
 ]
 
 export function FacturasList() {
-  const [facturas, setFacturas] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
+  const {
+    items: facturas,
+    total,
+    page,
+    paginas,
+    limit,
+    loading,
+    refrescando,
+    error,
+    q,
+    setQ,
+    orden,
+    setOrden,
+    irA,
+  } = useListado<any>("/api/facturas", { ordenInicial: "created_at.desc" })
 
-  useEffect(() => {
-    fetchFacturas()
-  }, [])
-
-  const fetchFacturas = async () => {
-    try {
-      const response = await fetch('/api/facturas')
-      if (!response.ok) throw new Error('Error al cargar facturas')
-      const data = await response.json()
-      setFacturas(data)
-      setError(null)
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "No se pudieron cargar las facturas"
-      setError(msg)
-      showErrorToast("Error", msg)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const sort = useSort(SORT_FIELDS)
+  // La busqueda y el orden los hace la base: con la lista paginada, filtrar en el cliente
+  // filtraria solo dentro de la pagina visible.
+  const sort = useSortRemoto(SORT_FIELDS, orden, setOrden)
 
 
-  const filteredFacturas = searchWithScore(
-    facturas,
-    searchTerm,
-    ["numero_factura", "proveedor_nombre", "estado"],
-    { numero_factura: 3, proveedor_nombre: 2, estado: 2 }
-  )
-
-  const sorted = sort.apply(filteredFacturas)
 
   return (
     <ListShell loading={loading} error={error} loadingText="Cargando facturas...">
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Facturas ({filteredFacturas.length})</CardTitle>
+          <CardTitle>Facturas ({total})</CardTitle>
           <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
+            value={q}
+            onChange={setQ}
             placeholder="Buscar por número, proveedor, estado..."
             className="w-full sm:w-80"
           />
         </div>
       </CardHeader>
       <CardContent>
-        <SearchStats
-          totalItems={facturas.length}
-          filteredItems={filteredFacturas.length}
-          searchTerm={searchTerm}
-          entityName="factura"
-        />
 
         <div className="mb-4 flex justify-end">
           <SortControl {...sort} />
         </div>
 
         <div className="space-y-4">
-          {filteredFacturas.length === 0 ? (
+          {facturas.length === 0 ? (
             <EmptyState
               icon={Receipt}
               title={
-                searchTerm
-                  ? `No se encontraron facturas que coincidan con "${searchTerm}"`
+                q
+                  ? `No se encontraron facturas que coincidan con "${q}"`
                   : "No hay facturas registradas"
               }
             >
-              {!searchTerm && (
+              {!q && (
                 <CrearButton modulo="facturas" href="/facturas/nueva" label="Crear la primera factura" />
               )}
             </EmptyState>
           ) : (
-            sorted.map((factura: any) => (
+            facturas.map((factura: any) => (
               <div
                 key={factura.id}
                 className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
@@ -146,6 +125,17 @@ export function FacturasList() {
               </div>
             ))
           )}
+        </div>
+
+        <div className="mt-4">
+          <Paginador
+            page={page}
+            paginas={paginas}
+            total={total}
+            limit={limit}
+            refrescando={refrescando}
+            onIrA={irA}
+          />
         </div>
       </CardContent>
     </Card>

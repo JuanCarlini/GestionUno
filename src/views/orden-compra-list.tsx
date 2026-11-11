@@ -8,29 +8,44 @@ import { Eye, CheckCircle, XCircle, Loader2, ShoppingCart } from "lucide-react"
 import { EmptyState } from "@/components/empty-state"
 import { CrearButton } from "@/components/crear-button"
 import { ListShell } from "@/components/list-shell"
-import { SortControl, useSort, type SortField } from "@/components/sort-control"
+import { SortControl, useSortRemoto, type SortField } from "@/components/sort-control"
+import { Paginador } from "@/components/paginador"
 import { LABEL_ESTADO } from "@/models"
 import Link from "next/link"
 import { useOrders } from "@/hooks/use-orders"
 import { formatCurrency } from "@/shared/format-utils"
-import { SearchStats } from "@/components/search-stats"
-import { searchWithScore } from "@/shared/search-utils"
 import { showErrorToast } from "@/shared/toast-helpers"
 import { StatusBadge } from "@/components/status-badge"
 import { useAuth } from "@/components/auth-context"
 
+// Las key son columnas reales de gu_ordenesdecompra: el orden lo hace la base, así que tienen
+// que estar en la whitelist COLUMNAS_ORDEN de la ruta. Por eso "estado" ya no ordena por la
+// etiqueta visible sino por el valor del enum, que es el orden del circuito y no el alfabético.
 const SORT_FIELDS: SortField[] = [
   { key: "numero_oc", label: "Número de OC" },
   { key: "fecha_oc", label: "Fecha" },
   { key: "total_con_iva", label: "Total" },
-  // Ordena por la etiqueta visible, no por el valor crudo del enum.
-  { key: "estado", label: "Estado", get: (i) => LABEL_ESTADO[i.estado as keyof typeof LABEL_ESTADO] ?? i.estado },
+  { key: "estado", label: "Estado" },
 ]
 
 export function OrdenCompraList() {
-  const { orders, loading, error, cambiarEstadoOrden } = useOrders()
+  const {
+    orders,
+    total,
+    page,
+    paginas,
+    limit,
+    loading,
+    refrescando,
+    error,
+    q,
+    setQ,
+    orden,
+    setOrden,
+    irA,
+    cambiarEstadoOrden,
+  } = useOrders()
   const { puede } = useAuth()
-  const [searchTerm, setSearchTerm] = useState("")
   const [updatingId, setUpdatingId] = useState<number | null>(null)
 
   // La matriz de permisos, no el rol: canAnularDocumento mapeaba cualquier rol custom a
@@ -39,21 +54,9 @@ export function OrdenCompraList() {
   // requirePermission en el server.
   const canAnular = puede("ordenes_compra", "aprobar")
 
-  const sort = useSort(SORT_FIELDS)
-
-
-  const filteredOrders = searchWithScore(
-    orders,
-    searchTerm,
-    ["numero_oc", "estado", "observaciones"],
-    {
-      numero_oc: 3,
-      estado: 2,
-      observaciones: 1,
-    }
-  )
-
-  const sorted = sort.apply(filteredOrders)
+  // La búsqueda y el orden los hace la base: con la lista paginada, filtrar en el cliente
+  // filtraría solo dentro de la página visible.
+  const sort = useSortRemoto(SORT_FIELDS, orden, setOrden)
 
   // El circuito no saltea etapas: de borrador se manda a aprobar, y recién de
   // en_aprobacion se aprueba. Ir directo a 'aprobado' devuelve 409.
@@ -77,43 +80,41 @@ export function OrdenCompraList() {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Órdenes de Compra ({filteredOrders.length})</CardTitle>
+          <CardTitle>Órdenes de Compra ({total})</CardTitle>
           <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
-            placeholder="Buscar por número, estado u observación..."
+            value={q}
+            onChange={setQ}
+            placeholder="Buscar por número, tarea u observación..."
             className="w-full sm:w-80"
           />
         </div>
       </CardHeader>
       <CardContent>
-        <SearchStats
-          totalItems={orders.length}
-          filteredItems={filteredOrders.length}
-          searchTerm={searchTerm}
-          entityName="orden"
-        />
-
         <div className="mb-4 flex justify-end">
           <SortControl {...sort} />
         </div>
 
-        <div className="space-y-4">
-          {filteredOrders.length === 0 ? (
+        {/* Mientras llega otra página, la tabla se queda visible atenuada en vez de volver al
+            skeleton: el salto de layout era peor que esperar medio segundo. */}
+        <div
+          className={`space-y-4 transition-opacity ${refrescando ? "opacity-50" : ""}`}
+          aria-busy={refrescando}
+        >
+          {orders.length === 0 ? (
             <EmptyState
               icon={ShoppingCart}
               title={
-                searchTerm
-                  ? `No se encontraron órdenes que coincidan con "${searchTerm}"`
+                q
+                  ? `No se encontraron órdenes que coincidan con "${q}"`
                   : "No hay órdenes de compra registradas"
               }
             >
-              {!searchTerm && (
+              {!q && (
                 <CrearButton modulo="ordenes_compra" href="/ordenes-compra/nueva" label="Crear la primera orden" />
               )}
             </EmptyState>
           ) : (
-            sorted.map((orden: any) => (
+            orders.map((orden: any) => (
               <div
                 key={orden.id}
                 className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
@@ -201,6 +202,17 @@ export function OrdenCompraList() {
               </div>
             ))
           )}
+        </div>
+
+        <div className="mt-4">
+          <Paginador
+            page={page}
+            paginas={paginas}
+            total={total}
+            limit={limit}
+            refrescando={refrescando}
+            onIrA={irA}
+          />
         </div>
       </CardContent>
     </Card>

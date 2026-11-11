@@ -1,18 +1,17 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { SearchBar } from "@/components/search-bar"
-import { SearchStats } from "@/components/search-stats"
 import { ListShell } from "@/components/list-shell"
-import { SortControl, useSort, type SortField } from "@/components/sort-control"
+import { SortControl, useSortRemoto, type SortField } from "@/components/sort-control"
+import { Paginador } from "@/components/paginador"
 import { Edit, FolderKanban } from "lucide-react"
 import { useProyectos } from "@/hooks/use-proyectos"
 import { useAuth } from "@/components/auth-context"
-import { searchWithScore } from "@/shared/search-utils"
 import { formatDateShort } from "@/shared/date-utils"
 import { getStatusStyle } from "@/components/status-colors"
 import { EmptyState } from "@/components/empty-state"
@@ -29,48 +28,46 @@ const SORT_FIELDS: SortField[] = [
 ]
 
 export function ProyectoList() {
-  const { proyectos, loading, error } = useProyectos()
+  const {
+    proyectos,
+    loading,
+    error,
+    total,
+    page,
+    paginas,
+    limit,
+    refrescando,
+    q,
+    setQ,
+    orden,
+    setOrden,
+    irA,
+  } = useProyectos()
   const { puede } = useAuth()
-  const [searchTerm, setSearchTerm] = useState("")
-  const sort = useSort(SORT_FIELDS, "asc")
+
+  // La búsqueda y el orden los hace la base: con la lista paginada, filtrar en el cliente
+  // filtraría solo dentro de la página visible. De paso se va el useMemo, que estaba para no
+  // re-puntuar la lista completa en cada render.
+  const sort = useSortRemoto(SORT_FIELDS, orden, setOrden)
 
   const canEdit = puede("proyectos", "crear")
-
-  // Memoizado: sin esto se re-puntúa y reordena la lista completa en cada render.
-  // `apply` es estable (useCallback en useSort): cambia solo si cambia el criterio.
-  const { apply } = sort
-  const filteredProyectos = useMemo(
-    () =>
-      apply(
-        searchWithScore(
-          proyectos,
-          searchTerm,
-          ["nombre", "codigo", "descripcion"],
-          { nombre: 3, codigo: 3, descripcion: 1 }
-        )
-      ),
-    [proyectos, searchTerm, apply]
-  )
 
   return (
     <ListShell loading={loading} error={error} loadingText="Cargando proyectos...">
       <div className="space-y-4">
         <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
+          value={q}
+          onChange={setQ}
           placeholder="Buscar por nombre, código o descripción..."
         />
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <SearchStats
-            totalItems={proyectos.length}
-            filteredItems={filteredProyectos.length}
-            searchTerm={searchTerm}
-            entityName="proyectos"
-          />
+          <p className="text-sm text-muted-foreground tabular-nums">
+            {total} {total === 1 ? "proyecto" : "proyectos"}
+          </p>
           <SortControl {...sort} />
         </div>
 
-        {filteredProyectos.length === 0 ? (
+        {proyectos.length === 0 ? (
           <Card>
             <CardContent>
               <EmptyState
@@ -89,7 +86,7 @@ export function ProyectoList() {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {filteredProyectos.map((proyecto) => (
+            {proyectos.map((proyecto) => (
               <Card key={proyecto.id}>
                 <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0 pb-3">
                   <div className="space-y-1 min-w-0">
@@ -133,6 +130,14 @@ export function ProyectoList() {
             ))}
           </div>
         )}
+      <Paginador
+        page={page}
+        paginas={paginas}
+        total={total}
+        limit={limit}
+        refrescando={refrescando}
+        onIrA={irA}
+      />
       </div>
     </ListShell>
   )
