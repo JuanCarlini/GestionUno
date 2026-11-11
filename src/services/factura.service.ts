@@ -5,6 +5,8 @@ import { exigirCambioAplicado } from "@/lib/route/estado-route"
 import { totalesDeLinea, IVA_DEFAULT } from "@/services/totales"
 import { puedeTransicionar, TRANSICIONES_FACTURA } from "@/services/transiciones"
 import type { CreateFacturaData, CreateFacturaLinea, CreateImputacion, EstadoFactura } from "@/models"
+import type { Orden, Pagina, Paginacion } from "@/lib/route/paginacion"
+import type { FiltrosListado } from "@/repositories/filtros"
 
 interface CreateFacturaInput extends CreateFacturaData {
   lineas: CreateFacturaLinea[]
@@ -14,20 +16,26 @@ interface CreateFacturaInput extends CreateFacturaData {
 // Reglas de negocio de facturas (I/O en FacturaRepository). Numeración, regla de imputación y
 // estado de pago viven en la DB; la app calcula los totales de línea, cabecera y facturado.
 export class FacturaService {
-  static async getAll() {
-    const facturas = await FacturaRepository.findAllWithProveedor()
-    if (facturas.length === 0) return []
+  static async getPagina(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<Record<string, unknown>>> {
+    const { data: facturas, total } = await FacturaRepository.findPaginaWithProveedor(p, opts)
+    if (facturas.length === 0) return { data: [], total }
 
     const rollups = await FacturaRepository.findRollupsByIds(facturas.map((f: any) => f.id))
     const porId = new Map(rollups.map((r) => [r.factura_id, r]))
 
-    return facturas.map((factura: any) => ({
-      ...factura,
-      proveedor_nombre: factura.gu_proveedores?.nombre,
-      proveedor_cuit: factura.gu_proveedores?.cuit,
-      estado_pago: porId.get(factura.id)?.estado_pago ?? "sin",
-      monto_pagado: Number(porId.get(factura.id)?.monto_pagado ?? 0),
-    }))
+    return {
+      total,
+      data: facturas.map((factura: any) => ({
+        ...factura,
+        proveedor_nombre: factura.gu_proveedores?.nombre,
+        proveedor_cuit: factura.gu_proveedores?.cuit,
+        estado_pago: porId.get(factura.id)?.estado_pago ?? "sin",
+        monto_pagado: Number(porId.get(factura.id)?.monto_pagado ?? 0),
+      })),
+    }
   }
 
   static async getById(id: number) {

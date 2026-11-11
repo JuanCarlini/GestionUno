@@ -15,6 +15,8 @@ import {
   OrdenCompraLineaConItem,
 } from "@/models"
 import { ItemService } from "./item.service"
+import type { Orden, Pagina, Paginacion } from "@/lib/route/paginacion"
+import type { FiltrosListado } from "@/repositories/filtros"
 
 // Una OC solo acepta cambios en sus líneas mientras es borrador (o rechazada): editar cantidades
 // tras aprobarla falsearía el avance certificado y dejaría v_loc_rollup en negativo.
@@ -30,19 +32,26 @@ export interface Actor {
 // Reglas de negocio de órdenes de compra (I/O en OrdenCompraRepository). Numeración, gate de
 // ≥1 línea y rollups (v_oc_rollup / v_loc_rollup) viven en la DB.
 export class OrdenCompraService {
-  // Lista con el chip de estado de certificación, leído de la vista.
-  static async getAll() {
-    const ordenes = await OrdenCompraRepository.findAll()
-    if (ordenes.length === 0) return []
+  // Una página del listado, con el chip de estado de certificación leído de la vista. El
+  // rollup se consulta solo para los ids de esta página.
+  static async getPagina(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<Record<string, unknown>>> {
+    const { data: ordenes, total } = await OrdenCompraRepository.findPagina(p, opts)
+    if (ordenes.length === 0) return { data: [], total }
 
     const rollups = await OrdenCompraRepository.findRollupsByIds(ordenes.map((o) => o.id))
     const porId = new Map(rollups.map((r) => [r.orden_compra_id, r]))
 
-    return ordenes.map((oc) => ({
-      ...oc,
-      estado_certificacion: porId.get(oc.id)?.estado_certificacion ?? "sin",
-      monto_pendiente_certificar: Number(porId.get(oc.id)?.monto_pendiente_certificar ?? 0),
-    }))
+    return {
+      total,
+      data: ordenes.map((oc) => ({
+        ...oc,
+        estado_certificacion: porId.get(oc.id)?.estado_certificacion ?? "sin",
+        monto_pendiente_certificar: Number(porId.get(oc.id)?.monto_pendiente_certificar ?? 0),
+      })),
+    }
   }
 
   static async getById(id: number): Promise<OrdenCompra | null> {

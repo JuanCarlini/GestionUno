@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server"
+import { leerListado, cuerpoPaginado } from "@/lib/route/paginacion"
+import { NextRequest, NextResponse } from "next/server"
 import { CertificacionService } from "@/services/certificacion.service"
 import { CreateCertificacionSchema } from "@/shared/validation/certificacion-validation"
 import { requirePermission } from "@/lib/auth/permissions-server"
@@ -6,12 +7,22 @@ import { handleRouteError } from "@/lib/route/handle-route-error"
 import { createRoute } from "@/lib/route/crud-route"
 import { CACHE_NUNCA, headersCache } from "@/lib/route/cache"
 
+// Columnas por las que se puede ordenar (?orden=campo.desc). Whitelist: sin ella el
+// parametro serviria para ordenar por cualquier columna de la tabla.
+const COLUMNAS_ORDEN = ["numero_cert", "fecha_cert", "total_con_iva", "estado", "created_at"] as const
+
 // GET /api/certificaciones - Lista con el rollup de facturación (v_cert_rollup)
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { error: authError } = await requirePermission("certificaciones", "ver")
     if (authError) return authError
-    return NextResponse.json(await CertificacionService.getAll(), { headers: headersCache(CACHE_NUNCA) })
+    const { paginacion, filtros, orden } = leerListado(request.url, {
+      columnasOrden: COLUMNAS_ORDEN,
+      ordenPorDefecto: { columna: "created_at", ascending: false },
+    })
+
+    const pagina = await CertificacionService.getPagina(paginacion, { filtros, orden })
+    return NextResponse.json(cuerpoPaginado(request.url, pagina, paginacion), { headers: headersCache(CACHE_NUNCA) })
   } catch (error) {
     return handleRouteError(error, "GET /api/certificaciones")
   }

@@ -2,6 +2,8 @@ import { OrdenPagoRepository } from "@/repositories/orden-pago.repository"
 import { HttpError } from "@/lib/route/http-error"
 import { exigirCambioAplicado } from "@/lib/route/estado-route"
 import { puedeTransicionar, TRANSICIONES_OP } from "@/services/transiciones"
+import type { Orden, Pagina, Paginacion } from "@/lib/route/paginacion"
+import type { FiltrosListado } from "@/repositories/filtros"
 import type {
   CreateOrdenPagoData,
   CreateLineaFactura,
@@ -13,9 +15,15 @@ import type {
 // Reglas de negocio de órdenes de pago (I/O en OrdenPagoRepository). La app mantiene
 // total_a_pagar = Σ facturas; el gate de pago (moneda y Σcajas = Σfacturas) es fn_op_gate.
 export class OrdenPagoService {
-  static async getAll() {
-    const ordenes = await OrdenPagoRepository.findAllWithProveedor()
-    return ordenes.map((op: any) => ({ ...op, proveedor_nombre: op.gu_proveedores?.nombre }))
+  static async getPagina(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<Record<string, unknown>>> {
+    const { data, total } = await OrdenPagoRepository.findPaginaWithProveedor(p, opts)
+    return {
+      total,
+      data: data.map((op: any) => ({ ...op, proveedor_nombre: op.gu_proveedores?.nombre })),
+    }
   }
 
   static async getById(id: number) {

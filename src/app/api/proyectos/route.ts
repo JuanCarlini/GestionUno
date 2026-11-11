@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server"
+import { leerListado, cuerpoPaginado } from "@/lib/route/paginacion"
+import { NextRequest, NextResponse } from "next/server"
 import { ProyectoService } from "@/services/proyecto.service"
 import { CreateProyectoSchema } from "@/shared/validation/proyecto-validation"
 import { requirePermission } from "@/lib/auth/permissions-server"
@@ -6,14 +7,23 @@ import { handleRouteError } from "@/lib/route/handle-route-error"
 import { createRoute } from "@/lib/route/crud-route"
 import { CACHE_CATALOGO, headersCache } from "@/lib/route/cache"
 
+// Columnas por las que se puede ordenar (?orden=campo.desc). Whitelist: sin ella el
+// parametro serviria para ordenar por cualquier columna de la tabla.
+const COLUMNAS_ORDEN = ["nombre", "codigo", "estado", "fecha_inicio", "created_at"] as const
+
 // GET /api/proyectos - Listar proyectos, autorizado contra la matriz como el resto del circuito.
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { error } = await requirePermission("proyectos", "ver")
     if (error) return error
 
-    const proyectos = await ProyectoService.getAll()
-    return NextResponse.json(proyectos, { headers: headersCache(CACHE_CATALOGO) })
+    const { paginacion, filtros, orden } = leerListado(request.url, {
+      columnasOrden: COLUMNAS_ORDEN,
+      ordenPorDefecto: { columna: "created_at", ascending: false },
+    })
+
+    const pagina = await ProyectoService.getPagina(paginacion, { filtros, orden })
+    return NextResponse.json(cuerpoPaginado(request.url, pagina, paginacion), { headers: headersCache(CACHE_CATALOGO) })
   } catch (error) {
     return handleRouteError(error, "GET /api/proyectos")
   }

@@ -5,7 +5,7 @@ import { CertificacionService } from "./certificacion.service"
 
 vi.mock("@/repositories/certificacion.repository", () => ({
   CertificacionRepository: {
-    findAllWithRelations: vi.fn(),
+    findPaginaWithRelations: vi.fn(),
     findByIdWithRelations: vi.fn(),
     findLineasByCertId: vi.fn(),
     findLineasDisponibles: vi.fn(),
@@ -183,15 +183,15 @@ describe("CertificacionService.getLineasDisponibles — saldo leído de v_loc_ro
 
 describe("CertificacionService.getAll — rollup de facturación leído de v_cert_rollup", () => {
   it("mergea estado_facturacion y monto_facturado por id", async () => {
-    repo.findAllWithRelations.mockResolvedValue([
+    repo.findPaginaWithRelations.mockResolvedValue({ total: 2, data: [
       { id: 1, gu_proveedores: { nombre: "ABC" }, gu_ordenesdecompra: { numero_oc: "OC-00001" } },
       { id: 2, gu_proveedores: { nombre: "XYZ" }, gu_ordenesdecompra: { numero_oc: "OC-00002" } },
-    ] as never)
+    ] } as never)
     repo.findRollupsByIds.mockResolvedValue([
       { certificacion_id: 1, monto_facturado: 500, estado_facturacion: "parcial" },
     ] as never)
 
-    const res: any[] = await CertificacionService.getAll()
+    const { data: res } = await CertificacionService.getPagina({ page: 1, limit: 25 })
 
     expect(repo.findRollupsByIds).toHaveBeenCalledWith([1, 2])
     expect(res[0]).toMatchObject({

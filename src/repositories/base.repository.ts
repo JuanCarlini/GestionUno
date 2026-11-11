@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/service"
+import { rango, type Orden, type Pagina, type Paginacion } from "@/lib/route/paginacion"
+import { orIlike, type FiltrosListado } from "./filtros"
 
 // Repo GENÉRICO sobre la tabla: adentro se usa el cliente sin tipar y la seguridad de
 // tipos vive en el borde (generics Row/Insert/Update + el export tipado por repo).
@@ -37,6 +39,38 @@ export function createBaseRepository<Row, Insert = Partial<Row>, Update = Partia
 
       if (error) throw error
       return (data ?? []) as Row[]
+    },
+
+    /**
+     * Una página de la tabla, con el total de la consulta SIN paginar (count: "exact", que
+     * PostgREST resuelve en la misma request: no son dos round-trips).
+     *
+     * `columnasTexto` habilita el filtro `q`; si el recurso no tiene búsqueda, se omite.
+     */
+    async findPagina(
+      p: Paginacion,
+      opts: { filtros?: FiltrosListado; orden?: Orden; columnasTexto?: readonly string[] } = {}
+    ): Promise<Pagina<Row>> {
+      const supabase = db()
+      const o: Orden = opts.orden ?? { columna: order.column, ascending: order.ascending ?? false }
+      const { desde, hasta } = rango(p)
+
+      let q = supabase.from(table).select("*", { count: "exact" })
+
+      const f = opts.filtros ?? {}
+      if (f.estado) q = q.eq("estado", f.estado)
+      if (f.proveedorId) q = q.eq("proveedor_id", f.proveedorId)
+      if (f.proyectoId) q = q.eq("proyecto_id", f.proyectoId)
+
+      const texto = opts.columnasTexto ? orIlike(f.q, opts.columnasTexto) : null
+      if (texto) q = q.or(texto)
+
+      const { data, error, count } = await q
+        .order(o.columna, { ascending: o.ascending })
+        .range(desde, hasta)
+
+      if (error) throw error
+      return { data: (data ?? []) as Row[], total: count ?? 0 }
     },
 
     async findById(id: number): Promise<Row | null> {
