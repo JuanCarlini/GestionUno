@@ -29,7 +29,7 @@ describe("getByIdRoute", () => {
     const GET = getByIdRoute({ getById: async () => null, noEncontrado: "no está", contexto: "T" })
     const res = await GET(req(), ctx("5"))
     expect(res.status).toBe(404)
-    expect(await res.json()).toEqual({ error: "no está" })
+    expect(await res.json()).toEqual({ error: { codigo: "NO_ENCONTRADO", mensaje: "no está" } })
   })
 
   it("si autorizar corta, no consulta getById", async () => {

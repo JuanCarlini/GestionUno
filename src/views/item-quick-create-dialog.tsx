@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Loader2 } from "lucide-react"
 import { CreateItemSchema, CreateItemFormData } from "@/shared/validation/item-validation"
 import { Item, ItemCategoria, UnidadMedida } from "@/models"
+import { mensajeDeError } from "@/shared/api-client"
 
 import {
   Dialog,
@@ -77,7 +78,7 @@ export function ItemQuickCreateDialog({
         let errorMessage = "Error al crear el item"
         try {
           const error = await response.json()
-          errorMessage = error.error || error.message || errorMessage
+          errorMessage = mensajeDeError(error, (error as { message?: string }).message || errorMessage)
         } catch (e) {
           // Si no se puede parsear como JSON, usar el texto
           const text = await response.text()

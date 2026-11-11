@@ -7,6 +7,7 @@ import { HttpError } from "@/lib/route/http-error"
 import { AuditService } from "@/lib/audit/audit.service"
 import { subirComprobante, urlComprobante, MAX_BYTES } from "@/lib/storage/comprobantes"
 import type { IdParams } from "@/lib/route/params"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 /**
  * PDF del comprobante de una factura, guardado en Supabase Storage (servicio externo).
@@ -28,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: IdParams) {
     await facturaExistente(id)
 
     const url = await urlComprobante(id)
-    if (!url) return NextResponse.json({ error: "La factura no tiene PDF adjunto" }, { status: 404 })
+    if (!url) return respuestaError(404, "La factura no tiene PDF adjunto")
     return NextResponse.json({ url })
   } catch (error) {
     return handleRouteError(error, "GET /api/facturas/[id]/comprobante")

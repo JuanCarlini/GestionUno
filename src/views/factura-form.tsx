@@ -15,6 +15,7 @@ import { FormRootError } from "@/components/form-root-error"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
+import { mensajeDeError } from "@/shared/api-client"
 
 // La factura tiene líneas de detalle (LFACT) e imputa un MONTO a certificaciones aprobadas del
 // proveedor (N:M). Regla dura (fn_check_imputacion): solo certs aprobadas y Σ monto_asignado ≤ total.
@@ -135,7 +136,7 @@ export function FacturaForm() {
         }),
       })
       const body = await res.json()
-      if (!res.ok) throw new Error(body.error || "Error al crear la factura")
+      if (!res.ok) throw new Error(mensajeDeError(body, "Error al crear la factura"))
 
       showSuccessToast("Factura creada", body.numero_factura)
       router.push(`/facturas/${body.id}`)

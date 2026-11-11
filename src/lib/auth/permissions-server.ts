@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { getCurrentUser } from "@/lib/auth/auth.cookies"
 import { isAdmin, stringToUserRole, tienePermiso } from "@/shared/permissions"
 import { RolRepository } from "@/repositories/rol.repository"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // Usuario autenticado desde el servidor: base interna de los require* de este archivo.
 async function getAuthenticatedUser() {
@@ -31,10 +32,7 @@ export async function requireAuth() {
 
   if (!user) {
     return {
-      error: NextResponse.json(
-        { error: "No autenticado" },
-        { status: 401 }
-      ),
+      error: respuestaError(401, "No autenticado"),
       user: null
     }
   }
@@ -51,10 +49,7 @@ export async function requireAdmin() {
 
   if (!isAdmin(stringToUserRole(user!.rol))) {
     return {
-      error: NextResponse.json(
-        { error: "No tienes permisos de administrador" },
-        { status: 403 }
-      ),
+      error: respuestaError(403, "No tienes permisos de administrador"),
       user: null
     }
   }
@@ -80,10 +75,7 @@ export async function requirePermission(modulo: string, accion: string) {
   const permisos = await RolRepository.findPermisosByNombre(user!.rol)
   if (!tienePermiso(user!.rol, permisos, modulo, accion)) {
     return {
-      error: NextResponse.json(
-        { error: "No tenés permisos para realizar esta acción" },
-        { status: 403 }
-      ),
+      error: respuestaError(403, "No tenés permisos para realizar esta acción"),
       user: null,
       permisos: null
     }

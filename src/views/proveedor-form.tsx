@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
+import { mensajeDeError } from "@/shared/api-client"
 
 const proveedorSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
@@ -59,7 +60,7 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
         
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.error || 'Error al actualizar proveedor')
+          throw new Error(mensajeDeError(error, 'Error al actualizar proveedor'))
         }
         
         showSuccessToast("Proveedor actualizado", "El proveedor se actualizó correctamente")
@@ -73,7 +74,7 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
         
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.error || 'Error al crear proveedor')
+          throw new Error(mensajeDeError(error, 'Error al crear proveedor'))
         }
         
         showSuccessToast("Proveedor creado", "El proveedor se creó correctamente")

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import { Download, Printer, Sheet } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
+import { mensajeDeError } from "@/shared/api-client"
 
 // Botones de exportacion: Excel pega contra la API, PDF es window.print() con la
 // hoja @media print (grafico vectorial gratis, sin rasterizar).
@@ -24,7 +25,7 @@ export function AccionesExport({ reporte }: { reporte: string }) {
       const res = await fetch(`/api/reportes/${cual}/export?${query.toString()}`)
       if (!res.ok) {
         const cuerpo = await res.json().catch(() => ({}))
-        throw new Error(cuerpo.error ?? `Error ${res.status}`)
+        throw new Error(mensajeDeError(cuerpo, `Error ${res.status}`))
       }
 
       const blob = await res.blob()

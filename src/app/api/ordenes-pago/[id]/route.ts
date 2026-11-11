@@ -6,6 +6,7 @@ import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
 import type { IdParams } from "@/lib/route/params"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // GET /api/ordenes-pago/[id] - Cabecera + facturas + cajas
 export const GET = getByIdRoute({
@@ -25,7 +26,7 @@ export async function DELETE(request: NextRequest, { params }: IdParams) {
 
     const success = await OrdenPagoService.delete(id)
     if (!success) {
-      return NextResponse.json({ error: "Orden de pago no encontrada" }, { status: 404 })
+      return respuestaError(404, "Orden de pago no encontrada")
     }
 
     await AuditService.registrar({

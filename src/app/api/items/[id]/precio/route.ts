@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/auth/permissions-server"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { HttpError } from "@/lib/route/http-error"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // GET /api/items/[id]/precio?proveedorId=N — precio de este item PARA ese proveedor.
 // 404 si el par no tiene precio todavía: la UI pide uno y se da de alta al vuelo.
@@ -19,10 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const precio = await ItemPrecioRepository.findPrecio(itemId, proveedorId)
     if (precio === null) {
-      return NextResponse.json(
-        { error: "El item no tiene precio cargado para este proveedor" },
-        { status: 404 }
-      )
+      return respuestaError(404, "El item no tiene precio cargado para este proveedor")
     }
 
     return NextResponse.json({ item_id: itemId, proveedor_id: proveedorId, precio })

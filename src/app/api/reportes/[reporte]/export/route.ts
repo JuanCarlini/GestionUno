@@ -4,6 +4,7 @@ import { handleRouteError } from "@/lib/route/handle-route-error"
 import { HttpError } from "@/lib/route/http-error"
 import { REPORTES } from "@/services/reporte.service"
 import { ESTRATEGIAS } from "@/lib/export/registro"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 interface Params {
   params: Promise<{
@@ -27,12 +28,12 @@ export async function GET(request: NextRequest, { params }: Params) {
 
     // hasOwn y no un truthy check: mismo motivo que la ruta de datos.
     if (!Object.hasOwn(REPORTES, nombre)) {
-      return NextResponse.json({ error: "Reporte no encontrado" }, { status: 404 })
+      return respuestaError(404, "Reporte no encontrado")
     }
 
     const formato = request.nextUrl.searchParams.get("formato") ?? "xlsx"
     if (!Object.hasOwn(ESTRATEGIAS, formato)) {
-      return NextResponse.json({ error: "Formato no soportado" }, { status: 400 })
+      return respuestaError(400, "Formato no soportado")
     }
 
     // Se recalcula acá, nunca se reciben filas del cliente: sino cualquiera podría

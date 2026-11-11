@@ -7,6 +7,7 @@ import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
 import type { IdParams } from "@/lib/route/params"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // GET /api/cajas/[id] — autentica el middleware
 export const GET = getByIdRoute({
@@ -25,7 +26,7 @@ export async function PUT(request: NextRequest, { params }: IdParams) {
     const validatedData = UpdateCajaSchema.parse(await request.json())
 
     const actualizada = await CajaService.update(id, validatedData)
-    if (!actualizada) return NextResponse.json({ error: "Caja no encontrada" }, { status: 404 })
+    if (!actualizada) return respuestaError(404, "Caja no encontrada")
 
     await AuditService.registrar({
       usuarioId: user!.id,

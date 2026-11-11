@@ -6,6 +6,7 @@ import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { AuditService, type AccionAuditoria } from "@/lib/audit/audit.service"
 import type { IdParams } from "@/lib/route/params"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // activar/ y suspender/ son la misma operación con distinto destino: un handler
 // parametrizado en vez de dos archivos gemelos de 40 líneas.
@@ -24,7 +25,7 @@ export function patchEstadoProveedor(cfg: {
       const proveedor = await ProveedorService.update(id, { estado: cfg.estado })
 
       if (!proveedor) {
-        return NextResponse.json({ error: "Proveedor no encontrado" }, { status: 404 })
+        return respuestaError(404, "Proveedor no encontrado")
       }
 
       await AuditService.registrar({

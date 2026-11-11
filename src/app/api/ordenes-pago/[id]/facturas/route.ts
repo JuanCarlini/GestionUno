@@ -6,6 +6,7 @@ import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { HttpError } from "@/lib/route/http-error"
 import type { IdParams } from "@/lib/route/params"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // POST /api/ordenes-pago/[id]/facturas - Agregar una factura a pagar.
 // 422 si la factura no está finalizada o no es del mismo proveedor/moneda (fn_lop_factura_pagable).
@@ -35,7 +36,7 @@ export async function DELETE(request: NextRequest, { params }: IdParams) {
     if (!facturaParam) throw new HttpError(400, "Falta el parámetro facturaId")
 
     const ok = await OrdenPagoService.quitarFactura(opId, parseId(facturaParam))
-    if (!ok) return NextResponse.json({ error: "Línea no encontrada" }, { status: 404 })
+    if (!ok) return respuestaError(404, "Línea no encontrada")
 
     return NextResponse.json({ message: "Factura quitada de la orden de pago" })
   } catch (error) {

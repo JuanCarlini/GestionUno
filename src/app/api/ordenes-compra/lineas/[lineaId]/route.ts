@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/auth/permissions-server"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { z } from "zod"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 interface Params {
   params: Promise<{ lineaId: string }>
@@ -29,7 +30,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     const lineaActualizada = await OrdenCompraService.updateLine(lineaId, validatedData)
     if (!lineaActualizada) {
-      return NextResponse.json({ error: "Línea no encontrada" }, { status: 404 })
+      return respuestaError(404, "Línea no encontrada")
     }
 
     return NextResponse.json(lineaActualizada)
@@ -48,7 +49,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
     const success = await OrdenCompraService.deleteLine(lineaId)
     if (!success) {
-      return NextResponse.json({ error: "Línea no encontrada" }, { status: 404 })
+      return respuestaError(404, "Línea no encontrada")
     }
 
     return NextResponse.json({ message: "Línea eliminada correctamente" })

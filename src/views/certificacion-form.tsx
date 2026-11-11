@@ -16,6 +16,7 @@ import { FormRootError } from "@/components/form-root-error"
 import { Loader2 } from "lucide-react"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
+import { mensajeDeError } from "@/shared/api-client"
 
 // La certificación cuelga de UNA orden de compra aprobada (hereda proveedor y moneda, no se eligen).
 // La única entrada por línea es el AVANCE EN UNIDADES; el tope del 100% lo aplica fn_check_avance_100.
@@ -133,7 +134,7 @@ export function CertificacionForm() {
       })
 
       const body = await res.json()
-      if (!res.ok) throw new Error(body.error || "Error al crear la certificación")
+      if (!res.ok) throw new Error(mensajeDeError(body, "Error al crear la certificación"))
 
       showSuccessToast("Certificación creada", body.numero_cert)
       router.push(`/certificaciones/${body.id}`)

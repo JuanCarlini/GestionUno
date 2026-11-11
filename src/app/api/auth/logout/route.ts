@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { removeAuthCookie, getCurrentUser } from '@/lib/auth/auth.cookies'
 import { AuditService } from '@/lib/audit/audit.service'
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 export async function POST() {
   try {
@@ -25,9 +26,6 @@ export async function POST() {
     
   } catch (error) {
     console.error('Error en logout:', error)
-    return NextResponse.json(
-      { error: "Error al cerrar sesión" },
-      { status: 500 }
-    )
+    return respuestaError(500, "Error al cerrar sesión")
   }
 }

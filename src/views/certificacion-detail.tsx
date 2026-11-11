@@ -11,6 +11,7 @@ import { showErrorToast, showSuccessToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
 import { useAuth } from "@/components/auth-context"
 import { StatusBadge } from "@/components/status-badge"
+import { mensajeDeError } from "@/shared/api-client"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -97,7 +98,7 @@ export function CertificacionDetail({ params }: Props) {
       })
 
       const data = await response.json()
-      if (!response.ok) throw new Error(data.error || "Error al actualizar estado")
+      if (!response.ok) throw new Error(mensajeDeError(data, "Error al actualizar estado"))
 
       // El PATCH /estado devuelve solo la cabecera (sin lineas ni joins). Reconsultamos
       // el detalle completo para no borrar las líneas ni los datos derivados de la vista.

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { FileText } from "lucide-react"
 import { showErrorToast, showSuccessToast } from "@/shared/toast-helpers"
+import { mensajeDeError } from "@/shared/api-client"
 
 interface Props {
   facturaId: string
@@ -22,7 +23,7 @@ export function FacturaComprobante({ facturaId, puedeSubir }: Props) {
     try {
       const response = await fetch(`/api/facturas/${facturaId}/comprobante`)
       const body = await response.json()
-      if (!response.ok) throw new Error(body.error || "No se pudo obtener el PDF")
+      if (!response.ok) throw new Error(mensajeDeError(body, "No se pudo obtener el PDF"))
       window.open(body.url, "_blank", "noopener")
     } catch (error) {
       showErrorToast("No se pudo abrir el PDF", error instanceof Error ? error.message : undefined)
@@ -41,7 +42,7 @@ export function FacturaComprobante({ facturaId, puedeSubir }: Props) {
         body: formData,
       })
       const body = await response.json()
-      if (!response.ok) throw new Error(body.error || "No se pudo adjuntar el PDF")
+      if (!response.ok) throw new Error(mensajeDeError(body, "No se pudo adjuntar el PDF"))
       showSuccessToast("Éxito", "Comprobante adjuntado")
     } catch (error) {
       showErrorToast("No se pudo adjuntar el PDF", error instanceof Error ? error.message : undefined)

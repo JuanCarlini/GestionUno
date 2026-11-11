@@ -6,6 +6,7 @@ import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // GET /api/ordenes-compra/[id] - Obtener una orden específica
 export const GET = getByIdRoute({
@@ -31,7 +32,7 @@ export async function PUT(
     const actor = { id: user!.id, puedeAjenas: puedeCon(user!, permisos!, "ordenes_compra", "aprobar") }
     const ordenActualizada = await OrdenCompraService.update(id, validatedData, actor)
     if (!ordenActualizada) {
-      return NextResponse.json({ error: "Orden de compra no encontrada" }, { status: 404 })
+      return respuestaError(404, "Orden de compra no encontrada")
     }
 
     await AuditService.registrar({
@@ -63,7 +64,7 @@ export async function DELETE(
     const actor = { id: user!.id, puedeAjenas: puedeCon(user!, permisos!, "ordenes_compra", "aprobar") }
     const eliminada = await OrdenCompraService.delete(id, actor)
     if (!eliminada) {
-      return NextResponse.json({ error: "Orden de compra no encontrada" }, { status: 404 })
+      return respuestaError(404, "Orden de compra no encontrada")
     }
 
     await AuditService.registrar({

@@ -5,6 +5,7 @@ import { UpdateProveedorSchema } from "@/shared/validation/proveedor-validation"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 interface Params {
   params: Promise<{
@@ -30,7 +31,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const updatedProveedor = await ProveedorService.update(id, data)
 
     if (!updatedProveedor) {
-      return NextResponse.json({ error: "Proveedor no encontrado" }, { status: 404 })
+      return respuestaError(404, "Proveedor no encontrado")
     }
 
     return NextResponse.json(updatedProveedor)
@@ -48,7 +49,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     const success = await ProveedorService.delete(id)
 
     if (!success) {
-      return NextResponse.json({ error: "Proveedor no encontrado" }, { status: 404 })
+      return respuestaError(404, "Proveedor no encontrado")
     }
 
     return NextResponse.json({ message: "Proveedor eliminado correctamente" })

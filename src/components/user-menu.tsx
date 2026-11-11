@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
+import { mensajeDeError } from "@/shared/api-client"
 
 interface UserMenuProps {
   userName?: string
@@ -73,7 +74,7 @@ export function UserMenu({ userName = "Admin" }: UserMenuProps) {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(data.error || "No se pudo cambiar la contraseña")
+        throw new Error(mensajeDeError(data, "No se pudo cambiar la contraseña"))
       }
       showSuccessToast("Contraseña actualizada")
       setDialogOpen(false)
