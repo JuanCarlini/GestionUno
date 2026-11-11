@@ -1,7 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { getCurrentUser } from "@/lib/auth/auth.cookies"
 import { RolRepository } from "@/repositories/rol.repository"
-import { requireAuth, requireAdmin, requirePermission, requirePagePermission, requirePageAdmin } from "./permissions-server"
+import {
+  requireAuth,
+  requireAdmin,
+  requirePermission,
+  requirePagePermission,
+  requirePageAdmin,
+  puedeCon,
+} from "./permissions-server"
 import { redirect } from "next/navigation"
 
 // Enforcement RBAC (S1): la barrera de autorización de toda ruta mutante. Antes sin un
@@ -81,6 +88,47 @@ describe("requirePermission", () => {
     comoRol("usuario")
     rolRepo.findPermisosByNombre.mockResolvedValue(["ordenes_compra:crear"])
     expect((await requirePermission("ordenes_compra", "crear")).error).toBeNull()
+  })
+
+  // Las rutas con regla de dueño preguntan por un segundo par (aprobar) después de haber
+  // exigido el primero (crear/borrar). Antes eso era una segunda consulta idéntica al mismo
+  // rol en la misma request; ahora los permisos vuelven con la autorización.
+  it("devuelve los permisos del rol, y consulta la matriz UNA sola vez", async () => {
+    comoRol("usuario")
+    rolRepo.findPermisosByNombre.mockResolvedValue(["ordenes_compra:crear", "ordenes_compra:ver"])
+
+    const { error, permisos } = await requirePermission("ordenes_compra", "crear")
+
+    expect(error).toBeNull()
+    expect(permisos).toEqual(["ordenes_compra:crear", "ordenes_compra:ver"])
+    expect(rolRepo.findPermisosByNombre).toHaveBeenCalledTimes(1)
+  })
+
+  it("en el camino de error los permisos vienen en null", async () => {
+    comoRol("usuario")
+    rolRepo.findPermisosByNombre.mockResolvedValue([])
+    expect((await requirePermission("ordenes_compra", "crear")).permisos).toBeNull()
+
+    getUser.mockResolvedValue(null as any)
+    expect((await requirePermission("ordenes_compra", "crear")).permisos).toBeNull()
+  })
+})
+
+// Es la pieza que hace que reusar los permisos no cueste otra query: pura, sin I/O.
+describe("puedeCon (sobre permisos ya resueltos)", () => {
+  it("no consulta la base", () => {
+    puedeCon({ rol: "usuario" }, ["ordenes_compra:aprobar"], "ordenes_compra", "aprobar")
+    expect(rolRepo.findPermisosByNombre).not.toHaveBeenCalled()
+  })
+
+  it("decide por membresía en el array", () => {
+    const permisos = ["ordenes_compra:crear"]
+    expect(puedeCon({ rol: "usuario" }, permisos, "ordenes_compra", "crear")).toBe(true)
+    expect(puedeCon({ rol: "usuario" }, permisos, "ordenes_compra", "aprobar")).toBe(false)
+  })
+
+  it("admin pasa igual con la matriz vacía (mismo short-circuit)", () => {
+    expect(puedeCon({ rol: "admin" }, [], "ordenes_compra", "aprobar")).toBe(true)
   })
 })
 

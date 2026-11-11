@@ -65,10 +65,15 @@ export async function requireAdmin() {
 /**
  * Autoriza por PERMISO del rol (`modulo:accion`), resuelto fresco por request (sin staleness
  * de JWT). Delega en `tienePermiso` (admin short-circuit + membership). Solo API Routes.
+ *
+ * Devuelve también `permisos`: la ruta que además necesita preguntar por otro par
+ * `modulo:accion` (la regla de dueño de OC pregunta por `aprobar` después de haber exigido
+ * `crear`) los reusa en vez de volver a consultar el mismo rol. Eran dos queries idénticas
+ * por request.
  */
 export async function requirePermission(modulo: string, accion: string) {
   const { error, user } = await requireAuth()
-  if (error) return { error, user: null }
+  if (error) return { error, user: null, permisos: null }
 
   // admin igual pega la query y el short-circuit vive en tienePermiso (una sola fuente de
   // verdad). El lookup por nombre es inocuo; si algún día pesa, un isAdmin early-return lo evita.
@@ -79,16 +84,32 @@ export async function requirePermission(modulo: string, accion: string) {
         { error: "No tenés permisos para realizar esta acción" },
         { status: 403 }
       ),
-      user: null
+      user: null,
+      permisos: null
     }
   }
 
-  return { error: null, user }
+  return { error: null, user, permisos }
 }
 
 /**
- * Pregunta puntual, sin cortar la request: ¿este usuario ya autenticado tiene `modulo:accion`?
- * La usan las reglas por dueño para decidir si alguien puede tocar registros ajenos.
+ * Pregunta puntual sobre permisos YA resueltos (los que devolvió requirePermission). Puro, sin
+ * I/O: es el camino para las reglas por dueño, que preguntan por un segundo par en la misma
+ * request.
+ */
+export function puedeCon(
+  user: { rol: string },
+  permisos: string[],
+  modulo: string,
+  accion: string
+): boolean {
+  return tienePermiso(user.rol, permisos, modulo, accion)
+}
+
+/**
+ * Pregunta puntual con su propia consulta, para cuando el llamador no tiene los permisos a
+ * mano. Si ya llamaste a requirePermission en la misma request, usá puedeCon con lo que te
+ * devolvió: esto es un round-trip más a la base.
  */
 export async function usuarioTienePermiso(
   user: { rol: string },

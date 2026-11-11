@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { OrdenCompraService } from "@/services"
 import { UpdateOrdenCompraSchema } from "@/shared/validation/orden-compra-validation"
-import { requirePermission, usuarioTienePermiso } from "@/lib/auth/permissions-server"
+import { requirePermission, puedeCon } from "@/lib/auth/permissions-server"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
@@ -21,13 +21,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error: authError, user } = await requirePermission("ordenes_compra", "crear")
+    const { error: authError, user, permisos } = await requirePermission("ordenes_compra", "crear")
     if (authError) return authError
 
     const id = parseId((await params).id)
     const validatedData = UpdateOrdenCompraSchema.parse(await request.json())
 
-    const actor = { id: user!.id, puedeAjenas: await usuarioTienePermiso(user!, "ordenes_compra", "aprobar") }
+    // Los permisos ya los trajo requirePermission: preguntar por "aprobar" no cuesta otra query.
+    const actor = { id: user!.id, puedeAjenas: puedeCon(user!, permisos!, "ordenes_compra", "aprobar") }
     const ordenActualizada = await OrdenCompraService.update(id, validatedData, actor)
     if (!ordenActualizada) {
       return NextResponse.json({ error: "Orden de compra no encontrada" }, { status: 404 })
@@ -53,12 +54,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error: authError, user } = await requirePermission("ordenes_compra", "borrar")
+    const { error: authError, user, permisos } = await requirePermission("ordenes_compra", "borrar")
     if (authError) return authError
 
     const id = parseId((await params).id)
 
-    const actor = { id: user!.id, puedeAjenas: await usuarioTienePermiso(user!, "ordenes_compra", "aprobar") }
+    // Mismo criterio que en el PUT: los permisos ya estan resueltos, no se vuelve a consultar.
+    const actor = { id: user!.id, puedeAjenas: puedeCon(user!, permisos!, "ordenes_compra", "aprobar") }
     const eliminada = await OrdenCompraService.delete(id, actor)
     if (!eliminada) {
       return NextResponse.json({ error: "Orden de compra no encontrada" }, { status: 404 })
