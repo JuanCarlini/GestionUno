@@ -25,7 +25,11 @@ export function useProveedores() {
 
   const activarProveedor = async (id: number) => {
     try {
-      const updatedProveedor = await api(`/api/proveedores/${id}/activar`, { method: "PATCH" })
+      const updatedProveedor = await api(`/api/proveedores/${id}/estado`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activo: true }),
+      })
       if (updatedProveedor) {
         setProveedores(prev =>
           prev.map(proveedor => proveedor.id === id ? updatedProveedor : proveedor)
@@ -42,7 +46,11 @@ export function useProveedores() {
   const suspenderProveedor = async (id: number) => {
     try {
       // La DB solo tiene activo/inactivo: "suspender" se materializa como inactivo
-      const updatedProveedor = await api(`/api/proveedores/${id}/suspender`, { method: "PATCH" })
+      const updatedProveedor = await api(`/api/proveedores/${id}/estado`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activo: false }),
+      })
       if (updatedProveedor) {
         setProveedores(prev =>
           prev.map(proveedor => proveedor.id === id ? updatedProveedor : proveedor)

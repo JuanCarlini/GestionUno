@@ -43,7 +43,11 @@ export function ProveedorDetailClient() {
   const handleActivar = async () => {
     if (!proveedor) return
     try {
-      const res = await fetch(`/api/proveedores/${proveedor.id}/activar`, { method: "PATCH" })
+      const res = await fetch(`/api/proveedores/${proveedor.id}/estado`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activo: true }),
+      })
       if (res.ok) {
         setProveedor(await res.json())
       }
@@ -57,7 +61,11 @@ export function ProveedorDetailClient() {
     if (!proveedor) return
     try {
       // La ruta materializa "desactivar" como inactivo y chequea permisos.
-      const res = await fetch(`/api/proveedores/${proveedor.id}/suspender`, { method: "PATCH" })
+      const res = await fetch(`/api/proveedores/${proveedor.id}/estado`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activo: false }),
+      })
       if (res.ok) {
         setProveedor(await res.json())
       }
