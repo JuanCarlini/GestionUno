@@ -17,6 +17,10 @@
 -- FOR EACH ROW y no FOR EACH STATEMENT con transition tables: una cabecera tiene un puñado de
 -- líneas, el UPDATE extra por fila no se nota, y la versión por fila es la que se entiende de
 -- una pasada. Un UPDATE puede mover la línea de documento, así que se recalculan los dos.
+--
+-- Los ids se arman con ramas por TG_OP y no con un CASE sobre NEW y OLD en la misma
+-- expresión: en un DELETE, NEW no está asignado, y PL/pgSQL puede intentar resolver ese
+-- parámetro aunque la rama no se tome ("record new is not assigned yet").
 
 -- ------------------------------------------------------------ órdenes de compra
 CREATE OR REPLACE FUNCTION public.fn_recalc_oc_cabecera() RETURNS trigger
@@ -26,12 +30,15 @@ AS $$
 DECLARE
   v_ids bigint[];
 BEGIN
-  v_ids := ARRAY(
-    SELECT DISTINCT x FROM unnest(ARRAY[
-      CASE WHEN TG_OP <> 'DELETE' THEN NEW.orden_compra_id END,
-      CASE WHEN TG_OP <> 'INSERT' THEN OLD.orden_compra_id END
-    ]) AS x WHERE x IS NOT NULL
-  );
+  IF TG_OP = 'INSERT' THEN
+    v_ids := ARRAY[NEW.orden_compra_id];
+  ELSIF TG_OP = 'DELETE' THEN
+    v_ids := ARRAY[OLD.orden_compra_id];
+  ELSE
+    -- Un UPDATE puede mover la línea de documento: hay que recalcular los dos. Si no se
+    -- movió, el id repetido es inofensivo (el subselect agrupa por id).
+    v_ids := ARRAY[NEW.orden_compra_id, OLD.orden_compra_id];
+  END IF;
 
   UPDATE public.gu_ordenesdecompra o
   SET total_neto    = t.neto,
@@ -73,12 +80,15 @@ AS $$
 DECLARE
   v_ids bigint[];
 BEGIN
-  v_ids := ARRAY(
-    SELECT DISTINCT x FROM unnest(ARRAY[
-      CASE WHEN TG_OP <> 'DELETE' THEN NEW.factura_id END,
-      CASE WHEN TG_OP <> 'INSERT' THEN OLD.factura_id END
-    ]) AS x WHERE x IS NOT NULL
-  );
+  IF TG_OP = 'INSERT' THEN
+    v_ids := ARRAY[NEW.factura_id];
+  ELSIF TG_OP = 'DELETE' THEN
+    v_ids := ARRAY[OLD.factura_id];
+  ELSE
+    -- Un UPDATE puede mover la línea de documento: hay que recalcular los dos. Si no se
+    -- movió, el id repetido es inofensivo (el subselect agrupa por id).
+    v_ids := ARRAY[NEW.factura_id, OLD.factura_id];
+  END IF;
 
   -- total_facturado = total_con_iva: es lo que hay que pagar, y es contra esto que
   -- fn_check_imputacion topea las imputaciones.
@@ -121,12 +131,15 @@ AS $$
 DECLARE
   v_ids bigint[];
 BEGIN
-  v_ids := ARRAY(
-    SELECT DISTINCT x FROM unnest(ARRAY[
-      CASE WHEN TG_OP <> 'DELETE' THEN NEW.certificacion_id END,
-      CASE WHEN TG_OP <> 'INSERT' THEN OLD.certificacion_id END
-    ]) AS x WHERE x IS NOT NULL
-  );
+  IF TG_OP = 'INSERT' THEN
+    v_ids := ARRAY[NEW.certificacion_id];
+  ELSIF TG_OP = 'DELETE' THEN
+    v_ids := ARRAY[OLD.certificacion_id];
+  ELSE
+    -- Un UPDATE puede mover la línea de documento: hay que recalcular los dos. Si no se
+    -- movió, el id repetido es inofensivo (el subselect agrupa por id).
+    v_ids := ARRAY[NEW.certificacion_id, OLD.certificacion_id];
+  END IF;
 
   UPDATE public.gu_certificaciones c
   SET total_neto    = t.neto,
@@ -167,12 +180,15 @@ AS $$
 DECLARE
   v_ids bigint[];
 BEGIN
-  v_ids := ARRAY(
-    SELECT DISTINCT x FROM unnest(ARRAY[
-      CASE WHEN TG_OP <> 'DELETE' THEN NEW.orden_pago_id END,
-      CASE WHEN TG_OP <> 'INSERT' THEN OLD.orden_pago_id END
-    ]) AS x WHERE x IS NOT NULL
-  );
+  IF TG_OP = 'INSERT' THEN
+    v_ids := ARRAY[NEW.orden_pago_id];
+  ELSIF TG_OP = 'DELETE' THEN
+    v_ids := ARRAY[OLD.orden_pago_id];
+  ELSE
+    -- Un UPDATE puede mover la línea de documento: hay que recalcular los dos. Si no se
+    -- movió, el id repetido es inofensivo (el subselect agrupa por id).
+    v_ids := ARRAY[NEW.orden_pago_id, OLD.orden_pago_id];
+  END IF;
 
   UPDATE public.gu_ordenesdepago op
   SET total_a_pagar = t.total
