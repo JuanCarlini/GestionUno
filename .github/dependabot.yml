@@ -33,3 +33,9 @@ updates:
     directory: "/"
     schedule:
       interval: monthly
+    # El mismo criterio que npm, que acá faltaba: sin este ignore seguían apareciendo
+    # PRs de major (checkout 4 -> 7, setup-node 4 -> 7) que por política se hacen a
+    # mano, y quedaban abiertos juntando ramas.
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
