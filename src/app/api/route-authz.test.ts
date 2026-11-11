@@ -74,6 +74,10 @@ const GET_SIN_GATE_A_PROPOSITO = [
   "cajas/[id]/route.ts",
   // Auth: operan sobre la propia sesión del usuario.
   "auth/me/route.ts",
+  // Health: PUBLICO a proposito (esta en publicRoutes del middleware). Un health check con
+  // credenciales no sirve para monitorear desde afuera, y la respuesta no expone nada que no
+  // se pueda publicar: "ok"/"error" por dependencia y el sha del commit.
+  "health/route.ts",
   // Dashboard: resumen agregado en SQL, visible para cualquier autenticado igual que la
   // página que lo consume. Lleva requireAuth(), no un permiso de la matriz.
   "dashboard/route.ts",

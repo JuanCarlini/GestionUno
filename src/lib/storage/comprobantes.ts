@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/service"
 import { HttpError } from "@/lib/route/http-error"
+import { conTimeout as correrConTimeout } from "@/shared/con-timeout"
 
 // Integración externa: Supabase Storage guarda el PDF del comprobante que manda el proveedor.
 // El archivo NO es parte del circuito: la factura existe y avanza (finalizar, pagar) tenga o no
@@ -14,16 +15,15 @@ const rutaDe = (facturaId: number) => `facturas/${facturaId}.pdf`
 
 // El SDK no tiene timeout propio: si Storage se cuelga, la request quedaría colgada hasta que
 // Vercel la mate (y el usuario sin respuesta). Se corre contra un reloj de 8 s.
-async function conTimeout<T>(operacion: Promise<T>): Promise<T> {
-  let reloj: ReturnType<typeof setTimeout> | undefined
-  const vencido = new Promise<never>((_, reject) => {
-    reloj = setTimeout(() => reject(new Error("timeout")), TIMEOUT_MS)
-  })
-  try {
-    return await Promise.race([operacion, vencido])
-  } finally {
-    clearTimeout(reloj)
-  }
+const conTimeout = <T,>(operacion: Promise<T>) => correrConTimeout(operacion, TIMEOUT_MS)
+
+/**
+ * Chequeo de vida de Storage para /api/health, con su propia ventana (el health check corta
+ * mucho antes que una subida). Devuelve void o tira: el formato de la respuesta lo arma la ruta.
+ */
+export async function pingStorage(ms: number): Promise<void> {
+  const { error } = await correrConTimeout(createClient().storage.getBucket(BUCKET), ms)
+  if (error) throw error
 }
 
 // Toda falla del proveedor externo (timeout, red, 5xx de Storage) se traduce a UN 503: es
