@@ -1,11 +1,16 @@
 import { createClient } from "@/lib/supabase/service"
 import { esSinFilas } from "./base.repository"
+import { rpcFila } from "./rpc"
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/database.types"
 import type { Factura, FacturaRollup, EstadoFactura } from "@/models"
 
 const TABLE = "gu_facturas"
 const TABLE_LINEAS = "gu_lineasdefactura"
 const TABLE_CERTS = "gu_facturas_certificaciones"
+
+// Sin factura_id: en el alta transaccional lo asigna la función con el id de la cabecera.
+export type LineaNuevaFactura = Omit<TablesInsert<"gu_lineasdefactura">, "id" | "factura_id">
+export type ImputacionNueva = { certificacion_id: number; monto_asignado: number }
 
 // Repositorio de gu_facturas (+ líneas + puente N:M con certificaciones): solo I/O. En la DB
 // viven el número (fn_num_fact), la regla de imputación (fn_check_imputacion) y el rollup de pago.
@@ -74,19 +79,21 @@ export class FacturaRepository {
     return data || []
   }
 
-  static async insert(factura: TablesInsert<"gu_facturas">): Promise<Factura> {
-    const supabase = createClient()
-    const { data, error } = await supabase.from(TABLE).insert(factura).select().single()
-    if (error) throw error
-    return data
+  // Alta completa en una transacción: cabecera, líneas e imputaciones. Las líneas y las
+  // imputaciones llegan sin factura_id, lo asigna la función.
+  static async crearConLineas(
+    cabecera: TablesInsert<"gu_facturas">,
+    lineas: LineaNuevaFactura[],
+    imputaciones: ImputacionNueva[]
+  ): Promise<Factura> {
+    return rpcFila<Factura>("fn_crear_factura", {
+      p_cabecera: cabecera,
+      p_lineas: lineas,
+      p_imputaciones: imputaciones,
+    })
   }
 
-  static async insertLineas(lineas: TablesInsert<"gu_lineasdefactura">[]): Promise<void> {
-    if (!lineas || lineas.length === 0) return
-    const supabase = createClient()
-    const { error } = await supabase.from(TABLE_LINEAS).insert(lineas)
-    if (error) throw error
-  }
+
 
   // Insertar DESPUÉS de las LFACT: fn_check_imputacion compara contra Σtotal_con_iva de las
   // líneas (valida cert aprobada + tope, rebota como P0001 -> 422).

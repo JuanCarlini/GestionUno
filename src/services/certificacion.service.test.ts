@@ -11,8 +11,7 @@ vi.mock("@/repositories/certificacion.repository", () => ({
     findLineasDisponibles: vi.fn(),
     findLocRollups: vi.fn(),
     findRollupsByIds: vi.fn(),
-    insert: vi.fn(),
-    insertLineas: vi.fn(),
+    crearConLineas: vi.fn(),
     update: vi.fn(),
     updateEstado: vi.fn(),
     deleteById: vi.fn(),
@@ -30,8 +29,7 @@ const OC_APROBADA = { id: 1, numero_oc: "OC-00001", proveedor_id: 2, estado: "ap
 beforeEach(() => {
   vi.clearAllMocks()
   ocRepo.findById.mockResolvedValue(OC_APROBADA as never)
-  repo.insert.mockResolvedValue({ id: 7, numero_cert: "CE-00001.1" } as never)
-  repo.insertLineas.mockResolvedValue(undefined)
+  repo.crearConLineas.mockResolvedValue({ id: 7, numero_cert: "CE-00001.1" } as never)
   repo.findLineasByCertId.mockResolvedValue([])
 })
 
@@ -43,9 +41,9 @@ describe("CertificacionService.create", () => {
       lineas: [{ linea_oc_id: 10, avance_unidades: 60 }],
     })
 
-    const arg = repo.insert.mock.calls[0][0]
-    expect(arg).toMatchObject({ orden_compra_id: 1, proveedor_id: 2, estado: "borrador" })
-    expect(arg).not.toHaveProperty("numero_cert")
+    const [cabecera] = repo.crearConLineas.mock.calls[0]
+    expect(cabecera).toMatchObject({ orden_compra_id: 1, proveedor_id: 2, estado: "borrador" })
+    expect(cabecera).not.toHaveProperty("numero_cert")
   })
 
   it("404 si la OC no existe", async () => {
@@ -62,53 +60,50 @@ describe("CertificacionService.create", () => {
       await expect(
         CertificacionService.create({ orden_compra_id: 1, lineas: [{ linea_oc_id: 1, avance_unidades: 1 }] })
       ).rejects.toMatchObject({ status: 422 })
-      expect(repo.insert).not.toHaveBeenCalled()
+      expect(repo.crearConLineas).not.toHaveBeenCalled()
     }
   )
 
-  it("las líneas solo llevan certificacion_id, linea_oc_id y avance_unidades", async () => {
+  it("las líneas solo llevan linea_oc_id y avance_unidades, sin certificacion_id", async () => {
     await CertificacionService.create({
       orden_compra_id: 1,
       lineas: [{ linea_oc_id: 10, avance_unidades: 60, avance_monto: 999, cantidad: 5 } as never],
     })
-    expect(repo.insertLineas).toHaveBeenCalledWith([
-      { certificacion_id: 7, linea_oc_id: 10, avance_unidades: 60 },
-    ])
+    const [, lineas] = repo.crearConLineas.mock.calls[0]
+    // avance_monto y el resto los deriva fn_lce_derive; certificacion_id lo pone la función.
+    expect(lineas).toEqual([{ linea_oc_id: 10, avance_unidades: 60 }])
   })
 
-  it("suma la cabecera desde las líneas YA derivadas por el trigger", async () => {
-    repo.findLineasByCertId.mockResolvedValue([
-      { avance_monto: 570000, iva_porcentaje: 21 },
-      { avance_monto: 30000, iva_porcentaje: 0 },
-    ] as never)
-
+  it("una sola llamada: los totales de cabecera los suma la transacción", async () => {
     await CertificacionService.create({
       orden_compra_id: 1,
       lineas: [{ linea_oc_id: 10, avance_unidades: 60 }],
     })
-
-    expect(repo.update).toHaveBeenCalledWith(7, { total_neto: 600000, total_con_iva: 719700 })
+    expect(repo.crearConLineas).toHaveBeenCalledTimes(1)
+    // Antes eran insert + insertLineas + update, y un deleteById si el trigger pegaba.
+    expect(repo.update).not.toHaveBeenCalled()
   })
 
-  it("si el trigger del 100% rechaza una línea, borra la cabecera y propaga el error crudo", async () => {
+  it("si el trigger del 100% rechaza una línea, el error sube crudo y no queda cabecera", async () => {
     const pg = Object.assign(
       new Error("No se puede certificar más del 100% de la línea de OC: cantidad 100, ya certificado 60, se intentó 110"),
       { code: "P0001" }
     )
-    repo.insertLineas.mockRejectedValue(pg)
+    repo.crearConLineas.mockRejectedValue(pg)
 
     await expect(
       CertificacionService.create({ orden_compra_id: 1, lineas: [{ linea_oc_id: 10, avance_unidades: 110 }] })
     ).rejects.toBe(pg) // sin reinterpretar: la ruta lo mapea a 422 con el mensaje de la DB
 
-    expect(repo.deleteById).toHaveBeenCalledWith(7)
+    // La transacción se cayó entera: no hay nada que compensar.
+    expect(repo.deleteById).not.toHaveBeenCalled()
   })
 
   it("exige al menos una línea (422)", async () => {
     await expect(CertificacionService.create({ orden_compra_id: 1, lineas: [] })).rejects.toMatchObject({
       status: 422,
     })
-    expect(repo.insert).not.toHaveBeenCalled()
+    expect(repo.crearConLineas).not.toHaveBeenCalled()
   })
 })
 

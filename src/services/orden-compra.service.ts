@@ -1,5 +1,5 @@
 import type { TablesUpdate } from "@/lib/supabase/database.types"
-import { OrdenCompraRepository } from "@/repositories/orden-compra.repository"
+import { OrdenCompraRepository, type LineaNueva } from "@/repositories/orden-compra.repository"
 import { ItemPrecioRepository } from "@/repositories/item-precio.repository"
 import { HttpError } from "@/lib/route/http-error"
 import { totalesDeLinea, totalesDeCabecera, IVA_DEFAULT } from "@/services/totales"
@@ -48,31 +48,26 @@ export class OrdenCompraService {
     return OrdenCompraRepository.findById(id)
   }
 
-  // Crea la OC (cabecera + líneas opcionales). numero_oc lo genera la DB; el estado lo
-  // fija el server; los totales los calcula la app (la DB no los mantiene).
+  // Crea la OC (cabecera + líneas opcionales) en UNA transacción (fn_crear_orden_compra).
+  // numero_oc lo genera la DB y el estado lo fija la función; los totales de cabecera los
+  // calcula la misma transacción desde las líneas persistidas.
   static async create(
     payload: CreateOrdenCompraData & { lineas?: CreateLineaFromItem[] },
     createdBy: number
   ): Promise<OrdenCompra> {
     const { lineas, ...ocData } = payload
 
-    const oc = await OrdenCompraRepository.insert({ ...ocData, estado: "borrador", created_by: createdBy })
+    // Las líneas se arman ANTES del alta: el precio heredado del proveedor, la descripción
+    // del item y los totales por línea son reglas de la app, no de la base.
+    // Concurrente (I/O-bound): cada armarLinea hace su lookup de item + precio; en serie
+    // eran ~2N round-trips secuenciales (N = líneas). Promise.all preserva el orden.
+    const armadas = await Promise.all(
+      (lineas ?? []).map((l) => OrdenCompraService.armarLinea(ocData.proveedor_id, l))
+    )
 
-    if (lineas && lineas.length > 0) {
-      try {
-        // Concurrente (I/O-bound): cada armarLinea hace su lookup de item + precio; en serie
-        // eran ~2N round-trips secuenciales (N = líneas). Promise.all preserva el orden.
-        const armadas = await Promise.all(lineas.map((l) => OrdenCompraService.armarLinea(oc, l)))
-        await OrdenCompraRepository.insertLineas(armadas)
-        await OrdenCompraService.recalcularCabecera(oc.id)
-      } catch (e) {
-        // Sin transacción de cliente: compensamos para no dejar una OC huérfana.
-        await OrdenCompraRepository.deleteById(oc.id)
-        throw e
-      }
-    }
-
-    return oc
+    // Ya no hay compensación: si falla una línea, la transacción se cae entera y no queda
+    // ninguna OC huérfana que borrar.
+    return OrdenCompraRepository.crearConLineas({ ...ocData, created_by: createdBy }, armadas)
   }
 
   // Agrega una línea eligiendo un item del catálogo.
@@ -82,8 +77,8 @@ export class OrdenCompraService {
     opts = { recalcular: true }
   ): Promise<OrdenCompraLinea> {
     const oc = await OrdenCompraService.getEditable(ocId)
-    const linea = await OrdenCompraService.armarLinea(oc, input)
-    const creada = await OrdenCompraRepository.insertLinea(linea)
+    const armada = await OrdenCompraService.armarLinea(oc.proveedor_id, input)
+    const creada = await OrdenCompraRepository.insertLinea({ ...armada, orden_compra_id: ocId })
 
     if (opts.recalcular) await OrdenCompraService.recalcularCabecera(ocId)
     return creada
@@ -98,16 +93,18 @@ export class OrdenCompraService {
    * El precio vive en gu_item_proveedor_precio (por proveedor), no en el item: si la UI no lo
    * manda se hereda del par (item, proveedor); si lo manda se guarda ahí y arma la lista.
    */
+  // Recibe el proveedor y no la OC: en el alta transaccional la cabecera todavía no existe
+  // cuando se arman las líneas, y lo único que hace falta es el proveedor para el precio.
   private static async armarLinea(
-    oc: Pick<OrdenCompra, "id" | "proveedor_id">,
+    proveedorId: number,
     input: CreateLineaFromItem
-  ): Promise<CreateOrdenCompraLinea> {
+  ): Promise<LineaNueva> {
     const item = await ItemService.getById(input.item_id)
     if (!item) throw new HttpError(404, `Item con ID ${input.item_id} no encontrado`)
 
     let precio = input.precio_unitario_neto
     if (precio === undefined) {
-      const heredado = await ItemPrecioRepository.findPrecio(input.item_id, oc.proveedor_id)
+      const heredado = await ItemPrecioRepository.findPrecio(input.item_id, proveedorId)
       if (heredado === null) {
         throw new HttpError(
           422,
@@ -116,12 +113,11 @@ export class OrdenCompraService {
       }
       precio = heredado
     } else {
-      await ItemPrecioRepository.upsertPrecio(input.item_id, oc.proveedor_id, precio)
+      await ItemPrecioRepository.upsertPrecio(input.item_id, proveedorId, precio)
     }
 
     const iva = input.iva_porcentaje ?? IVA_DEFAULT
     return {
-      orden_compra_id: oc.id,
       item_id: item.id,
       descripcion: input.descripcion || item.nombre,
       cantidad: input.cantidad,

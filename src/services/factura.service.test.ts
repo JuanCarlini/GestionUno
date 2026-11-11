@@ -11,8 +11,7 @@ vi.mock("@/repositories/factura.repository", () => ({
     findImputaciones: vi.fn(),
     findCertificacionesAprobadas: vi.fn(),
     findRollupsByIds: vi.fn(),
-    insert: vi.fn(),
-    insertLineas: vi.fn(),
+    crearConLineas: vi.fn(),
     insertImputaciones: vi.fn(),
     deleteImputacion: vi.fn(),
     update: vi.fn(),
@@ -23,18 +22,13 @@ vi.mock("@/repositories/factura.repository", () => ({
 
 const repo = vi.mocked(FacturaRepository)
 
-// Orden de llamadas al crear: registra en qué orden se tocó el repo, para probar que las
-// líneas se insertan ANTES que las imputaciones (fn_check_imputacion compara Σimput contra
-// Σtotal_con_iva de las LFACT: si las imputaciones van primero, la suma de líneas es 0).
-let orden: string[]
-
+// El orden líneas -> totales -> imputaciones ahora lo garantiza fn_crear_factura adentro de
+// la transacción (fn_check_imputacion compara contra la suma de las LFACT, que recién existe
+// después de insertarlas). Lo que se prueba acá es que el service le pase las tres cosas en
+// una sola llamada y que los totales por línea los calcule la app.
 beforeEach(() => {
   vi.clearAllMocks()
-  orden = []
-  repo.insert.mockImplementation(async () => { orden.push("insert"); return { id: 1, numero_factura: "FACT-00001" } as never })
-  repo.insertLineas.mockImplementation(async () => { orden.push("insertLineas") })
-  repo.insertImputaciones.mockImplementation(async () => { orden.push("insertImputaciones") })
-  repo.update.mockImplementation(async () => { orden.push("update"); return { id: 1 } as never })
+  repo.crearConLineas.mockResolvedValue({ id: 1, numero_factura: "FACT-00001" } as never)
   repo.findLineasByFacturaId.mockResolvedValue([])
 })
 
@@ -44,9 +38,9 @@ describe("FacturaService.create", () => {
       proveedor_id: 2, fecha_emision: "2026-07-08", moneda: "ARS",
       lineas: [{ descripcion: "x", cantidad: 1, precio_unitario: 100, iva_porcentaje: 21 }],
     })
-    const arg = repo.insert.mock.calls[0][0]
-    expect(arg).toMatchObject({ estado: "borrador" })
-    expect(arg).not.toHaveProperty("numero_factura")
+    const [cabecera] = repo.crearConLineas.mock.calls[0]
+    expect(cabecera).toMatchObject({ estado: "borrador" })
+    expect(cabecera).not.toHaveProperty("numero_factura")
   })
 
   it("calcula los totales de cada línea (no los acepta del cliente)", async () => {
@@ -54,37 +48,30 @@ describe("FacturaService.create", () => {
       proveedor_id: 2, fecha_emision: "2026-07-08", moneda: "ARS",
       lineas: [{ descripcion: "x", cantidad: 10, precio_unitario: 100, iva_porcentaje: 21, total_neto: 999, total_con_iva: 999 } as never],
     })
-    expect(repo.insertLineas).toHaveBeenCalledWith([
-      expect.objectContaining({ factura_id: 1, descripcion: "x", total_neto: 1000, total_con_iva: 1210 }),
+    const [, lineas] = repo.crearConLineas.mock.calls[0]
+    expect(lineas).toEqual([
+      expect.objectContaining({ descripcion: "x", total_neto: 1000, total_con_iva: 1210 }),
     ])
+    // Sin factura_id: lo asigna la función con el id de la cabecera.
+    expect(lineas[0]).not.toHaveProperty("factura_id")
   })
 
-  it("total_facturado = total_con_iva de las líneas", async () => {
-    repo.findLineasByFacturaId.mockResolvedValue([{ total_neto: 1000, total_con_iva: 1210 }] as never)
-    await FacturaService.create({
-      proveedor_id: 2, fecha_emision: "2026-07-08", moneda: "ARS",
-      lineas: [{ descripcion: "x", cantidad: 10, precio_unitario: 100, iva_porcentaje: 21 }],
-    })
-    expect(repo.update).toHaveBeenCalledWith(1, {
-      total_neto: 1000, total_iva: 210, total_con_iva: 1210, total_facturado: 1210,
-    })
-  })
-
-  it("inserta las LÍNEAS antes que las IMPUTACIONES (el trigger compara contra Σlfact)", async () => {
+  it("manda cabecera, líneas e imputaciones en una sola llamada", async () => {
     await FacturaService.create({
       proveedor_id: 2, fecha_emision: "2026-07-08", moneda: "ARS",
       lineas: [{ descripcion: "x", cantidad: 10, precio_unitario: 100, iva_porcentaje: 21 }],
       imputaciones: [{ certificacion_id: 3, monto_asignado: 500 }],
     })
-    expect(orden.indexOf("insertLineas")).toBeLessThan(orden.indexOf("insertImputaciones"))
-    expect(repo.insertImputaciones).toHaveBeenCalledWith([
-      { factura_id: 1, certificacion_id: 3, monto_asignado: 500 },
-    ])
+    expect(repo.crearConLineas).toHaveBeenCalledTimes(1)
+    const [, , imputaciones] = repo.crearConLineas.mock.calls[0]
+    expect(imputaciones).toEqual([{ certificacion_id: 3, monto_asignado: 500 }])
+    // Los totales los calcula la transacción, no un update aparte.
+    expect(repo.update).not.toHaveBeenCalled()
   })
 
-  it("compensa borrando la factura si el trigger rechaza la imputación", async () => {
+  it("si el trigger rechaza la imputación, el error sube crudo y no se borra nada", async () => {
     const pg = Object.assign(new Error("Solo se pueden imputar certificaciones aprobadas"), { code: "P0001" })
-    repo.insertImputaciones.mockRejectedValue(pg)
+    repo.crearConLineas.mockRejectedValue(pg)
     await expect(
       FacturaService.create({
         proveedor_id: 2, fecha_emision: "2026-07-08", moneda: "ARS",
@@ -92,14 +79,23 @@ describe("FacturaService.create", () => {
         imputaciones: [{ certificacion_id: 3, monto_asignado: 500 }],
       })
     ).rejects.toBe(pg)
-    expect(repo.deleteById).toHaveBeenCalledWith(1)
+    // Antes la factura quedaba creada y habia que compensar; ahora no existe.
+    expect(repo.deleteById).not.toHaveBeenCalled()
+  })
+
+  it("sin imputaciones manda un array vacío", async () => {
+    await FacturaService.create({
+      proveedor_id: 2, fecha_emision: "2026-07-08", moneda: "ARS",
+      lineas: [{ descripcion: "x", cantidad: 1, precio_unitario: 100, iva_porcentaje: 21 }],
+    })
+    expect(repo.crearConLineas.mock.calls[0][2]).toEqual([])
   })
 
   it("exige al menos una línea (422)", async () => {
     await expect(
       FacturaService.create({ proveedor_id: 2, fecha_emision: "2026-07-08", moneda: "ARS", lineas: [] })
     ).rejects.toMatchObject({ status: 422 })
-    expect(repo.insert).not.toHaveBeenCalled()
+    expect(repo.crearConLineas).not.toHaveBeenCalled()
   })
 })
 

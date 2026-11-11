@@ -1,7 +1,7 @@
-import { FacturaRepository } from "@/repositories/factura.repository"
+import { FacturaRepository, type LineaNuevaFactura } from "@/repositories/factura.repository"
 import { CertificacionRepository } from "@/repositories/certificacion.repository"
 import { HttpError } from "@/lib/route/http-error"
-import { totalesDeLinea, totalesDeCabecera, IVA_DEFAULT } from "@/services/totales"
+import { totalesDeLinea, IVA_DEFAULT } from "@/services/totales"
 import { puedeTransicionar, TRANSICIONES_FACTURA } from "@/services/transiciones"
 import type { CreateFacturaData, CreateFacturaLinea, CreateImputacion, EstadoFactura } from "@/models"
 
@@ -90,36 +90,22 @@ export class FacturaService {
       throw new HttpError(422, "La factura debe tener al menos una línea")
     }
 
-    const nuevaFactura = await FacturaRepository.insert({ ...facturaData, estado: "borrador" })
-
-    try {
-      await FacturaRepository.insertLineas(lineas.map((l) => FacturaService.armarLinea(nuevaFactura.id, l)))
-      await FacturaService.recalcularCabecera(nuevaFactura.id)
-
-      if (imputaciones && imputaciones.length > 0) {
-        await FacturaRepository.insertImputaciones(
-          imputaciones.map((i) => ({
-            factura_id: nuevaFactura.id,
-            certificacion_id: i.certificacion_id,
-            monto_asignado: i.monto_asignado,
-          }))
-        )
-      }
-    } catch (e) {
-      // Sin transacción de cliente: compensamos para no dejar una factura huérfana.
-      await FacturaRepository.deleteById(nuevaFactura.id)
-      throw e
-    }
-
-    return nuevaFactura
+    // Cabecera, líneas e imputaciones en UNA transacción (fn_crear_factura): los totales se
+    // calculan adentro antes de imputar, que es lo que necesita fn_check_imputacion para
+    // comparar contra el total. Si el trigger rechaza una imputación, no queda factura.
+    return FacturaRepository.crearConLineas(
+      { ...facturaData, estado: "borrador" },
+      lineas.map((l) => FacturaService.armarLinea(l)),
+      imputaciones ?? []
+    )
   }
 
   // Los totales de la línea los calcula la app (la columna de precio es `precio_unitario`).
-  private static armarLinea(facturaId: number, l: CreateFacturaLinea): CreateFacturaLinea & { factura_id: number } {
+  // Sin factura_id: lo asigna fn_crear_factura con el id de la cabecera recién creada.
+  private static armarLinea(l: CreateFacturaLinea): LineaNuevaFactura {
     const iva = l.iva_porcentaje ?? IVA_DEFAULT
     const { total_neto, total_con_iva } = totalesDeLinea(l.cantidad ?? 0, l.precio_unitario ?? 0, iva)
     return {
-      factura_id: facturaId,
       descripcion: l.descripcion,
       cantidad: l.cantidad,
       precio_unitario: l.precio_unitario,
@@ -129,12 +115,9 @@ export class FacturaService {
     }
   }
 
-  // total_facturado = total_con_iva de las líneas: es lo que hay que pagar.
-  static async recalcularCabecera(facturaId: number): Promise<void> {
-    const lineas = await FacturaRepository.findLineasByFacturaId(facturaId)
-    const totales = totalesDeCabecera(lineas)
-    await FacturaRepository.update(facturaId, { ...totales, total_facturado: totales.total_con_iva })
-  }
+  // total_facturado = total_con_iva de las líneas: es lo que hay que pagar. Se calcula dentro
+  // de fn_crear_factura, en la misma transacción (ver la migración altas_01_transaccionales),
+  // porque es lo que fn_check_imputacion necesita para topear las imputaciones.
 
   // Imputar / desimputar: solo sobre una factura en borrador. El tope lo aplica el trigger.
   static async imputar(facturaId: number, imputaciones: CreateImputacion[]) {
