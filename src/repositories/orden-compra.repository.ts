@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/service"
 import { esSinFilas } from "./base.repository"
 import { rpcFila } from "./rpc"
+import { rango, type Orden, type Pagina, type Paginacion } from "@/lib/route/paginacion"
+import { orIlike, type FiltrosListado } from "./filtros"
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/database.types"
 import type { EstadoAprobacion, LocRollup, OcRollup } from "@/models"
 import {
@@ -26,6 +28,35 @@ export class OrdenCompraRepository {
     const { data, error } = await supabase.from(TABLE).select("*").order("created_at", { ascending: false })
     if (error) throw error
     return (data || []) as OrdenCompra[]
+  }
+
+  // Una página del listado. El rollup de certificación lo agrega el service con una segunda
+  // consulta sobre los ids de ESTA página (antes era sobre todas las filas).
+  static async findPagina(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<OrdenCompra>> {
+    const supabase = createClient()
+    const o = opts.orden ?? { columna: "created_at", ascending: false }
+    const { desde, hasta } = rango(p)
+    const f = opts.filtros ?? {}
+
+    let q = supabase.from(TABLE).select("*", { count: "exact" })
+    // El estado ya viene validado contra el enum en la ruta; el cliente tipado pide el
+    // literal y el filtro llega como string de la query.
+    if (f.estado) q = q.eq("estado", f.estado as never)
+    if (f.proveedorId) q = q.eq("proveedor_id", f.proveedorId)
+    if (f.proyectoId) q = q.eq("proyecto_id", f.proyectoId)
+
+    const texto = orIlike(f.q, ["numero_oc", "tarea", "observaciones"])
+    if (texto) q = q.or(texto)
+
+    const { data, error, count } = await q
+      .order(o.columna, { ascending: o.ascending })
+      .range(desde, hasta)
+
+    if (error) throw error
+    return { data: (data ?? []) as OrdenCompra[], total: count ?? 0 }
   }
 
   static async findById(id: number): Promise<OrdenCompra | null> {

@@ -1,10 +1,24 @@
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/database.types"
 import { ProveedorRepository } from "@/repositories/proveedor.repository"
 import { Proveedor, EstadoProveedor } from "@/models"
+import type { Orden, Pagina, Paginacion } from "@/lib/route/paginacion"
+import type { FiltrosListado } from "@/repositories/filtros"
 
 // Reglas de negocio de proveedores. El acceso a datos vive en ProveedorRepository:
 // acá solo quedan las decisiones de dominio (normalizar estado, default al crear).
 export class ProveedorService {
+  // Una página del listado, con el mismo saneo de estado que getAll.
+  static async getPagina(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<Proveedor>> {
+    const { data, total } = await ProveedorRepository.findPagina(p, {
+      ...opts,
+      columnasTexto: ["nombre", "cuit", "email", "telefono", "direccion"],
+    })
+    return { total, data: data.map((pr) => ({ ...pr, estado: pr.estado ?? "activo" }) as Proveedor) }
+  }
+
   static async getAll(): Promise<Proveedor[]> {
     const proveedores = await ProveedorRepository.findAll()
     // normalizo estado a 'activo' si viene null

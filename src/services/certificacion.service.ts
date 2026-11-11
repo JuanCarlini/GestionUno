@@ -5,6 +5,8 @@ import { HttpError } from "@/lib/route/http-error"
 import { exigirCambioAplicado } from "@/lib/route/estado-route"
 import { puedeTransicionar, TRANSICIONES_APROBACION } from "@/services/transiciones"
 import type { CreateCertificacionLinea, EstadoAprobacion } from "@/models"
+import type { Orden, Pagina, Paginacion } from "@/lib/route/paginacion"
+import type { FiltrosListado } from "@/repositories/filtros"
 
 interface CreateCertificacionInput {
   orden_compra_id: number
@@ -16,21 +18,27 @@ interface CreateCertificacionInput {
 // Reglas de negocio de certificaciones (I/O en CertificacionRepository). Numeración, derivación
 // de líneas, tope del 100% y rollups viven en la DB; los chequeos de acá son pre-validación.
 export class CertificacionService {
-  static async getAll() {
-    const certs = await CertificacionRepository.findAllWithRelations()
-    if (certs.length === 0) return []
+  static async getPagina(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<Record<string, unknown>>> {
+    const { data: certs, total } = await CertificacionRepository.findPaginaWithRelations(p, opts)
+    if (certs.length === 0) return { data: [], total }
 
     const rollups = await CertificacionRepository.findRollupsByIds(certs.map((c: any) => c.id))
     const porId = new Map(rollups.map((r) => [r.certificacion_id, r]))
 
-    return certs.map((cert: any) => ({
-      ...cert,
-      proveedor_nombre: cert.gu_proveedores?.nombre,
-      numero_oc: cert.gu_ordenesdecompra?.numero_oc,
-      moneda: cert.gu_ordenesdecompra?.moneda,
-      estado_facturacion: porId.get(cert.id)?.estado_facturacion ?? "sin",
-      monto_facturado: Number(porId.get(cert.id)?.monto_facturado ?? 0),
-    }))
+    return {
+      total,
+      data: certs.map((cert: any) => ({
+        ...cert,
+        proveedor_nombre: cert.gu_proveedores?.nombre,
+        numero_oc: cert.gu_ordenesdecompra?.numero_oc,
+        moneda: cert.gu_ordenesdecompra?.moneda,
+        estado_facturacion: porId.get(cert.id)?.estado_facturacion ?? "sin",
+        monto_facturado: Number(porId.get(cert.id)?.monto_facturado ?? 0),
+      })),
+    }
   }
 
   static async getById(id: number) {

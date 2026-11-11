@@ -16,7 +16,7 @@ vi.mock("@/repositories/orden-compra.repository", () => ({
     updateEstado: vi.fn(),
     updateLinea: vi.fn(),
     deleteLinea: vi.fn(),
-    findAll: vi.fn(),
+    findPagina: vi.fn(),
     findRollupsByIds: vi.fn(),
   },
 }))
@@ -378,24 +378,40 @@ describe("OrdenCompraService.verificarDueno — solo el creador edita su OC", ()
   })
 })
 
-describe("OrdenCompraService.getAll — rollup leído de la vista", () => {
+describe("OrdenCompraService.getPagina — rollup leído de la vista", () => {
+  const PAGINA = { page: 1, limit: 25 }
+
   it("mergea estado_certificacion y monto_pendiente_certificar por id", async () => {
-    repo.findAll.mockResolvedValue([{ id: 1 }, { id: 2 }] as never)
+    repo.findPagina.mockResolvedValue({ data: [{ id: 1 }, { id: 2 }], total: 2 } as never)
     repo.findRollupsByIds.mockResolvedValue([
       { orden_compra_id: 1, estado_certificacion: "parcial", monto_pendiente_certificar: 40 },
     ] as never)
 
-    const res: any[] = await OrdenCompraService.getAll()
+    const { data, total } = await OrdenCompraService.getPagina(PAGINA)
 
+    expect(total).toBe(2)
+    // El rollup se consulta solo para los ids de ESTA página, no para toda la tabla.
     expect(repo.findRollupsByIds).toHaveBeenCalledWith([1, 2])
-    expect(res[0]).toMatchObject({ id: 1, estado_certificacion: "parcial", monto_pendiente_certificar: 40 })
+    expect(data[0]).toMatchObject({ id: 1, estado_certificacion: "parcial", monto_pendiente_certificar: 40 })
     // sin fila en la vista (OC sin líneas): 'sin'
-    expect(res[1]).toMatchObject({ id: 2, estado_certificacion: "sin", monto_pendiente_certificar: 0 })
+    expect(data[1]).toMatchObject({ id: 2, estado_certificacion: "sin", monto_pendiente_certificar: 0 })
   })
 
-  it("sin OCs no consulta la vista", async () => {
-    repo.findAll.mockResolvedValue([] as never)
-    expect(await OrdenCompraService.getAll()).toEqual([])
+  // El total viene del count de la consulta sin paginar: una página vacía (filtro que no
+  // matchea, o page más allá del final) no significa que la tabla esté vacía.
+  it("una página vacía no consulta la vista pero conserva el total", async () => {
+    repo.findPagina.mockResolvedValue({ data: [], total: 34 } as never)
+
+    expect(await OrdenCompraService.getPagina({ page: 99, limit: 25 })).toEqual({ data: [], total: 34 })
     expect(repo.findRollupsByIds).not.toHaveBeenCalled()
+  })
+
+  it("pasa los filtros y el orden al repositorio tal como llegan", async () => {
+    repo.findPagina.mockResolvedValue({ data: [], total: 0 } as never)
+    const opts = { filtros: { estado: "aprobado" }, orden: { columna: "fecha_oc", ascending: true } }
+
+    await OrdenCompraService.getPagina(PAGINA, opts)
+
+    expect(repo.findPagina).toHaveBeenCalledWith(PAGINA, opts)
   })
 })

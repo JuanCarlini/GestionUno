@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/service"
 import { esSinFilas } from "./base.repository"
 import { rpcFila } from "./rpc"
+import { rango, type Orden, type Pagina, type Paginacion } from "@/lib/route/paginacion"
+import { orIlike, type FiltrosListado } from "./filtros"
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/database.types"
 import type { Certificacion, CertRollup, EstadoAprobacion, LocRollup } from "@/models"
 
@@ -15,6 +17,36 @@ export type LineaNuevaCert = { linea_oc_id: number; avance_unidades: number }
 // (fn_num_cert), el derivado de líneas, la regla del 100%, la OC aprobada y el rollup de avance.
 export class CertificacionRepository {
   // La CE cuelga de UNA OC y hereda su proveedor. Ya no hay proyecto_id.
+  static async findPaginaWithRelations(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<any>> {
+    const supabase = createClient()
+    const o = opts.orden ?? { columna: "created_at", ascending: false }
+    const { desde, hasta } = rango(p)
+    const f = opts.filtros ?? {}
+
+    let q = supabase
+      .from(TABLE)
+      .select("*, gu_proveedores(nombre), gu_ordenesdecompra(id, numero_oc, moneda)", {
+        count: "exact",
+      })
+    // El estado ya viene validado contra el enum en la ruta; el cliente tipado pide el
+    // literal y el filtro llega como string de la query.
+    if (f.estado) q = q.eq("estado", f.estado as never)
+    if (f.proveedorId) q = q.eq("proveedor_id", f.proveedorId)
+
+    const texto = orIlike(f.q, ["numero_cert", "observaciones"])
+    if (texto) q = q.or(texto)
+
+    const { data, error, count } = await q
+      .order(o.columna, { ascending: o.ascending })
+      .range(desde, hasta)
+
+    if (error) throw error
+    return { data: data ?? [], total: count ?? 0 }
+  }
+
   static async findAllWithRelations(): Promise<any[]> {
     const supabase = createClient()
     const { data, error } = await supabase
