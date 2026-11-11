@@ -13,8 +13,11 @@ export const LABEL_PROYECTO_ESTADO: Record<(typeof PROYECTO_ESTADOS)[number], st
 
 // El form manda "" cuando la fecha está vacía; a la DB tiene que llegar undefined (columna
 // date con default null), y una fecha malformada se rechaza acá con 400, no con un 500 de DB.
+// El .optional() va ANTES del transform además de en el pipe: sin él, el z.string() de entrada
+// era requerido y un body que omitía la fecha se rechazaba con 400 "Required".
 const FechaOpcional = z
   .string()
+  .optional()
   .transform((v) => (v === "" ? undefined : v))
   .pipe(z.string().date("Fecha inválida (AAAA-MM-DD)").optional())
 
