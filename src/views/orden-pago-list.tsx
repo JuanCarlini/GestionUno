@@ -7,15 +7,14 @@ import { Eye, CheckCircle, XCircle, DollarSign, CreditCard } from "lucide-react"
 import { EmptyState } from "@/components/empty-state"
 import { CrearButton } from "@/components/crear-button"
 import { ListShell } from "@/components/list-shell"
-import { SortControl, useSort, type SortField } from "@/components/sort-control"
+import { SortControl, useSortRemoto, type SortField } from "@/components/sort-control"
+import { Paginador } from "@/components/paginador"
 import { LABEL_ESTADO } from "@/models"
 import Link from "next/link"
 import { useState } from "react"
 import { useOrdenesPago } from "@/hooks/use-ordenes-pago"
 import { formatCurrency } from "@/shared/format-utils"
 import { formatDateShort } from "@/shared/date-utils"
-import { searchWithScore } from "@/shared/search-utils"
-import { SearchStats } from "@/components/search-stats"
 import { StatusBadge } from "@/components/status-badge"
 import { useAuth } from "@/components/auth-context"
 
@@ -28,29 +27,36 @@ const SORT_FIELDS: SortField[] = [
 ]
 
 export function OrdenPagoList() {
-  const { orders, loading, error, cambiarEstado, aprobarOrden, pagarOrden, rechazarOrden } = useOrdenesPago()
+  const {
+    orders,
+    loading,
+    error,
+    total,
+    page,
+    paginas,
+    limit,
+    refrescando,
+    q,
+    setQ,
+    orden,
+    setOrden,
+    irA,
+    cambiarEstado,
+    aprobarOrden,
+    pagarOrden,
+    rechazarOrden,
+  } = useOrdenesPago()
   const { puede } = useAuth()
   const [processingId, setProcessingId] = useState<number | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
 
   // Ver el comentario de orden-compra-list: la decision sale de la matriz, no del rol.
   const canModify = puede("ordenes_pago", "aprobar")
 
-  const sort = useSort(SORT_FIELDS)
+  // La búsqueda y el orden los hace la base: con la lista paginada, filtrar en el cliente
+  // filtraría solo dentro de la página visible.
+  const sort = useSortRemoto(SORT_FIELDS, orden, setOrden)
 
 
-  const filteredOrders = searchWithScore(
-    orders,
-    searchTerm,
-    ['numero_op', 'proveedor_nombre', 'estado'],
-    {
-      numero_op: 3,         // Mayor peso para número de orden
-      proveedor_nombre: 2,  // Peso medio para proveedor
-      estado: 2             // Peso medio para estado
-    }
-  )
-
-  const sorted = sort.apply(filteredOrders)
 
   const handleAprobar = async (id: number) => {
     try {
@@ -103,43 +109,37 @@ export function OrdenPagoList() {
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Lista de Órdenes de Pago ({filteredOrders.length})</CardTitle>
+          <CardTitle>Lista de Órdenes de Pago ({total})</CardTitle>
           <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
+            value={q}
+            onChange={setQ}
             placeholder="Buscar por número, proveedor, método..."
             className="w-full sm:w-80"
           />
         </div>
       </CardHeader>
       <CardContent>
-        <SearchStats
-          totalItems={orders.length}
-          filteredItems={filteredOrders.length}
-          searchTerm={searchTerm}
-          entityName="orden de pago"
-        />
 
         <div className="mb-4 flex justify-end">
           <SortControl {...sort} />
         </div>
 
         <div className="space-y-4">
-          {filteredOrders.length === 0 ? (
+          {orders.length === 0 ? (
             <EmptyState
               icon={CreditCard}
               title={
-                searchTerm
-                  ? `No se encontraron órdenes que coincidan con "${searchTerm}"`
+                q
+                  ? `No se encontraron órdenes que coincidan con "${q}"`
                   : "No hay órdenes de pago registradas"
               }
             >
-              {!searchTerm && (
+              {!q && (
                 <CrearButton modulo="ordenes_pago" href="/ordenes-pago/nueva" label="Crear la primera orden" />
               )}
             </EmptyState>
           ) : (
-            sorted.map((orden) => (
+            orders.map((orden) => (
               <div 
                 key={orden.id}
                 className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
@@ -221,6 +221,17 @@ export function OrdenPagoList() {
               </div>
             ))
           )}
+        </div>
+
+        <div className="mt-4">
+          <Paginador
+            page={page}
+            paginas={paginas}
+            total={total}
+            limit={limit}
+            refrescando={refrescando}
+            onIrA={irA}
+          />
         </div>
       </CardContent>
     </Card>

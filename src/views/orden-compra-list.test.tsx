@@ -22,14 +22,30 @@ vi.mock("@/components/auth-context", () => ({
 }))
 
 const cambiarEstadoOrden = vi.fn()
+// El hook ahora expone el estado del listado paginado (useListado) ademas de las acciones de
+// dominio: la vista ya no filtra ni ordena en memoria.
 vi.mock("@/hooks/use-orders", () => ({
   useOrders: () => ({
     orders: [
       { id: 1, numero_oc: "OC-0012", estado: "borrador", total_con_iva: 1000, moneda: "ARS" },
       { id: 2, numero_oc: "OC-0013", estado: "aprobado", total_con_iva: 2000, moneda: "ARS" },
     ],
+    total: 2,
+    page: 1,
+    paginas: 1,
+    limit: 25,
     loading: false,
+    refrescando: false,
     error: null,
+    q: "",
+    setQ: vi.fn(),
+    estado: "",
+    setEstado: vi.fn(),
+    orden: "created_at.desc",
+    setOrden: vi.fn(),
+    irA: vi.fn(),
+    recargar: vi.fn(),
+    setItems: vi.fn(),
     cambiarEstadoOrden,
   }),
 }))
