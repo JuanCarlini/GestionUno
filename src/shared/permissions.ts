@@ -1,17 +1,9 @@
 import { UserRole } from "@/models"
 
-// El RBAC por permisos (modulo:accion) reemplazó a los grupos de rol; acá solo quedan los
-// helpers por ROL que siguen vivos (secciones /admin/* y gating de botones en la UI).
-
-// Solo supervisores y administradores pueden anular documentos.
-export function canAnularDocumento(userRole: UserRole): boolean {
-  return userRole === UserRole.ADMIN || userRole === UserRole.SUPERVISOR
-}
-
-// Solo supervisores y administradores pueden suspender o activar proveedores.
-export function canModificarProveedor(userRole: UserRole): boolean {
-  return userRole === UserRole.ADMIN || userRole === UserRole.SUPERVISOR
-}
+// El RBAC por permisos (modulo:accion) reemplazó a los grupos de rol. Acá solo quedan los
+// helpers por ROL que siguen vivos: el gating de /admin, que no es un par modulo:accion del
+// catálogo. Los botones de la UI ya no pasan por acá, usan puede() del auth-context
+// (canAnularDocumento y canModificarProveedor trataban cualquier rol custom como "usuario").
 
 export function isAdmin(userRole: UserRole): boolean {
   return userRole === UserRole.ADMIN

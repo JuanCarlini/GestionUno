@@ -17,7 +17,6 @@ import { Proveedor, EstadoProveedor } from "@/models"
 import { useState } from "react"
 import { StatusBadge } from "@/components/status-badge"
 import { useAuth } from "@/components/auth-context"
-import { canModificarProveedor, stringToUserRole } from "@/shared/permissions"
 
 interface Props {
   proveedor: Proveedor
@@ -40,10 +39,10 @@ const formatDate = (date?: string | Date | null) => {
 }
 
 export function ProveedorDetails({ proveedor, onActivar, onSuspender }: Props) {
-  const { user } = useAuth()
+  const { puede } = useAuth()
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const canModificar = user ? canModificarProveedor(stringToUserRole(user.rol)) : false
+  const canModificar = puede("proveedores", "aprobar")
 
   const handleActivar = async () => {
     if (!onActivar) return
