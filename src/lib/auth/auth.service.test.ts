@@ -1,11 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
-import { createClient } from "@/lib/supabase/service"
+import { UsuarioRepository } from "@/repositories/usuario.repository"
 import { BCRYPT_ROUNDS } from "@/shared/validation/password-validation"
 import { AuthService } from "./auth.service"
 
-vi.mock("@/lib/supabase/service", () => ({ createClient: vi.fn() }))
+// El service ya no habla con la base: el I/O vive en UsuarioRepository, y el filtro "solo
+// usuarios activos" es parte de la query de findActivoParaLogin / findActivoConRol.
+vi.mock("@/repositories/usuario.repository", () => ({
+  UsuarioRepository: {
+    findActivoParaLogin: vi.fn(),
+    findActivoConRol: vi.fn(),
+    findHashById: vi.fn(),
+    updatePassword: vi.fn(),
+  },
+}))
 vi.mock("@/lib/auth/jwt-secret", () => ({ getJwtSecret: () => "secreto-de-test" }))
 vi.mock("bcryptjs", () => ({
   default: {
@@ -18,30 +27,9 @@ vi.mock("jsonwebtoken", () => ({
   default: { sign: vi.fn(() => "token-firmado"), verify: vi.fn() },
 }))
 
+const repo = vi.mocked(UsuarioRepository)
 const bcryptMock = vi.mocked(bcrypt)
 const jwtMock = vi.mocked(jwt)
-
-// Cliente Supabase falso: builder encadenable que registra las llamadas. El single() resuelve
-// el resultado del select y el update().eq() el del update.
-function mockClient(res: { select?: unknown; update?: unknown } = {}) {
-  const calls: Record<string, unknown[]> = { from: [], select: [], eq: [], update: [] }
-  const b: Record<string, unknown> = {
-    from: (t: string) => (calls.from.push(t), b),
-    select: (s: string) => (calls.select.push(s), b),
-    eq: (c: string, v: unknown) => (calls.eq.push([c, v]), b),
-    update: (row: unknown) => {
-      calls.update.push(row)
-      return {
-        eq: (c: string, v: unknown) => (
-          calls.eq.push([c, v]), Promise.resolve(res.update ?? { error: null })
-        ),
-      }
-    },
-    single: () => Promise.resolve(res.select ?? { data: null, error: null }),
-  }
-  vi.mocked(createClient).mockReturnValue(b as never)
-  return calls
-}
 
 const USUARIO = {
   id: 7,
@@ -49,7 +37,7 @@ const USUARIO = {
   nombre: "Juan",
   password_hash: "$2a$12$hash-real",
   rol_id: 2,
-  estado: "activo",
+  estado: "activo" as const,
   gu_roles: { nombre: "supervisor" },
 }
 
@@ -69,7 +57,7 @@ beforeEach(() => {
 
 describe("AuthService.login", () => {
   it("devuelve el usuario y el token, sin el hash de la clave", async () => {
-    const calls = mockClient({ select: { data: USUARIO, error: null } })
+    repo.findActivoParaLogin.mockResolvedValue(USUARIO)
 
     const res = await AuthService.login("juan@obra.com", "correcta")
 
@@ -84,16 +72,12 @@ describe("AuthService.login", () => {
     })
     // El hash nunca sale del service.
     expect(JSON.stringify(res)).not.toContain("hash-real")
-    // Solo usuarios activos, y por email exacto.
-    expect(calls.from).toEqual(["gu_usuario"])
-    expect(calls.eq).toEqual([
-      ["email", "juan@obra.com"],
-      ["estado", "activo"],
-    ])
+    // El "solo activos" es parte del contrato de findActivoParaLogin, no un filtro de acá.
+    expect(repo.findActivoParaLogin).toHaveBeenCalledWith("juan@obra.com")
   })
 
   it("firma el token con el rol en el payload", async () => {
-    mockClient({ select: { data: USUARIO, error: null } })
+    repo.findActivoParaLogin.mockResolvedValue(USUARIO)
     await AuthService.login("juan@obra.com", "correcta")
     expect(jwtMock.sign).toHaveBeenCalledWith(PAYLOAD, "secreto-de-test", { expiresIn: "7d" })
   })
@@ -101,7 +85,7 @@ describe("AuthService.login", () => {
   // Sin esto, un email registrado responde más lento que uno inexistente y el tiempo de
   // respuesta se vuelve un oráculo de qué cuentas existen.
   it("con un email inexistente compara igual contra un hash de relleno", async () => {
-    mockClient({ select: { data: null, error: { message: "no rows" } } })
+    repo.findActivoParaLogin.mockResolvedValue(null)
 
     expect(await AuthService.login("nadie@obra.com", "correcta")).toBeNull()
     expect(bcryptMock.compare).toHaveBeenCalledTimes(1)
@@ -110,21 +94,19 @@ describe("AuthService.login", () => {
   })
 
   it("con la clave incorrecta no emite token", async () => {
-    mockClient({ select: { data: USUARIO, error: null } })
+    repo.findActivoParaLogin.mockResolvedValue(USUARIO)
     expect(await AuthService.login("juan@obra.com", "incorrecta")).toBeNull()
     expect(jwtMock.sign).not.toHaveBeenCalled()
   })
 
   it("si estado llega NULL cierra en inactivo (fail-closed)", async () => {
-    mockClient({ select: { data: { ...USUARIO, estado: null }, error: null } })
+    repo.findActivoParaLogin.mockResolvedValue({ ...USUARIO, estado: null })
     const res = await AuthService.login("juan@obra.com", "correcta")
     expect(res?.user.estado).toBe("inactivo")
   })
 
   it("si la base explota devuelve null en vez de propagar", async () => {
-    vi.mocked(createClient).mockImplementation(() => {
-      throw new Error("conexion caida")
-    })
+    repo.findActivoParaLogin.mockRejectedValue(new Error("conexion caida"))
     expect(await AuthService.login("juan@obra.com", "correcta")).toBeNull()
   })
 })
@@ -157,10 +139,8 @@ describe("AuthService.verifyToken / emitirToken", () => {
 })
 
 describe("AuthService.getUserById", () => {
-  it("trae updated_at (lo necesita la invalidación de sesiones) y filtra por activo", async () => {
-    const calls = mockClient({
-      select: { data: { ...USUARIO, updated_at: "2026-02-01T10:00:00Z" }, error: null },
-    })
+  it("trae updated_at, que es lo que invalida las sesiones viejas", async () => {
+    repo.findActivoConRol.mockResolvedValue({ ...USUARIO, updated_at: "2026-02-01T10:00:00Z" })
 
     const user = await AuthService.getUserById(7)
 
@@ -169,47 +149,39 @@ describe("AuthService.getUserById", () => {
       rol_nombre: "supervisor",
       updated_at: "2026-02-01T10:00:00Z",
     })
-    expect(calls.eq).toEqual([
-      ["id", 7],
-      ["estado", "activo"],
-    ])
+    expect(repo.findActivoConRol).toHaveBeenCalledWith(7)
   })
 
   it("devuelve null si no existe o está inactivo", async () => {
-    mockClient({ select: { data: null, error: { message: "no rows" } } })
+    repo.findActivoConRol.mockResolvedValue(null)
     expect(await AuthService.getUserById(99)).toBeNull()
   })
 })
 
 describe("AuthService.changePassword", () => {
   it("rechaza si la clave actual no coincide y no toca la fila", async () => {
-    const calls = mockClient({ select: { data: { password_hash: "$2a$12$x" }, error: null } })
+    repo.findHashById.mockResolvedValue("$2a$12$x")
     expect(await AuthService.changePassword(7, "incorrecta", "nueva")).toBe(false)
-    expect(calls.update).toEqual([])
+    expect(repo.updatePassword).not.toHaveBeenCalled()
   })
 
-  it("hashea con BCRYPT_ROUNDS y mueve updated_at (invalida las sesiones viejas)", async () => {
-    const calls = mockClient({ select: { data: { password_hash: "$2a$12$x" }, error: null } })
+  it("hashea con BCRYPT_ROUNDS y delega el update (que mueve updated_at)", async () => {
+    repo.findHashById.mockResolvedValue("$2a$12$x")
 
     expect(await AuthService.changePassword(7, "correcta", "nueva-clave")).toBe(true)
     expect(bcryptMock.hash).toHaveBeenCalledWith("nueva-clave", BCRYPT_ROUNDS)
-
-    const update = calls.update[0] as { password_hash: string; updated_at: string }
-    expect(update.password_hash).toBe("hash(nueva-clave)")
-    expect(Number.isNaN(Date.parse(update.updated_at))).toBe(false)
+    expect(repo.updatePassword).toHaveBeenCalledWith(7, "hash(nueva-clave)")
   })
 
   it("devuelve false si el update falla", async () => {
-    mockClient({
-      select: { data: { password_hash: "$2a$12$x" }, error: null },
-      update: { error: { message: "rls" } },
-    })
+    repo.findHashById.mockResolvedValue("$2a$12$x")
+    repo.updatePassword.mockRejectedValue(new Error("rls"))
     expect(await AuthService.changePassword(7, "correcta", "nueva")).toBe(false)
   })
 
   it("devuelve false si el usuario no existe", async () => {
-    const calls = mockClient({ select: { data: null, error: { message: "no rows" } } })
+    repo.findHashById.mockResolvedValue(null)
     expect(await AuthService.changePassword(99, "correcta", "nueva")).toBe(false)
-    expect(calls.update).toEqual([])
+    expect(repo.updatePassword).not.toHaveBeenCalled()
   })
 })

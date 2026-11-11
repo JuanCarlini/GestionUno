@@ -1,6 +1,6 @@
-import { createClient } from '@/lib/supabase/service'
 import { HttpError } from '@/lib/route/http-error'
 import { UsuarioRepository } from '@/repositories/usuario.repository'
+import { AuditoriaRepository } from '@/repositories/auditoria.repository'
 
 // Valores del enum audit_accion (columna gu_audit_log.accion). La bitácora
 // (gu_auditoria.accion) es texto libre y acepta cualquier filtro.
@@ -41,14 +41,7 @@ export class AuditService {
    */
   static async registrar({ usuarioId, tabla, registroId, accion, detalle }: RegistrarParams): Promise<void> {
     try {
-      const supabase = createClient()
-      await supabase.from('gu_auditoria').insert({
-        tabla_origen: tabla,
-        registro_id: registroId,
-        usuario_id: usuarioId,
-        accion,
-        motivo_cambio: detalle ?? null,
-      })
+      await AuditoriaRepository.insertBitacora({ usuarioId, tabla, registroId, accion, detalle })
     } catch (error) {
       console.error('AuditService.registrar falló (no bloqueante):', error)
     }
@@ -85,8 +78,6 @@ export class AuditService {
    * operaciones con usuario) y 'cambios' (gu_audit_log, valores anteriores/nuevos).
    */
   static async consultar(f: ConsultaAuditoria) {
-    const supabase = createClient()
-
     if (f.fuente === 'cambios') {
       // El filtro se compara contra un enum de Postgres: un valor fuera del enum
       // reventaba la query. Antes un 400 que un 500 silencioso.
@@ -97,21 +88,8 @@ export class AuditService {
         )
       }
 
-      let q = supabase
-        .from('gu_audit_log')
-        .select('id, tabla_afectada, registro_id, usuario_id, accion, datos_anteriores, datos_nuevos, created_at, gu_usuario(nombre, email)')
-        .order('created_at', { ascending: false })
-        .limit(500)
-
-      if (f.usuarioId) q = q.eq('usuario_id', Number(f.usuarioId))
-      if (f.tabla) q = q.eq('tabla_afectada', f.tabla)
-      if (f.accion) q = q.eq('accion', f.accion as (typeof ACCIONES_CAMBIO)[number])
-      if (f.desde) q = q.gte('created_at', `${f.desde}T00:00:00`)
-      if (f.hasta) q = q.lte('created_at', `${f.hasta}T23:59:59`)
-
-      const { data, error } = await q
-      if (error) throw error
-      return (data || []).map((r: any) => ({
+      const filas = await AuditoriaRepository.findCambios(f)
+      return filas.map((r: any) => ({
         id: r.id,
         tabla: r.tabla_afectada,
         registro_id: r.registro_id,
@@ -123,21 +101,8 @@ export class AuditService {
       }))
     }
 
-    let q = supabase
-      .from('gu_auditoria')
-      .select('id, tabla_origen, registro_id, usuario_id, accion, motivo_cambio, fecha_cambio, gu_usuario(nombre, email)')
-      .order('fecha_cambio', { ascending: false })
-      .limit(500)
-
-    if (f.usuarioId) q = q.eq('usuario_id', Number(f.usuarioId))
-    if (f.tabla) q = q.eq('tabla_origen', f.tabla)
-    if (f.accion) q = q.eq('accion', f.accion)
-    if (f.desde) q = q.gte('fecha_cambio', `${f.desde}T00:00:00`)
-    if (f.hasta) q = q.lte('fecha_cambio', `${f.hasta}T23:59:59`)
-
-    const { data, error } = await q
-    if (error) throw error
-    return (data || []).map((r: any) => ({
+    const filas = await AuditoriaRepository.findBitacora(f)
+    return filas.map((r: any) => ({
       id: r.id,
       tabla: r.tabla_origen,
       registro_id: r.registro_id,
