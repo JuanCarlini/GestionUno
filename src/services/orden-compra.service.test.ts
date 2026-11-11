@@ -6,9 +6,8 @@ import { OrdenCompraService } from "./orden-compra.service"
 
 vi.mock("@/repositories/orden-compra.repository", () => ({
   OrdenCompraRepository: {
-    insert: vi.fn(),
+    crearConLineas: vi.fn(),
     findById: vi.fn(),
-    insertLineas: vi.fn(),
     deleteById: vi.fn(),
     insertLinea: vi.fn(),
     findLineaById: vi.fn(),
@@ -41,42 +40,22 @@ const ACTOR = { id: 1, puedeAjenas: true }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  repo.insert.mockResolvedValue({ id: 55, proveedor_id: 2, estado: "borrador" } as never)
+  repo.crearConLineas.mockResolvedValue({ id: 55, proveedor_id: 2, estado: "borrador" } as never)
   repo.findById.mockResolvedValue(OC_BORRADOR as never)
-  repo.insertLineas.mockResolvedValue(undefined)
   repo.findLineasByOrdenId.mockResolvedValue([])
   repo.insertLinea.mockImplementation(async (l) => l as never)
   itemSvc.getById.mockResolvedValue({ id: 9, nombre: "Cemento" } as never)
 })
 
 describe("OrdenCompraService.create", () => {
-  it("fuerza estado 'borrador' y no manda numero_oc (lo genera la DB)", async () => {
+  it("manda la cabecera sin numero_oc ni estado: los pone la funcion", async () => {
     await OrdenCompraService.create({ proveedor_id: 2, estado: "aprobado" } as never, 7)
-    const arg = repo.insert.mock.calls[0][0]
-    expect(arg).toMatchObject({ estado: "borrador", created_by: 7 })
-    expect(arg).not.toHaveProperty("numero_oc")
+    const [cabecera] = repo.crearConLineas.mock.calls[0]
+    expect(cabecera).toMatchObject({ proveedor_id: 2, created_by: 7 })
+    expect(cabecera).not.toHaveProperty("numero_oc")
   })
 
-  it("compensa borrando la cabecera si fallan las líneas", async () => {
-    repo.insertLineas.mockRejectedValue(new Error("trigger"))
-    await expect(
-      OrdenCompraService.create(
-        {
-          proveedor_id: 2,
-          lineas: [{ item_id: 9, cantidad: 1, precio_unitario_neto: 1 }],
-        } as never,
-        7
-      )
-    ).rejects.toThrow("trigger")
-    expect(repo.deleteById).toHaveBeenCalledWith(55)
-  })
-
-  it("recalcula los totales de cabecera una sola vez, desde las líneas persistidas", async () => {
-    repo.findLineasByOrdenId.mockResolvedValue([
-      { total_neto: 95000, total_con_iva: 114950 },
-      { total_neto: 5000, total_con_iva: 5000 },
-    ] as never)
-
+  it("arma las lineas antes del alta y las manda sin orden_compra_id", async () => {
     await OrdenCompraService.create(
       {
         proveedor_id: 2,
@@ -88,12 +67,41 @@ describe("OrdenCompraService.create", () => {
       7
     )
 
-    expect(repo.update).toHaveBeenCalledTimes(1)
-    expect(repo.update).toHaveBeenCalledWith(55, {
-      total_neto: 100000,
-      total_iva: 19950,
-      total_con_iva: 119950,
-    })
+    const [, lineas] = repo.crearConLineas.mock.calls[0]
+    expect(lineas).toHaveLength(2)
+    // La cabecera todavia no existe cuando se arman: el id lo pone la funcion.
+    expect(lineas[0]).not.toHaveProperty("orden_compra_id")
+    // Los totales por linea los sigue calculando la app.
+    expect(lineas[0]).toMatchObject({ total_neto: 95000, total_con_iva: 114950 })
+    expect(lineas[1]).toMatchObject({ total_neto: 5000, total_con_iva: 5000 })
+  })
+
+  it("una sola llamada a la base: ni compensacion ni recalculo aparte", async () => {
+    await OrdenCompraService.create(
+      { proveedor_id: 2, lineas: [{ item_id: 9, cantidad: 1, precio_unitario_neto: 1 }] } as never,
+      7
+    )
+    expect(repo.crearConLineas).toHaveBeenCalledTimes(1)
+    // Lo que antes eran insert + insertLineas + update, y un deleteById si algo fallaba.
+    expect(repo.update).not.toHaveBeenCalled()
+    expect(repo.deleteById).not.toHaveBeenCalled()
+  })
+
+  it("si la transaccion falla, el error sube crudo y no se intenta borrar nada", async () => {
+    repo.crearConLineas.mockRejectedValue(new Error("trigger"))
+    await expect(
+      OrdenCompraService.create(
+        { proveedor_id: 2, lineas: [{ item_id: 9, cantidad: 1, precio_unitario_neto: 1 }] } as never,
+        7
+      )
+    ).rejects.toThrow("trigger")
+    // No hay cabecera huerfana que compensar: la transaccion se cayo entera.
+    expect(repo.deleteById).not.toHaveBeenCalled()
+  })
+
+  it("sin lineas manda un array vacio", async () => {
+    await OrdenCompraService.create({ proveedor_id: 2 } as never, 7)
+    expect(repo.crearConLineas.mock.calls[0][1]).toEqual([])
   })
 })
 

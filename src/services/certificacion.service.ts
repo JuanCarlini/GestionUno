@@ -2,7 +2,6 @@ import type { TablesUpdate } from "@/lib/supabase/database.types"
 import { CertificacionRepository } from "@/repositories/certificacion.repository"
 import { OrdenCompraRepository } from "@/repositories/orden-compra.repository"
 import { HttpError } from "@/lib/route/http-error"
-import { totalesDeCertificacion } from "@/services/totales"
 import { puedeTransicionar, TRANSICIONES_APROBACION } from "@/services/transiciones"
 import type { CreateCertificacionLinea, EstadoAprobacion } from "@/models"
 
@@ -75,37 +74,17 @@ export class CertificacionService {
       )
     }
 
-    const nuevaCert = await CertificacionRepository.insert({
-      ...certData,
-      orden_compra_id,
-      proveedor_id: oc.proveedor_id,
-      estado: "borrador",
-    })
-
-    try {
-      await CertificacionRepository.insertLineas(
-        lineas.map((l) => ({
-          certificacion_id: nuevaCert.id,
-          linea_oc_id: l.linea_oc_id,
-          avance_unidades: l.avance_unidades,
-        }))
-      )
-      await CertificacionService.recalcularCabecera(nuevaCert.id)
-    } catch (e) {
-      // Sin transacción de cliente: si el trigger del 100% rechaza una línea, la cabecera
-      // quedaría huérfana. Se compensa y se propaga el error crudo (la ruta lo hace 422).
-      await CertificacionRepository.deleteById(nuevaCert.id)
-      throw e
-    }
-
-    return nuevaCert
+    // Cabecera y líneas en UNA transacción (fn_crear_certificacion). Si el trigger del 100%
+    // rechaza una línea, se cae el alta completa: el error crudo sube igual y la ruta lo
+    // convierte en 422, pero ya no queda una cabecera huérfana que compensar.
+    return CertificacionRepository.crearConLineas(
+      { ...certData, orden_compra_id, proveedor_id: oc.proveedor_id, estado: "borrador" },
+      lineas.map((l) => ({ linea_oc_id: l.linea_oc_id, avance_unidades: l.avance_unidades }))
+    )
   }
 
-  // Los totales de la cabecera los suma la app, desde las líneas ya derivadas por el trigger.
-  static async recalcularCabecera(certId: number): Promise<void> {
-    const lineas = await CertificacionRepository.findLineasByCertId(certId)
-    await CertificacionRepository.update(certId, totalesDeCertificacion(lineas))
-  }
+  // Los totales de cabecera se suman dentro de fn_crear_certificacion, en la misma
+  // transacción que inserta las líneas (ver supabase/migrations/..._altas_01_transaccionales).
 
   // Pre-chequeo del grafo (409). Los gates de negocio son triggers y devuelven 422.
   static async cambiarEstado(id: number, destino: EstadoAprobacion) {

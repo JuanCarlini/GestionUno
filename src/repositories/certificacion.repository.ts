@@ -1,11 +1,15 @@
 import { createClient } from "@/lib/supabase/service"
 import { esSinFilas } from "./base.repository"
+import { rpcFila } from "./rpc"
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/database.types"
 import type { Certificacion, CertRollup, EstadoAprobacion, LocRollup } from "@/models"
 
 const TABLE = "gu_certificaciones"
 const TABLE_LINEAS = "gu_lineasdecertificacion"
 const TABLE_LINEAS_OC = "gu_lineasdeordenesdecompra"
+
+// avance_unidades es el único input de una línea: el resto lo deriva fn_lce_derive.
+export type LineaNuevaCert = { linea_oc_id: number; avance_unidades: number }
 
 // Repositorio de gu_certificaciones (+ líneas): solo I/O. En la DB viven el número
 // (fn_num_cert), el derivado de líneas, la regla del 100%, la OC aprobada y el rollup de avance.
@@ -46,19 +50,20 @@ export class CertificacionRepository {
     return data || []
   }
 
-  static async insert(cert: TablesInsert<"gu_certificaciones">): Promise<Certificacion> {
-    const supabase = createClient()
-    const { data, error } = await supabase.from(TABLE).insert(cert).select().single()
-    if (error) throw error
-    return data
+  // Alta completa en una transacción. Las líneas llegan solo con linea_oc_id y
+  // avance_unidades: el resto lo deriva fn_lce_derive, y si fn_check_avance_100 rechaza una,
+  // se cae el alta entera en vez de dejar la cabecera colgada.
+  static async crearConLineas(
+    cabecera: TablesInsert<"gu_certificaciones">,
+    lineas: LineaNuevaCert[]
+  ): Promise<Certificacion> {
+    return rpcFila<Certificacion>("fn_crear_certificacion", {
+      p_cabecera: cabecera,
+      p_lineas: lineas,
+    })
   }
 
-  static async insertLineas(lineas: TablesInsert<"gu_lineasdecertificacion">[]): Promise<void> {
-    if (!lineas || lineas.length === 0) return
-    const supabase = createClient()
-    const { error } = await supabase.from(TABLE_LINEAS).insert(lineas)
-    if (error) throw error
-  }
+
 
   static async update(id: number, data: TablesUpdate<"gu_certificaciones">): Promise<Certificacion | null> {
     const supabase = createClient()
