@@ -9,7 +9,12 @@ import { z } from "zod"
 // documentos del circuito NO usan esto: tienen su propio grafo de estados y van por
 // estadoRoute con el enum.
 export const CambiarActivoSchema = z.object({
-  activo: z.boolean({ required_error: "Indicá el estado al que querés llevar el recurso" }),
+  // Devolver undefined para el resto de los casos deja el mensaje por defecto de zod, que es
+  // lo que pasaba antes con required_error: solo pisaba el mensaje de campo faltante.
+  activo: z.boolean({
+    error: (issue) =>
+      issue.input === undefined ? "Indicá el estado al que querés llevar el recurso" : undefined,
+  }),
 })
 
 export type CambiarActivo = z.infer<typeof CambiarActivoSchema>

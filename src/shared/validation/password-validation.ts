@@ -8,7 +8,10 @@ const MAX_BYTES = 72
 // Solo longitud, sin reglas de composición: es lo que recomienda el NIST SP 800-63B desde 2017
 // (la composición empuja a patrones predecibles como "Password1!" sin sumar entropía real).
 export const PasswordSchema = z
-  .string({ required_error: "La contraseña es requerida", invalid_type_error: "La contraseña debe ser texto" })
+  .string({
+    error: (issue) =>
+      issue.input === undefined ? "La contraseña es requerida" : "La contraseña debe ser texto",
+  })
   .min(MIN_CARACTERES, `La contraseña debe tener al menos ${MIN_CARACTERES} caracteres`)
   .refine((v) => new TextEncoder().encode(v).length <= MAX_BYTES, {
     message: `La contraseña no puede superar los ${MAX_BYTES} bytes (bcrypt trunca a partir de ahí)`,
