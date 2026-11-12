@@ -40,6 +40,10 @@ al primer login. En producción tienen que estar.
 
 El esquema de la base de datos está en `supabase/migrations/`, en orden cronológico.
 
+El contrato de la API se sirve en `GET /api/openapi.json` (solo admin) y se genera desde los
+mismos schemas Zod que validan en el borde, así que no se desactualiza. Un test falla si una
+ruta de `src/app/api` no está descrita.
+
 ## Uso
 
 ```bash
