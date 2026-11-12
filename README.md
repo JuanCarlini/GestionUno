@@ -53,7 +53,31 @@ npm start        # servidor de producción
 npm run lint     # análisis estático
 npm test         # suite de vitest (lógica + componentes)
 npm run test:watch
+npm run test:e2e # Playwright, contra una app levantada (ver abajo)
 ```
+
+## Verificación por fases
+
+| Cuándo | Qué corre | Dónde |
+|---|---|---|
+| Al commitear | eslint y los tests de lo que tocaste | husky + lint-staged |
+| En cada push | lint, tipos, tests, audit y build | `.github/workflows/ci.yml` |
+| Cada noche | el circuito de punta a punta contra una base sembrada | `.github/workflows/nightly.yml` |
+| Cada 15 min | `GET /api/health` en producción | `.github/workflows/monitor.yml` |
+
+Los specs de Playwright están en `e2e/`: `circuito.spec.ts` recorre OC → certificación →
+factura → orden de pago por API (las reglas viven en los services y en los triggers, no en los
+formularios) y `navegacion.spec.ts` cubre el humo de la UI.
+
+Para correrlos a mano contra un entorno de prueba:
+
+```bash
+psql "$E2E_DB_URL" -f supabase/seed.sql   # usuarios y datos de prueba
+E2E_BASE_URL=http://localhost:3000 npm run test:e2e
+```
+
+`supabase/seed.sql` crea un usuario por rol con una contraseña pública y aborta si la base
+tiene documentos: **no correrlo nunca contra producción**.
 
 ## Estructura
 

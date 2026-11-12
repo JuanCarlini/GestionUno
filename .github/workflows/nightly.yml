@@ -1,0 +1,141 @@
+name: Night job
+
+# El commit job (ci.yml) corre en cada push y tiene que terminar en minutos: lint, tipos,
+# tests y build. Lo que no entra ahí por lento o por necesitar una base de verdad corre acá,
+# una vez por noche.
+on:
+  schedule:
+    # 06:00 UTC = 03:00 en Argentina. Si rompe, el resultado está antes de que alguien empiece.
+    - cron: "0 6 * * *"
+  # Para poder dispararlo a mano cuando se toca el circuito.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # El job abre un issue cuando falla.
+  issues: write
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # ---------------------------------------------------------------------------------
+    # ENTORNO DE PRUEBA — leer antes de habilitar este workflow.
+    #
+    # El plan pedía correr esto contra un BRANCH de Supabase. No se puede: branching es plan
+    # Pro o superior y la organización está en free (verificado: la API devuelve
+    # "Branching is supported only on the Pro plan or above"). Así que apunta a un proyecto de
+    # Supabase dedicado a pruebas, con sus credenciales en secrets. Cuando la cuenta pase a
+    # Pro, lo que cambia es de dónde salen estas variables: el resto del job queda igual.
+    #
+    # PRERREQUISITO CONOCIDO: `supabase db push` aplica supabase/migrations/, que arranca en
+    # ccip_01 y asume que ya existen gu_roles, gu_usuario, gu_proveedores, gu_proyectos,
+    # gu_auditoria y gu_audit_log (las crean migraciones de julio que NO están en el repo).
+    # Sobre un proyecto vacío, ccip_02 falla en su primer ALTER TABLE. Antes de habilitar esto
+    # hay que llevar el esquema base al repo (un pg_dump --schema-only de producción,
+    # recortado a esas tablas, como migración 0) o restaurar un dump en el proyecto de prueba.
+    # ---------------------------------------------------------------------------------
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+      JWT_SECRET: ${{ secrets.E2E_JWT_SECRET }}
+      E2E_BASE_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # La base de prueba se rearma desde cero todas las noches: un E2E que corre sobre los
+      # datos de ayer esconde los bugs que dependen del estado inicial.
+      - name: Aplicar migraciones
+        run: supabase db push --db-url "${{ secrets.E2E_DB_URL }}"
+
+      - name: Sembrar datos de prueba
+        run: psql "${{ secrets.E2E_DB_URL }}" -v ON_ERROR_STOP=1 -f supabase/seed.sql
+
+      - name: Build
+        run: npm run build
+
+      - name: Levantar la app
+        run: |
+          npm start &
+          npx wait-on http://localhost:3000/api/health --timeout 60000
+
+      - name: Instalar el browser
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E del circuito
+        run: npm run test:e2e
+
+      # Las invariantes de los reportes, desde la base: si la agregación miente, el SQL tira
+      # una excepción y el job falla con el detalle.
+      - name: Verificar los reportes
+        run: psql "${{ secrets.E2E_DB_URL }}" -v ON_ERROR_STOP=1 -f supabase/verificacion/reportes.sql
+
+      - name: Guardar el reporte de Playwright
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      # Un cron que falla en silencio es peor que no tenerlo: nadie mira la pestaña de Actions.
+      - name: Abrir un issue si falló
+        if: failure()
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const titulo = `El night job falló (${new Date().toISOString().slice(0, 10)})`
+            const cuerpo = [
+              `La corrida nocturna del circuito falló.`,
+              ``,
+              `- Workflow: ${context.workflow}`,
+              `- Corrida: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              `- Commit: ${context.sha}`,
+              ``,
+              `El reporte de Playwright (con trazas, screenshots y video de lo que falló) está`,
+              `en los artifacts de esa corrida.`,
+            ].join("\n")
+
+            // Si ya hay un issue abierto de una noche anterior, se comenta ahí en vez de
+            // abrir uno nuevo por día.
+            const abiertos = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              labels: "night-job",
+            })
+
+            if (abiertos.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: abiertos.data[0].number,
+                body: cuerpo,
+              })
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: titulo,
+                body: cuerpo,
+                labels: ["night-job"],
+              })
+            }
