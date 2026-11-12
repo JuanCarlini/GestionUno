@@ -142,3 +142,14 @@ html {
     @apply bg-background text-foreground;
   }
 }
+
+/* Un spinner es información, no decoración: dice "esto sigue trabajando". Con
+   prefers-reduced-motion no se apaga —quedaría un ícono quieto que parece colgado— sino que
+   gira despacio: sigue avisando, sin el movimiento rápido que a algunas personas les marea.
+   Los skeletons son otra cosa: ahí el pulso SÍ se apaga (motion-reduce:animate-none en cada
+   barra), porque la forma ya comunica sola. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin {
+    animation-duration: 2.5s;
+  }
+}
