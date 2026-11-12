@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useReporte } from "@/hooks/use-reporte"
+import { TabReporteSkeleton } from "@/components/skeletons"
 import { BarraHorizontal, StatTile } from "./graficos"
 import { TablaReporte } from "./tabla-reporte"
 import { formatearValor } from "./formato"
@@ -22,7 +23,7 @@ export function TabPendiente() {
     return <p role="alert" className="py-8 text-center text-destructive">Error: {error}</p>
   }
   if (!reporte) {
-    return <p className="py-8 text-center text-muted-foreground">Cargando…</p>
+    return <TabReporteSkeleton />
   }
 
   const tabla = reporte.tablas[0]

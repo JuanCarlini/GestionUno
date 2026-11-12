@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { notFound, useParams } from "next/navigation"
+import { DetailSkeleton } from "@/components/skeletons"
 import { ProveedorDetails } from "@/views/proveedor-details"
 import { Card, CardContent } from "@/components/ui/card"
-import { Loader2 } from "lucide-react"
 import { Proveedor } from "@/models"
 
 // Lógica client del detalle de proveedor (fetch + activar/desactivar). Extraída de la page
@@ -14,6 +14,9 @@ export function ProveedorDetailClient() {
   const [proveedor, setProveedor] = useState<Proveedor | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // notFound() tiene que salir del render, no del efecto: ahí adentro el throw cae fuera de
+  // React y no lo agarra el límite de not-found. Por eso el 404 viaja como estado.
+  const [noExiste, setNoExiste] = useState(false)
 
   const proveedorId = params.id as string
 
@@ -22,6 +25,10 @@ export function ProveedorDetailClient() {
       try {
         setLoading(true)
         const res = await fetch(`/api/proveedores/${proveedorId}`)
+        if (res.status === 404) {
+          setNoExiste(true)
+          return
+        }
         if (!res.ok) {
           setError("Proveedor no encontrado")
           return
@@ -75,16 +82,9 @@ export function ProveedorDetailClient() {
     }
   }
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Cargando proveedor...</span>
-        </CardContent>
-      </Card>
-    )
-  }
+  if (noExiste) notFound()
+
+  if (loading) return <DetailSkeleton />
 
   if (error) {
     return (
