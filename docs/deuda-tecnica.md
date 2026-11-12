@@ -3,38 +3,20 @@
 Lo que está mal a sabiendas, por qué sigue así y qué hace falta para sacarlo. Si algo de acá
 se arregla, se borra de este archivo.
 
-## Advisories de dependencias que el CI deja pasar
+## Advisories de dependencias que quedan abiertos
 
-`npm audit` en el CI corre con la vara en `critical`. Hoy quedan **2 high** y **8 moderate**
-que no frenan el push. No es que no importen: es que la única salida es un breaking change y
-un CI permanentemente rojo deja de avisar.
+`npm audit` en el CI corre con la vara en `high`, y hoy pasa: no quedan advisories high ni
+critical. Quedan **8 moderate**, que el CI deja pasar:
 
-### zod < 4.6.6 — GHSA-mrhx-c7xc-m3w5 (high)
+| Paquete | Dónde pega |
+|---|---|
+| `@typescript-eslint/*` (5 paquetes) | Solo herramienta de desarrollo, no entra al bundle. |
+| `minimatch` | Transitiva de la misma herramienta. |
+| `exceljs` + `uuid` | Sí entra al runtime: es el export a Excel de los reportes. |
 
-> Zod can exhaust memory while validating oversized constrained collections
-
-Arrastra también a `@asteasolutions/zod-to-openapi`, que depende de zod y por eso aparece
-como un segundo high.
-
-**Por qué importa acá:** la validación de Zod está justo en el borde de la API, sobre cuerpos
-que manda el cliente. Es el lugar exacto donde este advisory se puede explotar.
-
-**Mitigación mientras tanto:** las rutas corren en Vercel, con límite de tamaño de cuerpo y
-de tiempo por invocación, así que una petición gigante muere antes por ahí. No reemplaza al
-arreglo.
-
-**Qué hace falta para cerrarlo:**
-
-1. `zod@3 → zod@4`. Son 22 archivos con schemas. Los cambios que pegan en este código:
-   `z.string().email()` y compañía pasan a `z.email()`; `required_error` / `invalid_type_error`
-   pasan al parámetro `error`; `.strict()` cambia de forma; el shape de `ZodError.issues` se
-   movió. Los mensajes de error que hoy viajan al formulario salen de ahí, así que hay que
-   mirar `src/lib/route/respuesta-error.ts` y los tests de validación.
-2. `@asteasolutions/zod-to-openapi@7 → @9`. La v9 **exige** zod 4, así que va en el mismo
-   movimiento, no antes. Afecta a `src/lib/openapi/contrato.ts` y a `/api/openapi.json`.
-3. Correr la suite entera: la mayoría de los tests de reglas de negocio entran por un schema.
-
-No es un cambio mecánico: conviene hacerlo como una tarea propia, con su rama y su PR.
+Los de `exceljs` son los únicos que importan de verdad. Salen con el major de `exceljs`, que
+cambia la API de escritura de celdas; hay que revisar `src/lib/export/xlsx.ts`. Dependabot ya abre el
+PR cuando hay versión.
 
 ## El historial de migraciones no refleja lo aplicado
 

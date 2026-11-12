@@ -80,7 +80,7 @@ const ErrorSchema = registry.register(
 // database.types.ts. Describirlas a mano acá sería inventar un segundo lugar donde se
 // desactualizan, así que se declaran como objetos abiertos y el contrato es honesto sobre eso.
 const FilaSchema = z
-  .record(z.unknown())
+  .record(z.string(), z.unknown())
   .openapi({ description: "Fila del recurso; la forma exacta sale de database.types.ts" })
 
 const PaginadoSchema = registry.register(
