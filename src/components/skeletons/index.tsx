@@ -205,14 +205,24 @@ export function DashboardSkeleton() {
           ))}
         </div>
 
+        {/* Actividad Reciente y Requieren Atención: cinco filas de ícono + dos renglones
+            cada una. Un bloque macizo acá tenía la altura bien pero no la forma. */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i} data-skeleton="grafico">
+            <Card key={i} data-skeleton="panel">
               <CardHeader>
                 <Skeleton className={`h-6 w-40 ${PULSO}`} />
               </CardHeader>
-              <CardContent>
-                <Skeleton className={`h-64 w-full ${PULSO}`} />
+              <CardContent className="space-y-4">
+                {Array.from({ length: 5 }).map((__, j) => (
+                  <div key={j} className="flex items-center gap-3">
+                    <Skeleton className={`h-4 w-4 shrink-0 rounded-full ${PULSO}`} />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className={`h-4 w-3/4 ${PULSO}`} />
+                      <Skeleton className={`h-3 w-32 ${PULSO}`} />
+                    </div>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           ))}

@@ -77,10 +77,10 @@ describe("skeletons — forma de la pantalla", () => {
     expect(sin.querySelectorAll("*").length).toBeLessThan(con.querySelectorAll("*").length)
   })
 
-  it("el dashboard muestra 4 KPIs y 2 gráficos", () => {
+  it("el dashboard muestra 4 KPIs y los 2 paneles de abajo", () => {
     const { container } = render(<DashboardSkeleton />)
     expect(container.querySelectorAll('[data-skeleton="kpi"]').length).toBe(4)
-    expect(container.querySelectorAll('[data-skeleton="grafico"]').length).toBe(2)
+    expect(container.querySelectorAll('[data-skeleton="panel"]').length).toBe(2)
   })
 
   it("el encabezado de página no se anuncia como status (va dentro de otro)", () => {
