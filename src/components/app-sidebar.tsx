@@ -66,7 +66,11 @@ export function AppSidebar() {
           </div>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      {/* role + aria-label en vez de envolver en un <nav>: SidebarContent ya reenvía props a
+          su div, así que el landmark queda sin meter un elemento de más que rompa el flex.
+          Es el único bloque de navegación de la app; el logo y el botón de salir quedan
+          afuera a propósito. */}
+      <SidebarContent role="navigation" aria-label="Navegación principal">
         <SidebarGroup>
           <SidebarGroupLabel className="text-muted-foreground font-medium">
             Menú Principal
@@ -83,8 +87,10 @@ export function AppSidebar() {
                         isActive ? "bg-muted text-foreground font-medium" : ""
                       }`}
                     >
-                      <Link href={item.url}>
-                        <item.icon className="h-4 w-4" />
+                      {/* aria-current: el fondo gris dice cuál es la página actual a quien la
+                          ve. Sin esto, quien usa lector de pantalla no tiene cómo saberlo. */}
+                      <Link href={item.url} aria-current={isActive ? "page" : undefined}>
+                        <item.icon className="h-4 w-4" aria-hidden="true" />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
@@ -110,8 +116,11 @@ export function AppSidebar() {
                       pathname === "/admin/usuarios" ? "bg-destructive/10 text-destructive font-medium" : ""
                     }`}
                   >
-                    <Link href="/admin/usuarios">
-                      <Shield className="h-4 w-4" />
+                    <Link
+                      href="/admin/usuarios"
+                      aria-current={pathname === "/admin/usuarios" ? "page" : undefined}
+                    >
+                      <Shield className="h-4 w-4" aria-hidden="true" />
                       <span>Gestión de Usuarios</span>
                     </Link>
                   </SidebarMenuButton>
@@ -123,8 +132,11 @@ export function AppSidebar() {
                       pathname === "/admin/auditoria" ? "bg-destructive/10 text-destructive font-medium" : ""
                     }`}
                   >
-                    <Link href="/admin/auditoria">
-                      <ClipboardList className="h-4 w-4" />
+                    <Link
+                      href="/admin/auditoria"
+                      aria-current={pathname === "/admin/auditoria" ? "page" : undefined}
+                    >
+                      <ClipboardList className="h-4 w-4" aria-hidden="true" />
                       <span>Auditoría</span>
                     </Link>
                   </SidebarMenuButton>
@@ -149,7 +161,7 @@ export function AppSidebar() {
             className="w-full justify-start"
             onClick={handleLogout}
           >
-            <LogOut className="h-4 w-4 mr-2" />
+            <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
             Cerrar Sesión
           </Button>
         </div>
