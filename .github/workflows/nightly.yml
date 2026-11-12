@@ -80,7 +80,10 @@ jobs:
       - name: Instalar el browser
         run: npx playwright install --with-deps chromium
 
-      - name: E2E del circuito
+      # Corre todo e2e/: el circuito, el humo de navegación y el barrido de axe sobre las
+      # pantallas principales (ui-accesibilidad.spec.ts). Van en la misma corrida a propósito:
+      # un solo reporte de Playwright con todo lo que falló esa noche.
+      - name: E2E del circuito y barrido de accesibilidad
         run: npm run test:e2e
 
       # Las invariantes de los reportes, desde la base: si la agregación miente, el SQL tira
