@@ -222,19 +222,19 @@ export function FacturaDetail({ params }: Props) {
             <div className="bg-muted p-4 rounded-lg space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal (Neto)</span>
-                <span className="font-semibold">
+                <span className="font-semibold tabular-nums">
                   {formatCurrency(Number(factura.total_neto ?? 0), factura.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">IVA</span>
-                <span className="font-semibold">
+                <span className="font-semibold tabular-nums">
                   {formatCurrency(Number(factura.total_iva ?? 0), factura.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between text-lg font-bold border-t pt-2">
                 <span>Total con IVA</span>
-                <span className="text-emerald-600 dark:text-emerald-400">
+                <span className="tabular-nums text-emerald-600 dark:text-emerald-400">
                   {formatCurrency(Number(factura.total_con_iva ?? 0), factura.moneda ?? "ARS")}
                 </span>
               </div>
@@ -298,11 +298,11 @@ export function FacturaDetail({ params }: Props) {
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Cantidad</div>
-                      <div className="font-medium">{linea.cantidad}</div>
+                      <div className="font-medium tabular-nums">{linea.cantidad}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Precio Unitario</div>
-                      <div className="font-medium">
+                      <div className="font-medium tabular-nums">
                         {formatCurrency(Number(linea.precio_unitario ?? 0), factura.moneda ?? "ARS")}
                       </div>
                     </div>

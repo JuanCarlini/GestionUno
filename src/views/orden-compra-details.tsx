@@ -176,19 +176,19 @@ export function OrdenCompraDetails({ ordenId }: Props) {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Subtotal:</span>
-                <span className="text-base text-foreground">
+                <span className="text-base text-foreground tabular-nums">
                   {formatCurrency(Number(orden.total_neto ?? 0), orden.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Impuestos:</span>
-                <span className="text-base text-foreground">
+                <span className="text-base text-foreground tabular-nums">
                   {formatCurrency(Number(orden.total_iva ?? 0), orden.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between pt-3 border-t">
                 <span className="text-lg font-bold text-foreground">Total:</span>
-                <span className="text-lg font-bold text-foreground">
+                <span className="text-lg font-bold text-foreground tabular-nums">
                   {formatCurrency(Number(orden.total_con_iva ?? 0), orden.moneda ?? "ARS")}
                 </span>
               </div>
