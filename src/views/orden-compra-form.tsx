@@ -443,15 +443,15 @@ export function OrdenCompraForm() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Total Neto:</span>
-                    <span className="font-medium">{formatCurrency(calcularSubtotal(), monedaElegida)}</span>
+                    <span className="font-medium tabular-nums">{formatCurrency(calcularSubtotal(), monedaElegida)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>IVA:</span>
-                    <span className="font-medium">{formatCurrency(calcularImpuestos(), monedaElegida)}</span>
+                    <span className="font-medium tabular-nums">{formatCurrency(calcularImpuestos(), monedaElegida)}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t text-lg font-bold">
                     <span>Total con IVA:</span>
-                    <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(calcularTotal(), monedaElegida)}</span>
+                    <span className="tabular-nums text-emerald-600 dark:text-emerald-400">{formatCurrency(calcularTotal(), monedaElegida)}</span>
                   </div>
                 </div>
               </div>

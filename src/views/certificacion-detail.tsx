@@ -309,13 +309,13 @@ export function CertificacionDetail({ params }: Props) {
             <div className="flex flex-wrap justify-end gap-x-8 gap-y-3">
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Total Neto</div>
-                <div className="text-xl font-bold">
+                <div className="text-xl font-bold tabular-nums">
                   {formatCurrency(Number(cert.total_neto ?? 0), cert.moneda ?? "ARS")}
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Total con IVA</div>
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                <div className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                   {formatCurrency(Number(cert.total_con_iva ?? 0), cert.moneda ?? "ARS")}
                 </div>
               </div>
