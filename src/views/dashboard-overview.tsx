@@ -11,9 +11,9 @@ import {
   Clock, 
   CheckCircle,
   AlertTriangle,
-  Loader2,
   RefreshCw
 } from "lucide-react"
+import { DashboardSkeleton } from "@/components/skeletons"
 import { useDashboard } from "@/hooks/use-dashboard"
 import { formatCurrency } from "@/shared/format-utils"
 import { formatDateShort } from "@/shared/date-utils"
@@ -35,14 +35,8 @@ const getTipoIcon = (tipo: string) => {
 export function DashboardOverview() {
   const { stats, loading, error, refreshData } = useDashboard()
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Cargando dashboard...</span>
-      </div>
-    )
-  }
+  // El mismo skeleton que dashboard/loading.tsx: la transición entre los dos no salta.
+  if (loading) return <DashboardSkeleton />
 
   if (error) {
     return (

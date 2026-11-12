@@ -1,7 +1,8 @@
 "use client"
 
+import { DetailSkeleton } from "@/components/skeletons"
 import { useCallback, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { notFound, useRouter } from "next/navigation"
 import { use } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -68,11 +69,19 @@ export function FacturaDetail({ params }: Props) {
   const [updating, setUpdating] = useState(false)
   const [showApproveDialog, setShowApproveDialog] = useState(false)
   const [showRejectDialog, setShowRejectDialog] = useState(false)
+  // notFound() tiene que salir del render, no del efecto: ahí adentro el throw cae fuera de
+  // React y no lo agarra el límite de not-found. Por eso el 404 viaja como estado.
+  const [noExiste, setNoExiste] = useState(false)
   const router = useRouter()
 
   const fetchFactura = useCallback(async () => {
     try {
       const response = await fetch(`/api/facturas/${id}`)
+      // El 404 es una pantalla, no un toast rojo: la factura no existe.
+      if (response.status === 404) {
+        setNoExiste(true)
+        return
+      }
       if (!response.ok) throw new Error("Error al cargar factura")
       const data = await response.json()
       setFactura(data)
@@ -118,7 +127,9 @@ export function FacturaDetail({ params }: Props) {
   }
 
 
-  if (loading) return <div className="text-center py-8">Cargando...</div>
+  if (noExiste) notFound()
+
+  if (loading) return <DetailSkeleton />
   if (!factura) return <div className="text-center py-8">Factura no encontrada</div>
 
   return (
