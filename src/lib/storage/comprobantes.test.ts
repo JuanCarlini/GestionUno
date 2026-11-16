@@ -16,6 +16,7 @@ type Resultado = { data?: unknown; error?: unknown }
 // resuelve (para el caso del timeout).
 function mockStorage(ops: {
   getBucket?: Resultado | "cuelga"
+  listBuckets?: Resultado | "cuelga"
   createBucket?: Resultado
   createSignedUrl?: Resultado | "cuelga"
   upload?: Resultado | "cuelga"
@@ -32,6 +33,7 @@ function mockStorage(ops: {
   vi.mocked(createClient).mockReturnValue({
     storage: {
       getBucket: vi.fn(() => resolver(ops.getBucket, { data: {}, error: null })),
+      listBuckets: vi.fn(() => resolver(ops.listBuckets, { data: [], error: null })),
       createBucket: vi.fn(() => resolver(ops.createBucket, { error: null })),
       from,
     },
@@ -147,5 +149,47 @@ describe("subirComprobante", () => {
     mockStorage({ upload: { error: null } })
     const { subirComprobante } = await cargar()
     await expect(subirComprobante(7, new ArrayBuffer(8))).resolves.toBeUndefined()
+  })
+})
+
+// El chequeo de /api/health. Lo que tiene que medir es si Storage responde y si la credencial
+// sirve, NO si el bucket ya fue creado: lo crea asegurarBucket() en la primera subida.
+//
+// Este test existe por un 503 real en produccion. pingStorage usaba getBucket, y como nadie
+// habia subido un comprobante todavia, el bucket no existia: el health check reportaba la app
+// caida estando sana, y el monitoreo sintetico corre cada 15 minutos.
+describe("pingStorage — vida de Storage, no provisioning del bucket", () => {
+  it("pasa aunque el bucket todavia no exista", async () => {
+    // El estado exacto de produccion cuando esto se encontro: Storage sano y respondiendo,
+    // pero sin el bucket creado todavia. getBucket da 404 y listBuckets da la lista vacia.
+    // Si alguien vuelve a chequear con getBucket, este test falla.
+    mockStorage({
+      getBucket: { data: null, error: { status: 404, message: "Bucket not found" } },
+      listBuckets: { data: [], error: null },
+    })
+    const { pingStorage } = await cargar()
+
+    await expect(pingStorage(3000)).resolves.toBeUndefined()
+  })
+
+  it("pasa cuando hay buckets", async () => {
+    mockStorage({ listBuckets: { data: [{ name: "comprobantes" }], error: null } })
+    const { pingStorage } = await cargar()
+
+    await expect(pingStorage(3000)).resolves.toBeUndefined()
+  })
+
+  it("falla si Storage devuelve error", async () => {
+    mockStorage({ listBuckets: { data: null, error: { status: 500, message: "boom" } } })
+    const { pingStorage } = await cargar()
+
+    await expect(pingStorage(3000)).rejects.toBeTruthy()
+  })
+
+  it("falla si Storage no contesta dentro de la ventana", async () => {
+    mockStorage({ listBuckets: "cuelga" })
+    const { pingStorage } = await cargar()
+
+    await expect(pingStorage(20)).rejects.toBeTruthy()
   })
 })
