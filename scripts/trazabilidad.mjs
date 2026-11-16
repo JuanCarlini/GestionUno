@@ -38,14 +38,17 @@ const SECCION_CRITERIOS = /criterios de aceptaci/i
  * son justo las que más importa tener documentadas.
  */
 export function nombresCitables(fuente) {
-  const nombres = new Set()
+  // Map y no Set porque la CANTIDAD importa: si un nombre aparece dos veces en el archivo,
+  // citarlo no identifica a cuál de los dos se refiere el criterio.
+  const nombres = new Map()
   const cadena = `("(?:[^"\\\\]|\\\\.)*"|'(?:[^'\\\\]|\\\\.)*'|\`[^\`$]*\`)`
   const re = new RegExp(
     `\\b(?:it|describe)(?:\\.only|\\.skip|\\.concurrent|\\.fails|\\.sequential)?\\(\\s*${cadena}`,
     "g"
   )
   for (const m of fuente.matchAll(re)) {
-    nombres.add(m[1].slice(1, -1).replace(/\\(["'`\\])/g, "$1"))
+    const nombre = m[1].slice(1, -1).replace(/\\(["'`\\])/g, "$1")
+    nombres.set(nombre, (nombres.get(nombre) ?? 0) + 1)
   }
   return nombres
 }
@@ -58,6 +61,7 @@ export function criteriosDe(markdown) {
   const lineas = markdown.split(/\r?\n/)
   const criterios = []
   let dentro = false
+  let enBloqueDeCodigo = false
   let actual = null
 
   const cerrar = () => {
@@ -66,6 +70,15 @@ export function criteriosDe(markdown) {
   }
 
   lineas.forEach((linea, i) => {
+    // Los bloques ``` se saltean enteros. Si no, un ejemplo del formato dentro de un doc se
+    // parsearía como si fuera un criterio de verdad —y al revés, un "###" de ejemplo cortaría
+    // la sección y dejaría los criterios que siguen sin revisar, en silencio.
+    if (/^\s*```/.test(linea)) {
+      enBloqueDeCodigo = !enBloqueDeCodigo
+      return
+    }
+    if (enBloqueDeCodigo) return
+
     const titulo = linea.match(TITULO_SECCION)
     if (titulo) {
       cerrar()
@@ -160,6 +173,20 @@ export function verificar({ dirDocs, raiz, leer = (p) => fs.readFileSync(p, "utf
             // Sin esto hay que abrir el archivo y comparar a ojo cuál era el nombre parecido.
             sugerencia: masParecido(cita.nombre, nombres),
           })
+          continue
+        }
+
+        // Un nombre repetido dentro del archivo hace que la cita no identifique nada: quien
+        // la sigue encuentra dos tests y no sabe cuál verifica el criterio. Se arregla
+        // renombrando uno de los dos, que además es lo que conviene para leer la salida
+        // de vitest.
+        if (nombres.get(cita.nombre) > 1) {
+          problemas.push({
+            doc,
+            linea: criterio.linea,
+            tipo: "cita-ambigua",
+            detalle: `el criterio ${criterio.numero} cita "${cita.nombre}", que aparece ${nombres.get(cita.nombre)} veces en ${cita.archivo}`,
+          })
         }
       }
     }
@@ -168,7 +195,10 @@ export function verificar({ dirDocs, raiz, leer = (p) => fs.readFileSync(p, "utf
   return { problemas, revisados: docs, citas: citasTotales }
 }
 
-/** El nombre existente que más se parece, para cuando alguien renombró un test. */
+/**
+ * El nombre existente que más se parece, para cuando alguien renombró un test.
+ * `nombres` es el Map de nombresCitables; se recorren sus claves.
+ */
 export function masParecido(buscado, nombres) {
   const palabras = (s) => new Set(s.toLowerCase().split(/\W+/).filter((w) => w.length > 3))
   const objetivo = palabras(buscado)
@@ -176,7 +206,7 @@ export function masParecido(buscado, nombres) {
 
   let mejor = null
   let mejorPuntaje = 0
-  for (const nombre of nombres) {
+  for (const nombre of nombres.keys()) {
     const otras = palabras(nombre)
     const comunes = [...objetivo].filter((w) => otras.has(w)).length
     const puntaje = comunes / Math.max(objetivo.size, otras.size || 1)

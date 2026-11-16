@@ -57,7 +57,7 @@ describe("OrdenPagoService.agregarFactura", () => {
     expect(repo.findLineasFactura).not.toHaveBeenCalled()
   })
 
-  it("404 si la OP no existe", async () => {
+  it("404 si la OP no existe al agregar una factura", async () => {
     repo.findById.mockResolvedValue(null)
     await expect(OrdenPagoService.agregarFactura(9, { factura_id: 1, monto: 1 })).rejects.toMatchObject({ status: 404 })
   })
@@ -134,7 +134,7 @@ describe("OrdenPagoService.cambiarEstado", () => {
     await expect(OrdenPagoService.cambiarEstado(1, "en_aprobacion")).rejects.toBe(pg)
   })
 
-  it("404 si la OP no existe", async () => {
+  it("404 si la OP no existe al cambiar el estado", async () => {
     repo.findById.mockResolvedValue(null)
     await expect(OrdenPagoService.cambiarEstado(9, "en_aprobacion")).rejects.toMatchObject({ status: 404 })
   })

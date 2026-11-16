@@ -15,7 +15,15 @@ describe("nombresCitables", () => {
       it('con simples', () => {})
       it(\`con backticks\`, () => {})
     `)
-    expect([...nombres].sort()).toEqual(["con backticks", "con dobles", "con simples"])
+    expect([...nombres.keys()].sort()).toEqual(["con backticks", "con dobles", "con simples"])
+  })
+
+  it("cuenta las repeticiones: un nombre dos veces en el archivo no identifica a ninguno", () => {
+    const nombres = nombresCitables(`
+      describe("un grupo", () => { it("404 si no existe", () => {}) })
+      describe("otro grupo", () => { it("404 si no existe", () => {}) })
+    `)
+    expect(nombres.get("404 si no existe")).toBe(2)
   })
 
   it("encuentra los it.only, it.skip y it.concurrent", () => {
@@ -39,7 +47,7 @@ describe("nombresCitables", () => {
         it("un test", () => {})
       })
     `)
-    expect([...nombres].sort()).toEqual(["un grupo", "un test"])
+    expect([...nombres.keys()].sort()).toEqual(["un grupo", "un test"])
   })
 
   it("el template de un it.each no es citable, pero su describe sí", () => {
@@ -50,7 +58,7 @@ describe("nombresCitables", () => {
         it.each(ARCHIVOS)("%s", () => {})
       })
     `)
-    expect([...nombres]).toEqual(["toda ruta mutante tiene gate"])
+    expect([...nombres.keys()]).toEqual(["toda ruta mutante tiene gate"])
   })
 })
 
@@ -185,6 +193,53 @@ describe("verificar — sobre archivos de verdad", () => {
     const { problemas } = verificar({ dirDocs, raiz })
     expect(problemas).toHaveLength(1)
     expect(problemas[0].tipo).toBe("sin-test")
+  })
+
+  it("agarra una cita ambigua: el nombre aparece dos veces en el archivo", () => {
+    // Pasa la verificación de existencia pero no sirve: quien sigue la cita encuentra dos
+    // tests y no sabe cuál es. Se arregla renombrando uno.
+    escribir(
+      "src/dos.test.ts",
+      `describe("a", () => { it("404 si no existe", () => {}) })
+       describe("b", () => { it("404 si no existe", () => {}) })`
+    )
+    escribir(
+      "docs/requisitos/x.md",
+      docCon('1. **Algo.**\n   `src/dos.test.ts` → _"404 si no existe"_')
+    )
+
+    const { problemas } = verificar({ dirDocs, raiz })
+    expect(problemas).toHaveLength(1)
+    expect(problemas[0].tipo).toBe("cita-ambigua")
+  })
+
+  it("no mira adentro de los bloques de código: un ejemplo del formato no es un criterio", () => {
+    // El README documenta el formato con un ejemplo. Sin esta regla, el ejemplo se validaría
+    // como si fuera un criterio real y el doc fallaría por su propia documentación.
+    escribir(
+      "docs/requisitos/x.md",
+      docCon('1. **Algo.**\n   `src/cosa.test.ts` → _"el test que existe"_') +
+        '\n```markdown\n### Criterios de aceptación\n\n1. **Ejemplo.**\n   `src/inventado.test.ts` → _"no existe"_\n```\n'
+    )
+
+    expect(verificar({ dirDocs, raiz }).problemas).toEqual([])
+  })
+
+  it("un ### adentro de un bloque de código no corta la sección de criterios", () => {
+    // El caso silencioso: si el fence no se saltea, ese "###" apaga la sección y los
+    // criterios que vienen después quedan sin revisar sin que nadie se entere.
+    escribir(
+      "docs/requisitos/x.md",
+      docCon(
+        '1. **Uno.**\n   `src/cosa.test.ts` → _"el test que existe"_\n\n' +
+          "```md\n### Fuera de alcance\n```\n\n" +
+          '2. **Dos, y cita un test que no existe.**\n   `src/fantasma.test.ts` → _"x"_'
+      )
+    )
+
+    const { problemas } = verificar({ dirDocs, raiz })
+    expect(problemas).toHaveLength(1)
+    expect(problemas[0].tipo).toBe("archivo-inexistente")
   })
 
   it("agarra un documento sin criterios numerados", () => {
