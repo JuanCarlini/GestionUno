@@ -1,10 +1,11 @@
 # Requisitos — Órdenes de compra
 
-Formato: una historia de usuario por regla, con criterios de aceptación numerados y, para
-cada criterio, el test que lo verifica. Si un criterio no tiene test, no está cerrado.
+Ver [README.md](README.md) para el formato y para `npm run trazabilidad`.
 
-La Fase 5 del plan de mejora completa este directorio con el resto de los módulos y agrega
-`npm run trazabilidad`, que falla si un criterio apunta a un test que no existe.
+Este documento cubre la **propiedad de la fila**: quién puede editar y borrar una orden de
+compra. Las reglas del circuito que la OC comparte con el resto —el grafo de estados, los
+totales calculados por la base— están en [certificaciones.md](certificaciones.md), que las
+documenta para los dos.
 
 ---
 
