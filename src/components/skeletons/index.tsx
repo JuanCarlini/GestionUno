@@ -27,6 +27,20 @@ function Marco({
   )
 }
 
+/**
+ * La barra de "Volver" de las pantallas de detalle. Es a propósito mucho más chica que
+ * PageHeaderSkeleton: medido contra la app, ahí arriba no hay título ni descripción, solo un
+ * enlace para volver y —según el estado del documento— botones de acción en la misma fila.
+ */
+export function VolverSkeleton() {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <Skeleton className={`h-9 w-24 ${PULSO}`} />
+      <Skeleton className={`h-9 w-40 ${PULSO}`} />
+    </div>
+  )
+}
+
 /** Encabezado de página: título, descripción y el botón de acción a la derecha. */
 export function PageHeaderSkeleton() {
   return (
@@ -97,7 +111,7 @@ export function ListSkeleton({
 }
 
 /** Detalle de documento: número y chip de estado, grilla de datos en 2 columnas y las líneas. */
-export function DetailSkeleton() {
+export function DetailSkeleton({ campos = 4 }: { campos?: number } = {}) {
   return (
     <Marco etiqueta="Cargando el documento">
       <div className="space-y-6">
@@ -110,7 +124,7 @@ export function DetailSkeleton() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {Array.from({ length: 6 }).map((_, i) => (
+              {Array.from({ length: campos }).map((_, i) => (
                 <div key={i} className="space-y-2">
                   <Skeleton className={`h-3 w-28 ${PULSO}`} />
                   <Skeleton className={`h-5 w-44 ${PULSO}`} />
@@ -241,7 +255,11 @@ export function TabReporteSkeleton({ tiles = 3 }: { tiles?: number }) {
     <Marco etiqueta="Cargando el reporte">
       <div className="space-y-6">
         {tiles > 0 && (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          // Las clases van enteras en el ternario: Tailwind escanea el fuente y una clase
+          // armada por interpolación (`md:grid-cols-${n}`) no la genera nunca.
+          <div
+            className={`grid grid-cols-1 gap-4 ${tiles === 4 ? "md:grid-cols-4" : "md:grid-cols-3"}`}
+          >
             {Array.from({ length: tiles }).map((_, i) => (
               <Card key={i} data-skeleton="tile">
                 <CardHeader className="pb-2">

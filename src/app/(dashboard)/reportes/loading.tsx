@@ -1,5 +1,10 @@
-import { ReportesSkeleton } from "@/components/skeletons"
+import { PageHeaderSkeleton, ReportesSkeleton } from "@/components/skeletons"
 
 export default function Loading() {
-  return <ReportesSkeleton />
+  return (
+    <div className="space-y-6">
+      <PageHeaderSkeleton />
+      <ReportesSkeleton />
+    </div>
+  )
 }

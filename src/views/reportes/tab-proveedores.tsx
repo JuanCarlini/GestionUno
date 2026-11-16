@@ -20,7 +20,7 @@ export function TabProveedores() {
     return <p role="alert" className="py-8 text-center text-destructive">Error: {error}</p>
   }
   if (!reporte) {
-    return <TabReporteSkeleton />
+    return <TabReporteSkeleton tiles={0} />
   }
 
   const tabla = reporte.tablas[0]

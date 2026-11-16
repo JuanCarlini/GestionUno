@@ -7,6 +7,8 @@ import {
   DashboardSkeleton,
   ReportesSkeleton,
   PageHeaderSkeleton,
+  TabReporteSkeleton,
+  VolverSkeleton,
 } from "."
 
 // Un skeleton mal anunciado es peor que ninguno: el lector de pantalla lee una pila de divs
@@ -81,6 +83,43 @@ describe("skeletons — forma de la pantalla", () => {
     const { container } = render(<DashboardSkeleton />)
     expect(container.querySelectorAll('[data-skeleton="kpi"]').length).toBe(4)
     expect(container.querySelectorAll('[data-skeleton="panel"]').length).toBe(2)
+  })
+
+  // Medido contra la app desplegada: el detalle de una certificación muestra 4 campos
+  // (OC, fecha, proveedor, observaciones). Con 6, la tarjeta quedaba más alta de lo que
+  // llegaba y lo de abajo subía al cargar.
+  it("el detalle muestra 4 campos por defecto, los que tiene la pantalla", () => {
+    const { container } = render(<DetailSkeleton />)
+    // Cada campo es una etiqueta corta sobre un valor más ancho.
+    const anchos = [...container.querySelectorAll(".h-3.w-28")]
+    expect(anchos.length).toBe(4)
+  })
+
+  it("el detalle acepta otra cantidad de campos", () => {
+    const { container } = render(<DetailSkeleton campos={6} />)
+    expect(container.querySelectorAll(".h-3.w-28").length).toBe(6)
+  })
+
+  it("la grilla de tiles sigue a la cantidad: con 4 no se parte en dos filas", () => {
+    // Clases enteras y no interpoladas: Tailwind escanea el fuente y nunca generaría
+    // una clase armada con `md:grid-cols-${n}`.
+    const { container } = render(<TabReporteSkeleton tiles={4} />)
+    expect(container.querySelector(".md\\:grid-cols-4")).toBeTruthy()
+    expect(container.querySelectorAll('[data-skeleton="tile"]').length).toBe(4)
+
+    const { container: tres } = render(<TabReporteSkeleton />)
+    expect(tres.querySelector(".md\\:grid-cols-3")).toBeTruthy()
+  })
+
+  it("una pestaña sin indicadores no dibuja la fila de tiles", () => {
+    const { container } = render(<TabReporteSkeleton tiles={0} />)
+    expect(container.querySelectorAll('[data-skeleton="tile"]').length).toBe(0)
+  })
+
+  it("la barra de volver es chica: arriba del detalle no hay título ni descripción", () => {
+    const { container } = render(<VolverSkeleton />)
+    // Dos barras en una fila, no un bloque de dos renglones más un botón.
+    expect(container.querySelectorAll(".animate-pulse").length).toBe(2)
   })
 
   it("el encabezado de página no se anuncia como status (va dentro de otro)", () => {
