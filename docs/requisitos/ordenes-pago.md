@@ -49,23 +49,38 @@ descuadrada casi todo el tiempo, y frenar cada inserción haría imposible carga
    comparan contra él.**
    `src/services/orden-pago.service.test.ts` → _"agrega una caja sin recalcular total (el total lo fijan las facturas)"_
 
-6. **Una factura no finalizada, o de otra moneda, la rechaza el trigger y el error se
-   propaga sin reinterpretar.**
+6. **Una factura que no está finalizada, o que es de otra moneda o de otro proveedor, la
+   rechaza el trigger, y el error se propaga sin reinterpretar.**
    `src/services/orden-pago.service.test.ts` → _"propaga el error del trigger (factura no finalizada / otra moneda) sin reinterpretarlo"_
 
-7. **Fuera de borrador no se agregan cajas: 422.**
+7. **Fuera de borrador o rechazada no se agregan cajas: 422.**
    `src/services/orden-pago.service.test.ts` → _"no agrega cajas sobre una OP fuera de borrador (422)"_
 
-8. **Operar sobre una OP que no existe da 404.**
-   `src/services/orden-pago.service.test.ts` → _"404 si la OP no existe"_
+8. **Agregar una factura a una OP que no existe da 404.**
+   `src/services/orden-pago.service.test.ts` → _"404 si la OP no existe al agregar una factura"_
+
+9. **Cambiar el estado de una OP que no existe da 404.**
+   `src/services/orden-pago.service.test.ts` → _"404 si la OP no existe al cambiar el estado"_
+
+### Por qué el gate no necesita volver a correr
+
+El gate solo mira la transición `borrador → en_aprobacion`, pero una OP ya aprobada no puede
+descuadrarse después, porque **las líneas no se pueden tocar fuera de `borrador` y
+`rechazado`**. Eso está en dos capas:
+
+- `fn_lop_factura_pagable` y `fn_lopcaja_op_editable` (triggers) rechazan cualquier
+  `INSERT`/`UPDATE`/`DELETE` de líneas si la OP está en otro estado;
+- `OrdenPagoService.getEditable` lo corta antes, con un 422 que trae el estado.
+
+`fn_lop_factura_pagable` además verifica, en el mismo lugar, que la factura esté
+`finalizado`, que su moneda sea la de la OP y que **el proveedor coincida**.
 
 ### Fuera de alcance
 
-- El gate **no** vuelve a correr en `en_aprobacion → aprobado` ni en `aprobado → pagado`. Si
-  alguien modificara las líneas después de aprobada, la OP podría pagarse descuadrada; hoy
-  lo impide que las rutas de agregar y quitar exijan borrador, no el gate.
-- No se verifica que la factura no esté ya incluida en **otra** OP. El rollup de pago existe
-  y la pantalla lo muestra, pero no hay una restricción que lo impida en la base.
+- No se verifica que la factura no esté ya incluida en **otra** OP. Hay un
+  `UNIQUE (orden_pago_id, factura_id)`, que impide repetirla dentro de la misma orden, pero
+  nada impide que la misma factura entre en dos órdenes distintas. El rollup de pago existe
+  y la pantalla lo muestra, pero no es una restricción.
 
 ---
 

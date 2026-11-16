@@ -117,7 +117,8 @@ esto, dos supervisores aprobando a la vez pisarían uno al otro en silencio.
    `src/services/certificacion.service.test.ts` → _"404 si la certificación no existe"_
 
 9. **Qué permiso hace falta depende del estado destino, no del documento.** Llevar algo a
-   `aprobado` o `anulado` exige `aprobar`; mandarlo a aprobación alcanza con `crear`.
+   `aprobado`, `rechazado`, `anulado` o `pagado` exige `aprobar`; mandarlo a aprobación o
+   devolverlo a borrador alcanza con `crear`.
    `src/services/transiciones.test.ts` → _"en_aprobacion / borrador → 'crear'"_
 
 ### Fuera de alcance
