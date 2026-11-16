@@ -3,8 +3,8 @@ import { SaludRepository } from "@/repositories/salud.repository"
 import { pingStorage } from "@/lib/storage/comprobantes"
 import { conTimeout } from "@/shared/con-timeout"
 
-// GET /api/health — público y sin datos sensibles. Lo consume el monitoreo sintético
-// (.github/workflows/monitor.yml) y cualquier chequeo externo.
+// GET /api/health — público y sin datos sensibles. Lo consume cualquier chequeo externo
+// de disponibilidad.
 //
 // Público a propósito: un health check que pide credenciales no sirve para monitorear desde
 // afuera. Por eso la respuesta NO dice nada que no se pueda publicar: ni mensajes de error de
