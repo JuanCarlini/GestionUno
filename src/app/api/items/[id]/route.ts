@@ -6,6 +6,8 @@ import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import type { IdParams } from "@/lib/route/params"
+import { respuestaError } from "@/lib/route/respuesta-error"
+import { CACHE_CATALOGO } from "@/lib/route/cache"
 
 // GET /api/items/[id] - Obtener un item por ID
 export const GET = getByIdRoute({
@@ -13,6 +15,7 @@ export const GET = getByIdRoute({
   getById: (id) => ItemService.getById(id),
   noEncontrado: "Item no encontrado",
   contexto: "GET /api/items/[id]",
+  cache: CACHE_CATALOGO,
 })
 
 // PUT /api/items/[id] - Actualizar un item
@@ -26,7 +29,7 @@ export async function PUT(request: NextRequest, { params }: IdParams) {
 
     const itemActualizado = await ItemService.update(itemId, validatedData)
     if (!itemActualizado) {
-      return NextResponse.json({ error: "Item no encontrado" }, { status: 404 })
+      return respuestaError(404, "Item no encontrado")
     }
 
     return NextResponse.json(itemActualizado)
@@ -43,20 +46,10 @@ export async function DELETE(request: NextRequest, { params }: IdParams) {
 
     const itemId = parseId((await params).id)
 
-    // Un item usado en alguna OC no se borra: se marca inactivo
-    if (await ItemService.isInUse(itemId)) {
-      return NextResponse.json(
-        {
-          error: "No se puede eliminar el item porque está siendo utilizado en órdenes de compra",
-          suggestion: "Puedes marcarlo como inactivo en su lugar",
-        },
-        { status: 409 }
-      )
-    }
-
-    const success = await ItemService.softDelete(itemId)
-    if (!success) {
-      return NextResponse.json({ error: "Item no encontrado" }, { status: 404 })
+    // Soft delete: el 409 de "está en uso" lo tira el service, igual que en PATCH /estado.
+    const item = await ItemService.setActivo(itemId, false)
+    if (!item) {
+      return respuestaError(404, "Item no encontrado")
     }
 
     return NextResponse.json({ message: "Item marcado como inactivo correctamente" })

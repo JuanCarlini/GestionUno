@@ -5,15 +5,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { SearchBar } from "@/components/search-bar"
-import { SearchStats } from "@/components/search-stats"
 import { Eye, FileCheck } from "lucide-react"
 import { EmptyState } from "@/components/empty-state"
 import { CrearButton } from "@/components/crear-button"
 import { ListShell } from "@/components/list-shell"
-import { SortControl, useSort, type SortField } from "@/components/sort-control"
+import { SortControl, useSortRemoto, type SortField } from "@/components/sort-control"
+import { Paginador } from "@/components/paginador"
+import { useListado } from "@/hooks/use-listado"
 import { LABEL_ESTADO } from "@/models"
 import Link from "next/link"
-import { searchWithScore } from "@/shared/search-utils"
 import { formatCurrency } from "@/shared/format-utils"
 import { showErrorToast } from "@/shared/toast-helpers"
 import { StatusBadge } from "@/components/status-badge"
@@ -27,85 +27,64 @@ const SORT_FIELDS: SortField[] = [
 ]
 
 export function CertificacionesList() {
-  const [certificaciones, setCertificaciones] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
+  const {
+    items: certificaciones,
+    total,
+    page,
+    paginas,
+    limit,
+    loading,
+    refrescando,
+    error,
+    q,
+    setQ,
+    orden,
+    setOrden,
+    irA,
+  } = useListado<any>("/api/certificaciones", { ordenInicial: "created_at.desc" })
 
-  useEffect(() => {
-    fetchCertificaciones()
-  }, [])
-
-  const fetchCertificaciones = async () => {
-    try {
-      const response = await fetch('/api/certificaciones')
-      if (!response.ok) throw new Error('Error al cargar certificaciones')
-      const data = await response.json()
-      setCertificaciones(data)
-      setError(null)
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : "No se pudieron cargar las certificaciones"
-      setError(msg)
-      showErrorToast("Error", msg)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const sort = useSort(SORT_FIELDS)
+  // La búsqueda y el orden los hace la base: con la lista paginada, filtrar en el cliente
+  // filtraría solo dentro de la página visible.
+  const sort = useSortRemoto(SORT_FIELDS, orden, setOrden)
 
 
-  const filteredCertificaciones = searchWithScore(
-    certificaciones,
-    searchTerm,
-    ["numero_cert", "numero_oc", "proveedor_nombre", "estado"],
-    { numero_cert: 3, numero_oc: 2, proveedor_nombre: 2, estado: 2 }
-  )
-
-  const sorted = sort.apply(filteredCertificaciones)
 
   return (
     <ListShell loading={loading} error={error} loadingText="Cargando certificaciones...">
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle>Certificaciones ({filteredCertificaciones.length})</CardTitle>
+          <CardTitle>Certificaciones ({total})</CardTitle>
           <SearchBar
-            value={searchTerm}
-            onChange={setSearchTerm}
+            value={q}
+            onChange={setQ}
             placeholder="Buscar por número, OC, proveedor..."
             className="w-full sm:w-80"
           />
         </div>
       </CardHeader>
       <CardContent>
-        <SearchStats
-          totalItems={certificaciones.length}
-          filteredItems={filteredCertificaciones.length}
-          searchTerm={searchTerm}
-          entityName="certificación"
-        />
 
         <div className="mb-4 flex justify-end">
           <SortControl {...sort} />
         </div>
 
         <div className="space-y-4">
-          {filteredCertificaciones.length === 0 ? (
+          {certificaciones.length === 0 ? (
             <EmptyState
               icon={FileCheck}
               title={
-                searchTerm
-                  ? `No se encontraron certificaciones que coincidan con "${searchTerm}"`
+                q
+                  ? `No se encontraron certificaciones que coincidan con "${q}"`
                   : "No hay certificaciones registradas"
               }
             >
-              {!searchTerm && (
+              {!q && (
                 <CrearButton modulo="certificaciones" href="/certificaciones/nueva" label="Crear la primera certificación" />
               )}
             </EmptyState>
           ) : (
-            sorted.map((cert: any) => (
+            certificaciones.map((cert: any) => (
               <div
                 key={cert.id}
                 className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
@@ -152,6 +131,17 @@ export function CertificacionesList() {
               </div>
             ))
           )}
+        </div>
+
+        <div className="mt-4">
+          <Paginador
+            page={page}
+            paginas={paginas}
+            total={total}
+            limit={limit}
+            refrescando={refrescando}
+            onIrA={irA}
+          />
         </div>
       </CardContent>
     </Card>

@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
+import { ListSkeleton } from "@/components/skeletons"
 
 // Estados uniformes de las listas del circuito (loading / error). El resto — título,
 // buscador, filas, empty-state — diverge por dominio y va como children.
@@ -18,17 +18,9 @@ export function ListShell({
   children: ReactNode
 }) {
   if (loading) {
-    return (
-      <Card>
-        <CardContent className="space-y-3 py-6" role="status" aria-busy="true" aria-label={loadingText}>
-          <Skeleton className="h-9 w-64" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-16 w-full" />
-        </CardContent>
-      </Card>
-    )
+    // El mismo skeleton que muestra loading.tsx mientras resuelve el Server Component: así la
+    // transición entre los dos no salta. Antes era uno genérico de 4 barras iguales.
+    return <ListSkeleton etiqueta={loadingText} />
   }
 
   if (error) {

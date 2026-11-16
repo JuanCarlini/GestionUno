@@ -1,8 +1,9 @@
 import type { TablesUpdate } from "@/lib/supabase/database.types"
-import { OrdenCompraRepository } from "@/repositories/orden-compra.repository"
+import { OrdenCompraRepository, type LineaNueva } from "@/repositories/orden-compra.repository"
 import { ItemPrecioRepository } from "@/repositories/item-precio.repository"
 import { HttpError } from "@/lib/route/http-error"
-import { totalesDeLinea, totalesDeCabecera, IVA_DEFAULT } from "@/services/totales"
+import { exigirCambioAplicado } from "@/lib/route/estado-route"
+import { totalesDeLinea, IVA_DEFAULT } from "@/services/totales"
 import { puedeTransicionar, TRANSICIONES_APROBACION } from "@/services/transiciones"
 import {
   CreateOrdenCompraData,
@@ -14,6 +15,8 @@ import {
   OrdenCompraLineaConItem,
 } from "@/models"
 import { ItemService } from "./item.service"
+import type { Orden, Pagina, Paginacion } from "@/lib/route/paginacion"
+import type { FiltrosListado } from "@/repositories/filtros"
 
 // Una OC solo acepta cambios en sus líneas mientras es borrador (o rechazada): editar cantidades
 // tras aprobarla falsearía el avance certificado y dejaría v_loc_rollup en negativo.
@@ -29,64 +32,60 @@ export interface Actor {
 // Reglas de negocio de órdenes de compra (I/O en OrdenCompraRepository). Numeración, gate de
 // ≥1 línea y rollups (v_oc_rollup / v_loc_rollup) viven en la DB.
 export class OrdenCompraService {
-  // Lista con el chip de estado de certificación, leído de la vista.
-  static async getAll() {
-    const ordenes = await OrdenCompraRepository.findAll()
-    if (ordenes.length === 0) return []
+  // Una página del listado, con el chip de estado de certificación leído de la vista. El
+  // rollup se consulta solo para los ids de esta página.
+  static async getPagina(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<Record<string, unknown>>> {
+    const { data: ordenes, total } = await OrdenCompraRepository.findPagina(p, opts)
+    if (ordenes.length === 0) return { data: [], total }
 
     const rollups = await OrdenCompraRepository.findRollupsByIds(ordenes.map((o) => o.id))
     const porId = new Map(rollups.map((r) => [r.orden_compra_id, r]))
 
-    return ordenes.map((oc) => ({
-      ...oc,
-      estado_certificacion: porId.get(oc.id)?.estado_certificacion ?? "sin",
-      monto_pendiente_certificar: Number(porId.get(oc.id)?.monto_pendiente_certificar ?? 0),
-    }))
+    return {
+      total,
+      data: ordenes.map((oc) => ({
+        ...oc,
+        estado_certificacion: porId.get(oc.id)?.estado_certificacion ?? "sin",
+        monto_pendiente_certificar: Number(porId.get(oc.id)?.monto_pendiente_certificar ?? 0),
+      })),
+    }
   }
 
   static async getById(id: number): Promise<OrdenCompra | null> {
     return OrdenCompraRepository.findById(id)
   }
 
-  // Crea la OC (cabecera + líneas opcionales). numero_oc lo genera la DB; el estado lo
-  // fija el server; los totales los calcula la app (la DB no los mantiene).
+  // Crea la OC (cabecera + líneas opcionales) en UNA transacción (fn_crear_orden_compra).
+  // numero_oc lo genera la DB y el estado lo fija la función; los totales de cabecera los
+  // calcula la misma transacción desde las líneas persistidas.
   static async create(
     payload: CreateOrdenCompraData & { lineas?: CreateLineaFromItem[] },
     createdBy: number
   ): Promise<OrdenCompra> {
     const { lineas, ...ocData } = payload
 
-    const oc = await OrdenCompraRepository.insert({ ...ocData, estado: "borrador", created_by: createdBy })
+    // Las líneas se arman ANTES del alta: el precio heredado del proveedor, la descripción
+    // del item y los totales por línea son reglas de la app, no de la base.
+    // Concurrente (I/O-bound): cada armarLinea hace su lookup de item + precio; en serie
+    // eran ~2N round-trips secuenciales (N = líneas). Promise.all preserva el orden.
+    const armadas = await Promise.all(
+      (lineas ?? []).map((l) => OrdenCompraService.armarLinea(ocData.proveedor_id, l))
+    )
 
-    if (lineas && lineas.length > 0) {
-      try {
-        // Concurrente (I/O-bound): cada armarLinea hace su lookup de item + precio; en serie
-        // eran ~2N round-trips secuenciales (N = líneas). Promise.all preserva el orden.
-        const armadas = await Promise.all(lineas.map((l) => OrdenCompraService.armarLinea(oc, l)))
-        await OrdenCompraRepository.insertLineas(armadas)
-        await OrdenCompraService.recalcularCabecera(oc.id)
-      } catch (e) {
-        // Sin transacción de cliente: compensamos para no dejar una OC huérfana.
-        await OrdenCompraRepository.deleteById(oc.id)
-        throw e
-      }
-    }
-
-    return oc
+    // Ya no hay compensación: si falla una línea, la transacción se cae entera y no queda
+    // ninguna OC huérfana que borrar.
+    return OrdenCompraRepository.crearConLineas({ ...ocData, created_by: createdBy }, armadas)
   }
 
-  // Agrega una línea eligiendo un item del catálogo.
-  static async addLinea(
-    ocId: number,
-    input: CreateLineaFromItem,
-    opts = { recalcular: true }
-  ): Promise<OrdenCompraLinea> {
+  // Agrega una línea eligiendo un item del catálogo. Los totales de la cabecera los recalcula
+  // trg_recalc_oc_cabecera en la misma transacción (migración totales_01_triggers_cabecera).
+  static async addLinea(ocId: number, input: CreateLineaFromItem): Promise<OrdenCompraLinea> {
     const oc = await OrdenCompraService.getEditable(ocId)
-    const linea = await OrdenCompraService.armarLinea(oc, input)
-    const creada = await OrdenCompraRepository.insertLinea(linea)
-
-    if (opts.recalcular) await OrdenCompraService.recalcularCabecera(ocId)
-    return creada
+    const armada = await OrdenCompraService.armarLinea(oc.proveedor_id, input)
+    return OrdenCompraRepository.insertLinea({ ...armada, orden_compra_id: ocId })
   }
 
   // Alias histórico: la ruta POST /[id]/lineas lo llama así.
@@ -98,16 +97,18 @@ export class OrdenCompraService {
    * El precio vive en gu_item_proveedor_precio (por proveedor), no en el item: si la UI no lo
    * manda se hereda del par (item, proveedor); si lo manda se guarda ahí y arma la lista.
    */
+  // Recibe el proveedor y no la OC: en el alta transaccional la cabecera todavía no existe
+  // cuando se arman las líneas, y lo único que hace falta es el proveedor para el precio.
   private static async armarLinea(
-    oc: Pick<OrdenCompra, "id" | "proveedor_id">,
+    proveedorId: number,
     input: CreateLineaFromItem
-  ): Promise<CreateOrdenCompraLinea> {
+  ): Promise<LineaNueva> {
     const item = await ItemService.getById(input.item_id)
     if (!item) throw new HttpError(404, `Item con ID ${input.item_id} no encontrado`)
 
     let precio = input.precio_unitario_neto
     if (precio === undefined) {
-      const heredado = await ItemPrecioRepository.findPrecio(input.item_id, oc.proveedor_id)
+      const heredado = await ItemPrecioRepository.findPrecio(input.item_id, proveedorId)
       if (heredado === null) {
         throw new HttpError(
           422,
@@ -116,12 +117,11 @@ export class OrdenCompraService {
       }
       precio = heredado
     } else {
-      await ItemPrecioRepository.upsertPrecio(input.item_id, oc.proveedor_id, precio)
+      await ItemPrecioRepository.upsertPrecio(input.item_id, proveedorId, precio)
     }
 
     const iva = input.iva_porcentaje ?? IVA_DEFAULT
     return {
-      orden_compra_id: oc.id,
       item_id: item.id,
       descripcion: input.descripcion || item.nombre,
       cantidad: input.cantidad,
@@ -132,7 +132,8 @@ export class OrdenCompraService {
     }
   }
 
-  // Actualizar una línea; si cambia cantidad/precio/IVA, recalcula sus totales y los de la cabecera.
+  // Actualizar una línea; si cambia cantidad/precio/IVA, recalcula sus totales. Los de la
+  // cabecera los pone el trigger.
   static async updateLine(
     lineaId: number,
     updates: Partial<CreateOrdenCompraLinea>
@@ -156,9 +157,7 @@ export class OrdenCompraService {
       )
     }
 
-    const actualizada = await OrdenCompraRepository.updateLinea(lineaId, updates)
-    await OrdenCompraService.recalcularCabecera(actual.orden_compra_id)
-    return actualizada
+    return OrdenCompraRepository.updateLinea(lineaId, updates)
   }
 
   static async deleteLine(lineaId: number): Promise<boolean> {
@@ -166,16 +165,13 @@ export class OrdenCompraService {
     if (!actual) throw new HttpError(404, "Línea no encontrada")
     await OrdenCompraService.getEditable(actual.orden_compra_id)
 
-    const ok = await OrdenCompraRepository.deleteLinea(lineaId)
-    if (ok) await OrdenCompraService.recalcularCabecera(actual.orden_compra_id)
-    return ok
+    return OrdenCompraRepository.deleteLinea(lineaId)
   }
 
-  // La DB no mantiene los totales de cabecera: tras tocar líneas, la app los reescribe.
-  static async recalcularCabecera(ocId: number): Promise<void> {
-    const lineas = await OrdenCompraRepository.findLineasByOrdenId(ocId)
-    await OrdenCompraRepository.update(ocId, totalesDeCabecera(lineas))
-  }
+  // Los totales de cabecera ya no se reescriben desde acá: los recalcula
+  // trg_recalc_oc_cabecera sobre gu_lineasdeordenesdecompra, dentro de la misma transacción
+  // que cambió la línea (ver supabase/migrations/..._totales_01_triggers_cabecera.sql). Dos
+  // ediciones simultáneas se intercalaban entre el read y el write y dejaban el total viejo.
 
   // Pre-chequeo del grafo de estados (409). Los gates de negocio son triggers y devuelven 422:
   // acá no se reimplementan.
@@ -187,7 +183,8 @@ export class OrdenCompraService {
       throw new HttpError(409, `No se puede pasar de ${oc.estado} a ${destino}`)
     }
 
-    return OrdenCompraRepository.updateEstado(id, destino)
+    // El estado leído arriba viaja al update: si cambió en el medio, 409.
+    return exigirCambioAplicado(await OrdenCompraRepository.updateEstado(id, destino, oc.estado))
   }
 
   // La cabecera se protege como las líneas: sin esta guarda se podría reasignar el proveedor o la

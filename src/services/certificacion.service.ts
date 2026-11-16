@@ -2,9 +2,11 @@ import type { TablesUpdate } from "@/lib/supabase/database.types"
 import { CertificacionRepository } from "@/repositories/certificacion.repository"
 import { OrdenCompraRepository } from "@/repositories/orden-compra.repository"
 import { HttpError } from "@/lib/route/http-error"
-import { totalesDeCertificacion } from "@/services/totales"
+import { exigirCambioAplicado } from "@/lib/route/estado-route"
 import { puedeTransicionar, TRANSICIONES_APROBACION } from "@/services/transiciones"
 import type { CreateCertificacionLinea, EstadoAprobacion } from "@/models"
+import type { Orden, Pagina, Paginacion } from "@/lib/route/paginacion"
+import type { FiltrosListado } from "@/repositories/filtros"
 
 interface CreateCertificacionInput {
   orden_compra_id: number
@@ -16,21 +18,27 @@ interface CreateCertificacionInput {
 // Reglas de negocio de certificaciones (I/O en CertificacionRepository). Numeración, derivación
 // de líneas, tope del 100% y rollups viven en la DB; los chequeos de acá son pre-validación.
 export class CertificacionService {
-  static async getAll() {
-    const certs = await CertificacionRepository.findAllWithRelations()
-    if (certs.length === 0) return []
+  static async getPagina(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<Record<string, unknown>>> {
+    const { data: certs, total } = await CertificacionRepository.findPaginaWithRelations(p, opts)
+    if (certs.length === 0) return { data: [], total }
 
     const rollups = await CertificacionRepository.findRollupsByIds(certs.map((c: any) => c.id))
     const porId = new Map(rollups.map((r) => [r.certificacion_id, r]))
 
-    return certs.map((cert: any) => ({
-      ...cert,
-      proveedor_nombre: cert.gu_proveedores?.nombre,
-      numero_oc: cert.gu_ordenesdecompra?.numero_oc,
-      moneda: cert.gu_ordenesdecompra?.moneda,
-      estado_facturacion: porId.get(cert.id)?.estado_facturacion ?? "sin",
-      monto_facturado: Number(porId.get(cert.id)?.monto_facturado ?? 0),
-    }))
+    return {
+      total,
+      data: certs.map((cert: any) => ({
+        ...cert,
+        proveedor_nombre: cert.gu_proveedores?.nombre,
+        numero_oc: cert.gu_ordenesdecompra?.numero_oc,
+        moneda: cert.gu_ordenesdecompra?.moneda,
+        estado_facturacion: porId.get(cert.id)?.estado_facturacion ?? "sin",
+        monto_facturado: Number(porId.get(cert.id)?.monto_facturado ?? 0),
+      })),
+    }
   }
 
   static async getById(id: number) {
@@ -75,37 +83,17 @@ export class CertificacionService {
       )
     }
 
-    const nuevaCert = await CertificacionRepository.insert({
-      ...certData,
-      orden_compra_id,
-      proveedor_id: oc.proveedor_id,
-      estado: "borrador",
-    })
-
-    try {
-      await CertificacionRepository.insertLineas(
-        lineas.map((l) => ({
-          certificacion_id: nuevaCert.id,
-          linea_oc_id: l.linea_oc_id,
-          avance_unidades: l.avance_unidades,
-        }))
-      )
-      await CertificacionService.recalcularCabecera(nuevaCert.id)
-    } catch (e) {
-      // Sin transacción de cliente: si el trigger del 100% rechaza una línea, la cabecera
-      // quedaría huérfana. Se compensa y se propaga el error crudo (la ruta lo hace 422).
-      await CertificacionRepository.deleteById(nuevaCert.id)
-      throw e
-    }
-
-    return nuevaCert
+    // Cabecera y líneas en UNA transacción (fn_crear_certificacion). Si el trigger del 100%
+    // rechaza una línea, se cae el alta completa: el error crudo sube igual y la ruta lo
+    // convierte en 422, pero ya no queda una cabecera huérfana que compensar.
+    return CertificacionRepository.crearConLineas(
+      { ...certData, orden_compra_id, proveedor_id: oc.proveedor_id, estado: "borrador" },
+      lineas.map((l) => ({ linea_oc_id: l.linea_oc_id, avance_unidades: l.avance_unidades }))
+    )
   }
 
-  // Los totales de la cabecera los suma la app, desde las líneas ya derivadas por el trigger.
-  static async recalcularCabecera(certId: number): Promise<void> {
-    const lineas = await CertificacionRepository.findLineasByCertId(certId)
-    await CertificacionRepository.update(certId, totalesDeCertificacion(lineas))
-  }
+  // Los totales de cabecera se suman dentro de fn_crear_certificacion, en la misma
+  // transacción que inserta las líneas (ver supabase/migrations/..._altas_01_transaccionales).
 
   // Pre-chequeo del grafo (409). Los gates de negocio son triggers y devuelven 422.
   static async cambiarEstado(id: number, destino: EstadoAprobacion) {
@@ -116,7 +104,8 @@ export class CertificacionService {
       throw new HttpError(409, `No se puede pasar de ${cert.estado} a ${destino}`)
     }
 
-    return CertificacionRepository.updateEstado(id, destino)
+    // El estado leído arriba viaja al update: si cambió en el medio, 409.
+    return exigirCambioAplicado(await CertificacionRepository.updateEstado(id, destino, cert.estado))
   }
 
   // El schema solo deja pasar fecha_devengado/observaciones (el devengado suele cargarse

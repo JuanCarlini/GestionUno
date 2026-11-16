@@ -1,4 +1,5 @@
 import { ItemRepository } from "@/repositories/item.repository"
+import { HttpError } from "@/lib/route/http-error"
 import { Item, CreateItemDTO, UpdateItemDTO } from "@/models"
 
 // Reglas de negocio de items. El I/O vive en ItemRepository; acá quedan el default
@@ -33,13 +34,20 @@ export class ItemService {
     return ItemRepository.update(id, item)
   }
 
-  // Soft delete: marcar inactivo (reversible con reactivate)
-  static async softDelete(id: number): Promise<boolean> {
-    return ItemRepository.setActive(id, false)
-  }
-
-  static async reactivate(id: number): Promise<boolean> {
-    return ItemRepository.setActive(id, true)
+  // Activar o desactivar. Un solo método para los dos sentidos: lo consumen PATCH
+  // /items/[id]/estado y el DELETE del recurso, que es el mismo soft delete.
+  //
+  // La regla vive acá y no en la ruta para que los dos caminos la hereden: un item que
+  // aparece en alguna línea de OC no se desactiva, porque el histórico de esas OC lo
+  // referencia y el catálogo tiene que seguir resolviéndolo.
+  static async setActivo(id: number, activo: boolean): Promise<Item | null> {
+    if (!activo && (await ItemService.isInUse(id))) {
+      throw new HttpError(
+        409,
+        "No se puede desactivar el item porque está siendo utilizado en órdenes de compra"
+      )
+    }
+    return ItemRepository.setActive(id, activo)
   }
 
   static async isInUse(id: number): Promise<boolean> {

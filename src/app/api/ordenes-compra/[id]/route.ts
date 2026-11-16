@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { OrdenCompraService } from "@/services"
 import { UpdateOrdenCompraSchema } from "@/shared/validation/orden-compra-validation"
-import { requirePermission, usuarioTienePermiso } from "@/lib/auth/permissions-server"
+import { requirePermission, puedeCon } from "@/lib/auth/permissions-server"
 import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { getByIdRoute } from "@/lib/route/crud-route"
 import { AuditService } from "@/lib/audit/audit.service"
+import { respuestaError } from "@/lib/route/respuesta-error"
+import { CACHE_NUNCA } from "@/lib/route/cache"
 
 // GET /api/ordenes-compra/[id] - Obtener una orden específica
 export const GET = getByIdRoute({
@@ -13,6 +15,7 @@ export const GET = getByIdRoute({
   getById: (id) => OrdenCompraService.getById(id),
   noEncontrado: "Orden de compra no encontrada",
   contexto: "GET /api/ordenes-compra/[id]",
+  cache: CACHE_NUNCA,
 })
 
 // PUT /api/ordenes-compra/[id] - Editar la cabecera (el estado va por PATCH /estado)
@@ -21,16 +24,17 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error: authError, user } = await requirePermission("ordenes_compra", "crear")
+    const { error: authError, user, permisos } = await requirePermission("ordenes_compra", "crear")
     if (authError) return authError
 
     const id = parseId((await params).id)
     const validatedData = UpdateOrdenCompraSchema.parse(await request.json())
 
-    const actor = { id: user!.id, puedeAjenas: await usuarioTienePermiso(user!, "ordenes_compra", "aprobar") }
+    // Los permisos ya los trajo requirePermission: preguntar por "aprobar" no cuesta otra query.
+    const actor = { id: user!.id, puedeAjenas: puedeCon(user!, permisos!, "ordenes_compra", "aprobar") }
     const ordenActualizada = await OrdenCompraService.update(id, validatedData, actor)
     if (!ordenActualizada) {
-      return NextResponse.json({ error: "Orden de compra no encontrada" }, { status: 404 })
+      return respuestaError(404, "Orden de compra no encontrada")
     }
 
     await AuditService.registrar({
@@ -53,15 +57,16 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { error: authError, user } = await requirePermission("ordenes_compra", "borrar")
+    const { error: authError, user, permisos } = await requirePermission("ordenes_compra", "borrar")
     if (authError) return authError
 
     const id = parseId((await params).id)
 
-    const actor = { id: user!.id, puedeAjenas: await usuarioTienePermiso(user!, "ordenes_compra", "aprobar") }
+    // Mismo criterio que en el PUT: los permisos ya estan resueltos, no se vuelve a consultar.
+    const actor = { id: user!.id, puedeAjenas: puedeCon(user!, permisos!, "ordenes_compra", "aprobar") }
     const eliminada = await OrdenCompraService.delete(id, actor)
     if (!eliminada) {
-      return NextResponse.json({ error: "Orden de compra no encontrada" }, { status: 404 })
+      return respuestaError(404, "Orden de compra no encontrada")
     }
 
     await AuditService.registrar({

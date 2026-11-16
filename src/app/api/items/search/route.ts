@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { ItemService } from "@/services"
 import { requirePermission } from "@/lib/auth/permissions-server"
 import { handleRouteError } from "@/lib/route/handle-route-error"
+import { respuestaError } from "@/lib/route/respuesta-error"
+import { CACHE_CATALOGO, headersCache } from "@/lib/route/cache"
 
 // GET /api/items/search?query=texto - Buscar items por nombre o descripción
 export async function GET(request: NextRequest) {
@@ -12,15 +14,12 @@ export async function GET(request: NextRequest) {
     const query = request.nextUrl.searchParams.get("query")
 
     if (!query || query.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Query de búsqueda requerido" },
-        { status: 400 }
-      )
+      return respuestaError(400, "Query de búsqueda requerido")
     }
 
     const items = await ItemService.search(query.trim())
     
-    return NextResponse.json(items || [])
+    return NextResponse.json(items || [], { headers: headersCache(CACHE_CATALOGO) })
   } catch (error) {
     return handleRouteError(error, "GET /api/items/search")
   }

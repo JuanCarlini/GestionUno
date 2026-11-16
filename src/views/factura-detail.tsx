@@ -1,7 +1,8 @@
 "use client"
 
+import { DetailSkeleton } from "@/components/skeletons"
 import { useCallback, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { notFound, useRouter } from "next/navigation"
 import { use } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -12,6 +13,7 @@ import { formatCurrency } from "@/shared/format-utils"
 import { useAuth } from "@/components/auth-context"
 import { StatusBadge } from "@/components/status-badge"
 import { FacturaComprobante } from "@/views/factura-comprobante"
+import { mensajeDeError } from "@/shared/api-client"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,11 +69,19 @@ export function FacturaDetail({ params }: Props) {
   const [updating, setUpdating] = useState(false)
   const [showApproveDialog, setShowApproveDialog] = useState(false)
   const [showRejectDialog, setShowRejectDialog] = useState(false)
+  // notFound() tiene que salir del render, no del efecto: ahí adentro el throw cae fuera de
+  // React y no lo agarra el límite de not-found. Por eso el 404 viaja como estado.
+  const [noExiste, setNoExiste] = useState(false)
   const router = useRouter()
 
   const fetchFactura = useCallback(async () => {
     try {
       const response = await fetch(`/api/facturas/${id}`)
+      // El 404 es una pantalla, no un toast rojo: la factura no existe.
+      if (response.status === 404) {
+        setNoExiste(true)
+        return
+      }
       if (!response.ok) throw new Error("Error al cargar factura")
       const data = await response.json()
       setFactura(data)
@@ -98,7 +108,7 @@ export function FacturaDetail({ params }: Props) {
       })
 
       const updated = await response.json()
-      if (!response.ok) throw new Error(updated.error || "Error al actualizar factura")
+      if (!response.ok) throw new Error(mensajeDeError(updated, "Error al actualizar factura"))
 
       // El PATCH /estado devuelve solo la cabecera (sin lineas ni imputaciones).
       // Reconsultamos el detalle completo para no borrar esas secciones.
@@ -117,7 +127,9 @@ export function FacturaDetail({ params }: Props) {
   }
 
 
-  if (loading) return <div className="text-center py-8">Cargando...</div>
+  if (noExiste) notFound()
+
+  if (loading) return <DetailSkeleton conVolver />
   if (!factura) return <div className="text-center py-8">Factura no encontrada</div>
 
   return (
@@ -210,19 +222,19 @@ export function FacturaDetail({ params }: Props) {
             <div className="bg-muted p-4 rounded-lg space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal (Neto)</span>
-                <span className="font-semibold">
+                <span className="font-semibold tabular-nums">
                   {formatCurrency(Number(factura.total_neto ?? 0), factura.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">IVA</span>
-                <span className="font-semibold">
+                <span className="font-semibold tabular-nums">
                   {formatCurrency(Number(factura.total_iva ?? 0), factura.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between text-lg font-bold border-t pt-2">
                 <span>Total con IVA</span>
-                <span className="text-emerald-600 dark:text-emerald-400">
+                <span className="tabular-nums text-emerald-600 dark:text-emerald-400">
                   {formatCurrency(Number(factura.total_con_iva ?? 0), factura.moneda ?? "ARS")}
                 </span>
               </div>
@@ -286,11 +298,11 @@ export function FacturaDetail({ params }: Props) {
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Cantidad</div>
-                      <div className="font-medium">{linea.cantidad}</div>
+                      <div className="font-medium tabular-nums">{linea.cantidad}</div>
                     </div>
                     <div>
                       <div className="text-sm text-muted-foreground">Precio Unitario</div>
-                      <div className="font-medium">
+                      <div className="font-medium tabular-nums">
                         {formatCurrency(Number(linea.precio_unitario ?? 0), factura.moneda ?? "ARS")}
                       </div>
                     </div>

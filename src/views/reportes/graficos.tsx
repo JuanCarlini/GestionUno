@@ -206,7 +206,7 @@ export function StatTile({
   return (
     <div className="rounded-lg border p-4">
       <p className="text-sm font-medium text-muted-foreground">{titulo}</p>
-      <p className="mt-1 text-2xl font-bold">{valor}</p>
+      <p className="mt-1 text-2xl font-bold tabular-nums">{valor}</p>
       {detalle && <p className="mt-1 text-xs text-muted-foreground">{detalle}</p>}
     </div>
   )

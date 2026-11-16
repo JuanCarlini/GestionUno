@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/service"
 import { esSinFilas } from "./base.repository"
+import { rpcFila } from "./rpc"
+import { rango, type Orden, type Pagina, type Paginacion } from "@/lib/route/paginacion"
+import { orIlike, type FiltrosListado } from "./filtros"
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/database.types"
 import type { Factura, FacturaRollup, EstadoFactura } from "@/models"
 
@@ -7,9 +10,39 @@ const TABLE = "gu_facturas"
 const TABLE_LINEAS = "gu_lineasdefactura"
 const TABLE_CERTS = "gu_facturas_certificaciones"
 
+// Sin factura_id: en el alta transaccional lo asigna la función con el id de la cabecera.
+export type LineaNuevaFactura = Omit<TablesInsert<"gu_lineasdefactura">, "id" | "factura_id">
+export type ImputacionNueva = { certificacion_id: number; monto_asignado: number }
+
 // Repositorio de gu_facturas (+ líneas + puente N:M con certificaciones): solo I/O. En la DB
 // viven el número (fn_num_fact), la regla de imputación (fn_check_imputacion) y el rollup de pago.
 export class FacturaRepository {
+  static async findPaginaWithProveedor(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<any>> {
+    const supabase = createClient()
+    const o = opts.orden ?? { columna: "created_at", ascending: false }
+    const { desde, hasta } = rango(p)
+    const f = opts.filtros ?? {}
+
+    let q = supabase.from(TABLE).select("*, gu_proveedores(nombre, cuit)", { count: "exact" })
+    // El estado ya viene validado contra el enum en la ruta; el cliente tipado pide el
+    // literal y el filtro llega como string de la query.
+    if (f.estado) q = q.eq("estado", f.estado as never)
+    if (f.proveedorId) q = q.eq("proveedor_id", f.proveedorId)
+
+    const texto = orIlike(f.q, ["numero_factura", "numero_comprobante", "observaciones"])
+    if (texto) q = q.or(texto)
+
+    const { data, error, count } = await q
+      .order(o.columna, { ascending: o.ascending })
+      .range(desde, hasta)
+
+    if (error) throw error
+    return { data: data ?? [], total: count ?? 0 }
+  }
+
   static async findAllWithProveedor(): Promise<any[]> {
     const supabase = createClient()
     const { data, error } = await supabase
@@ -74,19 +107,21 @@ export class FacturaRepository {
     return data || []
   }
 
-  static async insert(factura: TablesInsert<"gu_facturas">): Promise<Factura> {
-    const supabase = createClient()
-    const { data, error } = await supabase.from(TABLE).insert(factura).select().single()
-    if (error) throw error
-    return data
+  // Alta completa en una transacción: cabecera, líneas e imputaciones. Las líneas y las
+  // imputaciones llegan sin factura_id, lo asigna la función.
+  static async crearConLineas(
+    cabecera: TablesInsert<"gu_facturas">,
+    lineas: LineaNuevaFactura[],
+    imputaciones: ImputacionNueva[]
+  ): Promise<Factura> {
+    return rpcFila<Factura>("fn_crear_factura", {
+      p_cabecera: cabecera,
+      p_lineas: lineas,
+      p_imputaciones: imputaciones,
+    })
   }
 
-  static async insertLineas(lineas: TablesInsert<"gu_lineasdefactura">[]): Promise<void> {
-    if (!lineas || lineas.length === 0) return
-    const supabase = createClient()
-    const { error } = await supabase.from(TABLE_LINEAS).insert(lineas)
-    if (error) throw error
-  }
+
 
   // Insertar DESPUÉS de las LFACT: fn_check_imputacion compara contra Σtotal_con_iva de las
   // líneas (valida cert aprobada + tope, rebota como P0001 -> 422).
@@ -120,9 +155,22 @@ export class FacturaRepository {
     return data
   }
 
-  static async updateEstado(id: number, estado: EstadoFactura): Promise<Factura> {
+  // Update CONDICIONAL: filtra también por el estado que la app leyó antes de validar la
+  // transición. Si otro usuario ya movió el documento, no afecta ninguna fila y devuelve
+  // null; el service lo convierte en 409 en vez de pisar el cambio del otro.
+  static async updateEstado(
+    id: number,
+    estado: EstadoFactura,
+    estadoEsperado: EstadoFactura
+  ): Promise<Factura | null> {
     const supabase = createClient()
-    const { data, error } = await supabase.from(TABLE).update({ estado }).eq("id", id).select().single()
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update({ estado })
+      .eq("id", id)
+      .eq("estado", estadoEsperado)
+      .select()
+      .maybeSingle()
     if (error) throw error
     return data
   }

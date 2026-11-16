@@ -1,7 +1,8 @@
 "use client"
 
+import { DetailSkeleton } from "@/components/skeletons"
 import { useCallback, useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { notFound, useParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
@@ -19,6 +20,7 @@ import { formatCurrency } from "@/shared/format-utils"
 import { StatusBadge } from "@/components/status-badge"
 import { useAuth } from "@/components/auth-context"
 import { showErrorToast } from "@/shared/toast-helpers"
+import { mensajeDeError } from "@/shared/api-client"
 import {
   Loader2,
   ArrowLeft,
@@ -71,12 +73,18 @@ export function OrdenPagoDetails() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
+  const [noExiste, setNoExiste] = useState(false)
   // Aprobar, rechazar y pagar son transiciones sin vuelta atrás: piden confirmación.
   const [confirmAction, setConfirmAction] = useState<"aprobado" | "rechazado" | "pagado" | null>(null)
 
   const fetchOrden = useCallback(async () => {
     try {
       const res = await fetch(`/api/ordenes-pago/${id}`)
+      // El 404 va a la pantalla de 404 (ver el comentario en orden-compra-details).
+      if (res.status === 404) {
+        setNoExiste(true)
+        return
+      }
       if (!res.ok) {
         setError("Orden no encontrada")
         setOrden(null)
@@ -106,7 +114,7 @@ export function OrdenPagoDetails() {
         body: JSON.stringify({ estado: nuevoEstado }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Error al cambiar el estado")
+      if (!res.ok) throw new Error(mensajeDeError(data, "Error al cambiar el estado"))
       // El PATCH /estado devuelve solo la cabecera; reconsultamos facturas + cajas.
       await fetchOrden()
     } catch (error) {
@@ -119,16 +127,9 @@ export function OrdenPagoDetails() {
     }
   }
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando detalles de la orden de pago...</p>
-        </CardContent>
-      </Card>
-    )
-  }
+  if (noExiste) notFound()
+
+  if (loading) return <DetailSkeleton conVolver />
 
   if (error || !orden) {
     return (

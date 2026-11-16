@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/service"
 import { esSinFilas } from "./base.repository"
+import { rpcFila } from "./rpc"
+import { rango, type Orden, type Pagina, type Paginacion } from "@/lib/route/paginacion"
+import { orIlike, type FiltrosListado } from "./filtros"
 import type { TablesInsert, TablesUpdate } from "@/lib/supabase/database.types"
 import type { EstadoAprobacion, LocRollup, OcRollup } from "@/models"
 import {
@@ -12,14 +15,48 @@ import {
 const TABLE = "gu_ordenesdecompra"
 const TABLE_LINEAS = "gu_lineasdeordenesdecompra"
 
-// Repositorio de gu_ordenesdecompra (+ líneas): solo I/O — el default de estado, la
-// compensación anti-huérfanas y el cálculo de totales de línea viven en OrdenCompraService.
+// Línea lista para persistir, sin orden_compra_id: en el alta transaccional la cabecera
+// todavía no existe cuando la app arma las líneas, y el id lo pone la función.
+export type LineaNueva = Omit<CreateOrdenCompraLinea, "orden_compra_id">
+
+// Repositorio de gu_ordenesdecompra (+ líneas): solo I/O — el cálculo de totales de línea
+// vive en OrdenCompraService. El alta va por fn_crear_orden_compra: cabecera y líneas en una
+// transacción, así que ya no hay compensación anti-huérfanas que mantener.
 export class OrdenCompraRepository {
   static async findAll(): Promise<OrdenCompra[]> {
     const supabase = createClient()
     const { data, error } = await supabase.from(TABLE).select("*").order("created_at", { ascending: false })
     if (error) throw error
     return (data || []) as OrdenCompra[]
+  }
+
+  // Una página del listado. El rollup de certificación lo agrega el service con una segunda
+  // consulta sobre los ids de ESTA página (antes era sobre todas las filas).
+  static async findPagina(
+    p: Paginacion,
+    opts: { filtros?: FiltrosListado; orden?: Orden } = {}
+  ): Promise<Pagina<OrdenCompra>> {
+    const supabase = createClient()
+    const o = opts.orden ?? { columna: "created_at", ascending: false }
+    const { desde, hasta } = rango(p)
+    const f = opts.filtros ?? {}
+
+    let q = supabase.from(TABLE).select("*", { count: "exact" })
+    // El estado ya viene validado contra el enum en la ruta; el cliente tipado pide el
+    // literal y el filtro llega como string de la query.
+    if (f.estado) q = q.eq("estado", f.estado as never)
+    if (f.proveedorId) q = q.eq("proveedor_id", f.proveedorId)
+    if (f.proyectoId) q = q.eq("proyecto_id", f.proyectoId)
+
+    const texto = orIlike(f.q, ["numero_oc", "tarea", "observaciones"])
+    if (texto) q = q.or(texto)
+
+    const { data, error, count } = await q
+      .order(o.columna, { ascending: o.ascending })
+      .range(desde, hasta)
+
+    if (error) throw error
+    return { data: (data ?? []) as OrdenCompra[], total: count ?? 0 }
   }
 
   static async findById(id: number): Promise<OrdenCompra | null> {
@@ -32,19 +69,16 @@ export class OrdenCompraRepository {
     return data as OrdenCompra
   }
 
-  static async insert(oc: TablesInsert<"gu_ordenesdecompra">): Promise<OrdenCompra> {
-    const supabase = createClient()
-    const { data, error } = await supabase.from(TABLE).insert(oc).select().single()
-    if (error) throw error
-    return data as OrdenCompra
-  }
-
-  // Inserta líneas sin devolverlas (usado por create; error se propaga para compensar).
-  static async insertLineas(lineas: TablesInsert<"gu_lineasdeordenesdecompra">[]): Promise<void> {
-    if (!lineas || lineas.length === 0) return
-    const supabase = createClient()
-    const { error } = await supabase.from(TABLE_LINEAS).insert(lineas)
-    if (error) throw error
+  // Alta completa en una transacción. Las líneas llegan SIN orden_compra_id: lo asigna la
+  // función con el id que acaba de generar la cabecera.
+  static async crearConLineas(
+    cabecera: TablesInsert<"gu_ordenesdecompra">,
+    lineas: LineaNueva[]
+  ): Promise<OrdenCompra> {
+    return rpcFila<OrdenCompra>("fn_crear_orden_compra", {
+      p_cabecera: cabecera,
+      p_lineas: lineas,
+    })
   }
 
   // Inserta líneas y las devuelve (usado por createLines).
@@ -76,9 +110,22 @@ export class OrdenCompraRepository {
 
   // Transición de estado. El gate (fn_oc_gate: >=1 línea) es un trigger: si rebota,
   // el error sube como P0001 y la ruta lo traduce a 422 con el mensaje de la DB.
-  static async updateEstado(id: number, estado: EstadoAprobacion): Promise<OrdenCompra> {
+  // Update CONDICIONAL: filtra también por el estado que la app leyó antes de validar la
+  // transición. Si otro usuario ya movió el documento, no afecta ninguna fila y devuelve
+  // null; el service lo convierte en 409 en vez de pisar el cambio del otro.
+  static async updateEstado(
+    id: number,
+    estado: EstadoAprobacion,
+    estadoEsperado: EstadoAprobacion
+  ): Promise<OrdenCompra | null> {
     const supabase = createClient()
-    const { data, error } = await supabase.from(TABLE).update({ estado }).eq("id", id).select().single()
+    const { data, error } = await supabase
+      .from(TABLE)
+      .update({ estado })
+      .eq("id", id)
+      .eq("estado", estadoEsperado)
+      .select()
+      .maybeSingle()
     if (error) throw error
     return data as OrdenCompra
   }

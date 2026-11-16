@@ -18,6 +18,7 @@ import { Proveedor, Item } from "@/models"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
 import { ItemSelector } from "@/views/item-selector"
+import { mensajeDeError } from "@/shared/api-client"
 
 // La CABECERA va por react-hook-form + zodResolver; los items se agregan por un mini-form de
 // staging y viven en una lista de solo lectura → estado controlado (useFieldArray no aporta acá).
@@ -189,7 +190,7 @@ export function OrdenCompraForm() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
-        throw new Error(body.error || `Error ${res.status}`)
+        throw new Error(mensajeDeError(body, `Error ${res.status}`))
       }
 
       showSuccessToast("Orden de compra creada exitosamente")
@@ -442,15 +443,15 @@ export function OrdenCompraForm() {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Total Neto:</span>
-                    <span className="font-medium">{formatCurrency(calcularSubtotal(), monedaElegida)}</span>
+                    <span className="font-medium tabular-nums">{formatCurrency(calcularSubtotal(), monedaElegida)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>IVA:</span>
-                    <span className="font-medium">{formatCurrency(calcularImpuestos(), monedaElegida)}</span>
+                    <span className="font-medium tabular-nums">{formatCurrency(calcularImpuestos(), monedaElegida)}</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t text-lg font-bold">
                     <span>Total con IVA:</span>
-                    <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(calcularTotal(), monedaElegida)}</span>
+                    <span className="tabular-nums text-emerald-600 dark:text-emerald-400">{formatCurrency(calcularTotal(), monedaElegida)}</span>
                   </div>
                 </div>
               </div>

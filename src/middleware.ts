@@ -1,9 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 import { getJwtSecret } from '@/lib/auth/jwt-secret'
+import { respuestaError } from '@/lib/route/respuesta-error'
 
 // Registro público deshabilitado: los usuarios los da de alta el admin.
-const publicRoutes = ['/login', '/api/auth/login']
+// /api/health es público porque un health check con credenciales no sirve para monitorear
+// desde afuera; su respuesta no expone nada que no se pueda publicar.
+const publicRoutes = ['/login', '/api/auth/login', '/api/health']
 const authRoutes = ['/login']
 
 async function verificarToken(token: string): Promise<boolean> {
@@ -39,7 +42,9 @@ export async function middleware(request: NextRequest) {
   // Sin token válido y ruta protegida: 401 para API, redirect a login para páginas
   if (!tokenValido && !isPublicRoute) {
     if (isApiRoute) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
+      // Mismo formato que el resto de la API: el 401 del middleware era el unico que
+      // seguia devolviendo { error: "texto" }.
+      return respuestaError(401, 'No autenticado')
     }
     const response = NextResponse.redirect(new URL('/login', request.url))
     if (token) {

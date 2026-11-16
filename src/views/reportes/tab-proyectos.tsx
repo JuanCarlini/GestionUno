@@ -5,6 +5,7 @@ import {
 } from "@/components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useReporte } from "@/hooks/use-reporte"
+import { TabReporteSkeleton } from "@/components/skeletons"
 import { BarraHorizontal, Medidor } from "./graficos"
 import { formatearValor } from "./formato"
 import { porMoneda } from "./moneda"
@@ -25,7 +26,7 @@ export function TabProyectos() {
     return <p role="alert" className="py-8 text-center text-destructive">Error: {error}</p>
   }
   if (!reporte) {
-    return <p className="py-8 text-center text-muted-foreground">Cargando…</p>
+    return <TabReporteSkeleton tiles={0} />
   }
 
   const filas = reporte.tablas[0].filas as unknown as FilaProyecto[]

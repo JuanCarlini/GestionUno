@@ -4,6 +4,7 @@ import { CreateItemSchema } from "@/shared/validation/item-validation"
 import { requirePermission } from "@/lib/auth/permissions-server"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { createRoute } from "@/lib/route/crud-route"
+import { CACHE_CATALOGO, headersCache } from "@/lib/route/cache"
 
 // GET /api/items - Obtener todos los items activos
 // Query params opcionales: ?includeInactive=true, ?categoria=string
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
       items = await ItemService.getAll()
     }
 
-    return NextResponse.json(items || [])
+    return NextResponse.json(items || [], { headers: headersCache(CACHE_CATALOGO) })
   } catch (error) {
     return handleRouteError(error, "GET /api/items")
   }

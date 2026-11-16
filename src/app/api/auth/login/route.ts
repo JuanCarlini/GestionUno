@@ -4,6 +4,7 @@ import { setAuthCookie } from '@/lib/auth/auth.cookies'
 import { AuditService } from '@/lib/audit/audit.service'
 import { estaBloqueado, registrarFallo, limpiarIntentos, resolverIp, clavesDeLogin } from '@/lib/auth/rate-limit'
 import { handleRouteError } from '@/lib/route/handle-route-error'
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,18 +14,12 @@ export async function POST(request: NextRequest) {
 
 
     if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email y contraseña son requeridos" },
-        { status: 400 }
-      )
+      return respuestaError(400, "Email y contraseña son requeridos")
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Formato de email inválido" },
-        { status: 400 }
-      )
+      return respuestaError(400, "Formato de email inválido")
     }
 
     // Rate-limiting contra fuerza bruta. El contador por email (no depende de headers)
@@ -33,31 +28,24 @@ export async function POST(request: NextRequest) {
     const ip = resolverIp(request.headers)
     const { porEmail, porIpEmail } = clavesDeLogin(ip, email)
 
-    const rl = estaBloqueado(porEmail, now).bloqueado
-      ? estaBloqueado(porEmail, now)
-      : estaBloqueado(porIpEmail, now)
+    const porCuenta = await estaBloqueado(porEmail, now)
+    const rl = porCuenta.bloqueado ? porCuenta : await estaBloqueado(porIpEmail, now)
     if (rl.bloqueado) {
-      return NextResponse.json(
-        { error: "Demasiados intentos fallidos. Probá de nuevo más tarde." },
-        { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } }
-      )
+      return respuestaError(429, "Demasiados intentos fallidos. Probá de nuevo más tarde.", { headers: { "Retry-After": String(rl.retryAfterSec) } })
     }
 
     const result = await AuthService.login(email, password)
 
     if (!result) {
-      registrarFallo(porEmail, now)
-      registrarFallo(porIpEmail, now)
+      await registrarFallo(porEmail, now)
+      await registrarFallo(porIpEmail, now)
       // Bitácora: el intento fallido queda registrado y es investigable.
       await AuditService.registrarLoginFallido(String(email), ip)
-      return NextResponse.json(
-        { error: "Credenciales inválidas" },
-        { status: 401 }
-      )
+      return respuestaError(401, "Credenciales inválidas")
     }
 
-    limpiarIntentos(porEmail)
-    limpiarIntentos(porIpEmail)
+    await limpiarIntentos(porEmail)
+    await limpiarIntentos(porIpEmail)
 
     await setAuthCookie(result.token)
 

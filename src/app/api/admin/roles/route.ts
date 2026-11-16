@@ -3,6 +3,7 @@ import { requireAdmin } from "@/lib/auth/permissions-server"
 import { RolService } from "@/services/rol.service"
 import { AuditService } from "@/lib/audit/audit.service"
 import { handleRouteError } from "@/lib/route/handle-route-error"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // GET /api/admin/roles - Catálogo de roles con cantidad de usuarios (solo admin)
 export async function GET() {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const { nombre, descripcion, permisos } = await request.json()
     if (!nombre?.trim()) {
-      return NextResponse.json({ error: "El nombre del rol es requerido" }, { status: 400 })
+      return respuestaError(400, "El nombre del rol es requerido")
     }
 
     const nuevo = await RolService.create({ nombre, descripcion, permisos })

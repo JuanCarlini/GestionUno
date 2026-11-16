@@ -6,6 +6,7 @@ import { parseId } from "@/lib/route/parse-id"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { HttpError } from "@/lib/route/http-error"
 import type { IdParams } from "@/lib/route/params"
+import { respuestaError } from "@/lib/route/respuesta-error"
 
 // POST /api/ordenes-pago/[id]/cajas - Repartir el pago en una caja.
 // La moneda y que Σcajas = total se validan al mandar a aprobar (fn_op_gate), no acá.
@@ -35,7 +36,7 @@ export async function DELETE(request: NextRequest, { params }: IdParams) {
     if (!cajaParam) throw new HttpError(400, "Falta el parámetro cajaId")
 
     const ok = await OrdenPagoService.quitarCaja(opId, parseId(cajaParam))
-    if (!ok) return NextResponse.json({ error: "Línea no encontrada" }, { status: 404 })
+    if (!ok) return respuestaError(404, "Línea no encontrada")
 
     return NextResponse.json({ message: "Caja quitada de la orden de pago" })
   } catch (error) {

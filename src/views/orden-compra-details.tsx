@@ -1,9 +1,10 @@
 "use client"
 
+import { notFound } from "next/navigation"
+import { DetailSkeleton } from "@/components/skeletons"
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
 import { formatCurrency } from "@/shared/format-utils"
 import { formatDateShort } from "@/shared/date-utils"
 import { StatusBadge } from "@/components/status-badge"
@@ -42,6 +43,9 @@ export function OrdenCompraDetails({ ordenId }: Props) {
   const [proveedor, setProveedor] = useState<{ nombre: string | null } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  // notFound() tiene que salir del render, no del efecto: ahí adentro el throw cae fuera de
+  // React y no lo agarra el límite de not-found. Por eso el 404 viaja como estado.
+  const [noExiste, setNoExiste] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,6 +55,12 @@ export function OrdenCompraDetails({ ordenId }: Props) {
 
         // 1) cabecera
         const ocRes = await fetch(`/api/ordenes-compra/${ordenId}`)
+        // Un 404 no es un error de carga: la orden no existe. Va a la pantalla de 404, no a
+        // una tarjeta de error que invita a reintentar algo que nunca va a estar.
+        if (ocRes.status === 404) {
+          setNoExiste(true)
+          return
+        }
         if (!ocRes.ok) {
           setError("Orden no encontrada")
           setOrden(null)
@@ -86,16 +96,9 @@ export function OrdenCompraDetails({ ordenId }: Props) {
     }
   }, [ordenId])
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando detalles de la orden...</p>
-        </CardContent>
-      </Card>
-    )
-  }
+  if (noExiste) notFound()
+
+  if (loading) return <DetailSkeleton />
 
   if (error || !orden) {
     return (
@@ -173,19 +176,19 @@ export function OrdenCompraDetails({ ordenId }: Props) {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Subtotal:</span>
-                <span className="text-base text-foreground">
+                <span className="text-base text-foreground tabular-nums">
                   {formatCurrency(Number(orden.total_neto ?? 0), orden.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Impuestos:</span>
-                <span className="text-base text-foreground">
+                <span className="text-base text-foreground tabular-nums">
                   {formatCurrency(Number(orden.total_iva ?? 0), orden.moneda ?? "ARS")}
                 </span>
               </div>
               <div className="flex justify-between pt-3 border-t">
                 <span className="text-lg font-bold text-foreground">Total:</span>
-                <span className="text-lg font-bold text-foreground">
+                <span className="text-lg font-bold text-foreground tabular-nums">
                   {formatCurrency(Number(orden.total_con_iva ?? 0), orden.moneda ?? "ARS")}
                 </span>
               </div>

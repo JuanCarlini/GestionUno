@@ -4,6 +4,7 @@ import { CreateCajaSchema } from "@/shared/validation/caja-validation"
 import { requireAdmin } from "@/lib/auth/permissions-server"
 import { handleRouteError } from "@/lib/route/handle-route-error"
 import { createRoute } from "@/lib/route/crud-route"
+import { CACHE_CATALOGO, headersCache } from "@/lib/route/cache"
 
 // GET /api/cajas - Cajas activas (la OP las necesita; autentica el middleware)
 export async function GET(request: NextRequest) {
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
       ? await CajaService.getAllIncludingInactive()
       : await CajaService.getAll()
 
-    return NextResponse.json(cajas)
+    return NextResponse.json(cajas, { headers: headersCache(CACHE_CATALOGO) })
   } catch (error) {
     return handleRouteError(error, "GET /api/cajas")
   }

@@ -1,7 +1,8 @@
 "use client"
 
+import { DetailSkeleton } from "@/components/skeletons"
 import { useCallback, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { notFound, useRouter } from "next/navigation"
 import { use } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -11,6 +12,7 @@ import { showErrorToast, showSuccessToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
 import { useAuth } from "@/components/auth-context"
 import { StatusBadge } from "@/components/status-badge"
+import { mensajeDeError } from "@/shared/api-client"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,11 +68,19 @@ export function CertificacionDetail({ params }: Props) {
   const [updating, setUpdating] = useState(false)
   const [showApproveDialog, setShowApproveDialog] = useState(false)
   const [showRejectDialog, setShowRejectDialog] = useState(false)
+  // notFound() tiene que salir del render, no del efecto: ahí adentro el throw cae fuera de
+  // React y no lo agarra el límite de not-found. Por eso el 404 viaja como estado.
+  const [noExiste, setNoExiste] = useState(false)
   const router = useRouter()
 
   const fetchCertificacion = useCallback(async () => {
     try {
       const response = await fetch(`/api/certificaciones/${id}`)
+      // El 404 es una pantalla, no un toast rojo: la certificación no existe.
+      if (response.status === 404) {
+        setNoExiste(true)
+        return
+      }
       if (!response.ok) throw new Error("Error al cargar certificación")
       const data = await response.json()
       setCert(data)
@@ -97,7 +107,7 @@ export function CertificacionDetail({ params }: Props) {
       })
 
       const data = await response.json()
-      if (!response.ok) throw new Error(data.error || "Error al actualizar estado")
+      if (!response.ok) throw new Error(mensajeDeError(data, "Error al actualizar estado"))
 
       // El PATCH /estado devuelve solo la cabecera (sin lineas ni joins). Reconsultamos
       // el detalle completo para no borrar las líneas ni los datos derivados de la vista.
@@ -123,7 +133,9 @@ export function CertificacionDetail({ params }: Props) {
     }
   }
 
-  if (loading) return <div className="text-center py-8">Cargando...</div>
+  if (noExiste) notFound()
+
+  if (loading) return <DetailSkeleton conVolver />
   if (!cert) return <div className="text-center py-8">Certificación no encontrada</div>
 
   // El circuito no saltea etapas: de borrador se manda a aprobar; recién de en_aprobacion
@@ -297,13 +309,13 @@ export function CertificacionDetail({ params }: Props) {
             <div className="flex flex-wrap justify-end gap-x-8 gap-y-3">
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Total Neto</div>
-                <div className="text-xl font-bold">
+                <div className="text-xl font-bold tabular-nums">
                   {formatCurrency(Number(cert.total_neto ?? 0), cert.moneda ?? "ARS")}
                 </div>
               </div>
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Total con IVA</div>
-                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                <div className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
                   {formatCurrency(Number(cert.total_con_iva ?? 0), cert.moneda ?? "ARS")}
                 </div>
               </div>
