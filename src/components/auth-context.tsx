@@ -57,3 +57,15 @@ export function useAuth() {
   }
   return context
 }
+
+/**
+ * Como useAuth pero devuelve undefined en vez de tirar cuando no hay provider.
+ *
+ * Es para los error boundaries. Hoy `(dashboard)/error.tsx` queda dentro del layout —y por
+ * lo tanto dentro del provider—, pero si eso cambiara, useAuth tiraría DENTRO del boundary
+ * que tiene que mostrar el error: la pantalla que existe justamente para cuando algo falló
+ * sería la que falla, y sin global-error.tsx atrás no queda nada que mostrar.
+ */
+export function useAuthOpcional() {
+  return useContext(AuthContext)
+}
