@@ -45,6 +45,13 @@ jobs:
       - name: Tests
         run: npm test
 
+      # Los criterios de aceptación de docs/requisitos citan el test que los verifica. Esto
+      # falla si una cita quedó apuntando a un test que ya no existe, que es lo que convierte
+      # al directorio en documentación viva en vez de un archivo que envejece solo.
+      # Va después de los tests: si la suite está rota, eso se ve primero.
+      - name: Trazabilidad de requisitos
+        run: npm run trazabilidad
+
       # Backstop de dependencias: un advisory nuevo se ve el día que sale y no meses después
       # (fue exactamente lo que pasó: 29 advisories de Next acumulados en silencio).
       #
