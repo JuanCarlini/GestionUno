@@ -22,7 +22,14 @@ const conTimeout = <T,>(operacion: Promise<T>) => correrConTimeout(operacion, TI
  * mucho antes que una subida). Devuelve void o tira: el formato de la respuesta lo arma la ruta.
  */
 export async function pingStorage(ms: number): Promise<void> {
-  const { error } = await correrConTimeout(createClient().storage.getBucket(BUCKET), ms)
+  // listBuckets y no getBucket: lo que este chequeo tiene que probar es que Storage responde
+  // y que la credencial sirve, no que el bucket ya esté creado. El bucket lo crea
+  // asegurarBucket() en la primera subida, así que "todavía no existe" es un estado normal.
+  //
+  // Es exactamente el estado de producción hoy: storage.buckets está vacío porque nadie subió
+  // un comprobante. Con getBucket, /api/health devolvía 503 por eso y el monitoreo sintético
+  // iba a reportar la app caída cada 15 minutos estando sana.
+  const { error } = await correrConTimeout(createClient().storage.listBuckets(), ms)
   if (error) throw error
 }
 
