@@ -19,7 +19,9 @@ export default defineConfig({
         test: {
           name: "logica",
           environment: "node",
-          include: ["src/**/*.test.ts"],
+          // scripts/ también: ahí vive trazabilidad.mjs, que es el que sostiene la promesa
+          // de docs/requisitos. Va en .mjs para que tsc no pida tipos de un import sin ellos.
+          include: ["src/**/*.test.ts", "scripts/**/*.test.mjs"],
         },
       },
       {
