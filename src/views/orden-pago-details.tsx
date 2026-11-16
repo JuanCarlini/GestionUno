@@ -129,7 +129,7 @@ export function OrdenPagoDetails() {
 
   if (noExiste) notFound()
 
-  if (loading) return <DetailSkeleton />
+  if (loading) return <DetailSkeleton conVolver />
 
   if (error || !orden) {
     return (

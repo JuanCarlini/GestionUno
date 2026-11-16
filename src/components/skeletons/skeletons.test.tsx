@@ -122,6 +122,24 @@ describe("skeletons — forma de la pantalla", () => {
     expect(container.querySelectorAll(".animate-pulse").length).toBe(2)
   })
 
+  // Quién dibuja la barra de "Volver" cambia por pantalla: en órdenes de compra la pone la
+  // page y queda montada mientras el cliente busca; en el resto la pone la vista, y ahí el
+  // skeleton tiene que reservarle el lugar o la tarjeta baja ~50px al cargar.
+  it("el detalle no reserva lugar para el volver salvo que se lo pidan", () => {
+    const { container } = render(<DetailSkeleton />)
+    expect(container.querySelector('[data-skeleton="volver"]')).toBeNull()
+  })
+
+  it("el detalle con conVolver reserva el lugar de la barra", () => {
+    const { container } = render(<DetailSkeleton conVolver />)
+    expect(container.querySelector('[data-skeleton="volver"]')).toBeTruthy()
+  })
+
+  it("el formulario también puede reservar el volver", () => {
+    const { container } = render(<FormSkeleton conVolver />)
+    expect(container.querySelector('[data-skeleton="volver"]')).toBeTruthy()
+  })
+
   it("el encabezado de página no se anuncia como status (va dentro de otro)", () => {
     render(<PageHeaderSkeleton />)
     expect(screen.queryByRole("status")).toBeNull()
