@@ -84,7 +84,7 @@ export function ProveedorDetailClient() {
 
   if (noExiste) notFound()
 
-  if (loading) return <DetailSkeleton />
+  if (loading) return <DetailSkeleton conVolver />
 
   if (error) {
     return (

@@ -1,10 +1,5 @@
-import { VolverSkeleton, DetailSkeleton } from "@/components/skeletons"
+import { DetailSkeleton } from "@/components/skeletons"
 
 export default function Loading() {
-  return (
-    <div className="space-y-6">
-      <VolverSkeleton />
-      <DetailSkeleton />
-    </div>
-  )
+  return <DetailSkeleton conVolver />
 }

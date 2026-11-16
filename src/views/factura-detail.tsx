@@ -129,7 +129,7 @@ export function FacturaDetail({ params }: Props) {
 
   if (noExiste) notFound()
 
-  if (loading) return <DetailSkeleton />
+  if (loading) return <DetailSkeleton conVolver />
   if (!factura) return <div className="text-center py-8">Factura no encontrada</div>
 
   return (

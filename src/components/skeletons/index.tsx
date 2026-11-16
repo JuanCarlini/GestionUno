@@ -34,7 +34,7 @@ function Marco({
  */
 export function VolverSkeleton() {
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div data-skeleton="volver" className="flex items-center justify-between gap-3">
       <Skeleton className={`h-9 w-24 ${PULSO}`} />
       <Skeleton className={`h-9 w-40 ${PULSO}`} />
     </div>
@@ -111,10 +111,17 @@ export function ListSkeleton({
 }
 
 /** Detalle de documento: número y chip de estado, grilla de datos en 2 columnas y las líneas. */
-export function DetailSkeleton({ campos = 4 }: { campos?: number } = {}) {
+export function DetailSkeleton({
+  campos = 4,
+  // Quien dibuja la barra de "Volver" cambia por pantalla: en órdenes de compra la pone la
+  // page (y queda montada mientras el cliente busca, así que acá sobraría); en el resto la
+  // pone la vista, y entonces el skeleton tiene que reservarle el lugar.
+  conVolver = false,
+}: { campos?: number; conVolver?: boolean } = {}) {
   return (
     <Marco etiqueta="Cargando el documento">
       <div className="space-y-6">
+        {conVolver && <VolverSkeleton />}
         <Card>
           <CardHeader>
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -154,10 +161,15 @@ export function DetailSkeleton({ campos = 4 }: { campos?: number } = {}) {
 }
 
 /** Formulario: campos en grilla y la tabla de líneas editable debajo. */
-export function FormSkeleton({ campos = 6, conLineas = true }: { campos?: number; conLineas?: boolean }) {
+export function FormSkeleton({
+  campos = 6,
+  conLineas = true,
+  conVolver = false,
+}: { campos?: number; conLineas?: boolean; conVolver?: boolean }) {
   return (
     <Marco etiqueta="Cargando el formulario">
       <div className="space-y-6">
+        {conVolver && <VolverSkeleton />}
         <Card>
           <CardHeader>
             <Skeleton className={`h-6 w-44 ${PULSO}`} />

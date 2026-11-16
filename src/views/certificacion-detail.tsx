@@ -135,7 +135,7 @@ export function CertificacionDetail({ params }: Props) {
 
   if (noExiste) notFound()
 
-  if (loading) return <DetailSkeleton />
+  if (loading) return <DetailSkeleton conVolver />
   if (!cert) return <div className="text-center py-8">Certificación no encontrada</div>
 
   // El circuito no saltea etapas: de borrador se manda a aprobar; recién de en_aprobacion

@@ -69,4 +69,14 @@ describe("ProveedorDetailClient — qué pantalla corresponde a cada respuesta",
 
     expect(screen.getByRole("status").getAttribute("aria-label")).toBe("Cargando el documento")
   })
+
+  it("el skeleton reserva el lugar de la barra de Volver, que esta pantalla dibuja", () => {
+    // Acá la barra la pone la vista, no la page. Sin reservarle el lugar, al llegar los datos
+    // aparece el "Volver" y empuja la tarjeta ~50px hacia abajo. Medido en el preview.
+    vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})))
+
+    const { container } = render(<ProveedorDetailClient />)
+
+    expect(container.querySelector('[data-skeleton="volver"]')).toBeTruthy()
+  })
 })

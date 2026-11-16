@@ -53,7 +53,7 @@ export function ProveedorEditarClient() {
   if (noExiste) notFound()
 
   // El proveedor no tiene tabla de líneas: el formulario es solo campos.
-  if (loading) return <FormSkeleton conLineas={false} />
+  if (loading) return <FormSkeleton conLineas={false} conVolver />
 
   if (error) {
     return (
