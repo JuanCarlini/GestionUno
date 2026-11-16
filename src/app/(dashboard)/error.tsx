@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle, RotateCw, ChevronDown } from "lucide-react"
-import { useAuth } from "@/components/auth-context"
+import { useAuthOpcional } from "@/components/auth-context"
 import { isAdmin, stringToUserRole } from "@/shared/permissions"
 
 // Error boundary de todo el dashboard. Lo que reemplaza: una excepción en cualquier pantalla
@@ -19,7 +19,9 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  const { user } = useAuth()
+  // Opcional a proposito: ver el comentario de useAuthOpcional. Si esta pantalla tirara,
+  // no hay global-error.tsx atras para mostrar nada.
+  const user = useAuthOpcional()?.user ?? null
   const [abierto, setAbierto] = useState(false)
 
   useEffect(() => {
