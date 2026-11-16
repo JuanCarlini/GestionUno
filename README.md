@@ -60,10 +60,8 @@ npm run test:e2e # Playwright, contra una app levantada (ver abajo)
 
 | Cuándo | Qué corre | Dónde |
 |---|---|---|
-| Al commitear | eslint y los tests de lo que tocaste | husky + lint-staged |
 | En cada push | lint, tipos, tests, audit y build | `.github/workflows/ci.yml` |
 | Cada noche | el circuito de punta a punta contra una base sembrada | `.github/workflows/nightly.yml` |
-| Cada 15 min | `GET /api/health` en producción | `.github/workflows/monitor.yml` |
 
 Los specs de Playwright están en `e2e/`: `circuito.spec.ts` recorre OC → certificación →
 factura → orden de pago por API (las reglas viven en los services y en los triggers, no en los
