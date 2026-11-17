@@ -63,7 +63,15 @@ html {
 
 /* Paleta de marca: azul petróleo (hue 201) a baja saturación.
    Los neutrales van tintados hacia el mismo hue para que cuerpo y sidebar
-   compartan familia; el color pleno queda reservado a primary/ring y estados. */
+   compartan familia; el color pleno queda reservado a primary/ring y estados.
+
+   --border y --input no son el mismo gris a propósito. El borde dibuja estructura
+   (filas de los listados, separadores) y alcanza con que se lea; el input dibuja un
+   control, así que tiene que leerse como algo donde se puede escribir y va un paso
+   más oscuro. Medido en contraste contra el fondo: borde 1.50:1, input 1.71:1. Antes
+   los dos estaban en 89% de luminosidad = 1.26:1, y a ese valor las filas de los
+   listados eran cajas con un borde que no se veía: la lista no tenía estructura
+   visible y lo único que separaba una fila de la otra era el hover. */
 @layer base {
   :root {
     --background: 210 20% 99%;
@@ -82,8 +90,8 @@ html {
     --accent-foreground: 201 65% 22%;
     --destructive: 0 74% 46%;
     --destructive-foreground: 0 0% 98%;
-    --border: 210 14% 89%;
-    --input: 210 14% 89%;
+    --border: 210 14% 82%;
+    --input: 210 14% 78%;
     --ring: 201 65% 32%;
     --chart-1: 201 65% 40%;
     --chart-2: 173 58% 39%;
@@ -117,8 +125,8 @@ html {
     --accent-foreground: 200 40% 90%;
     --destructive: 0 62% 52%;
     --destructive-foreground: 0 0% 98%;
-    --border: 208 14% 17%;
-    --input: 208 14% 17%;
+    --border: 208 14% 22%;
+    --input: 208 14% 26%;
     --ring: 199 55% 62%;
     --chart-1: 199 55% 55%;
     --chart-2: 160 60% 45%;

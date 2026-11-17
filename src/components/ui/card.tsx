@@ -39,7 +39,19 @@ const CardTitle = React.forwardRef<
       // Sin tracking fijo: lo pone la escala de tamaños (tailwind.config.ts), que lo
       // ajusta por tamaño. Acá hace falta porque el CardTitle se usa también con
       // md:text-3xl encima, y un valor clavado no acompaña ese cambio.
-      "text-2xl font-semibold leading-none",
+      //
+      // 18px, no 24px. En 24 el título de tarjeta medía exactamente lo mismo que el
+      // h1 de PageHeader abajo de md —los dos text-2xl— y solo los separaba el peso:
+      // la página y cada tarjeta dentro de ella pesaban igual. Además la escala tenía
+      // un hueco entre el cuerpo (14px) y los títulos (24px), así que todo lo
+      // intermedio caía en text-sm y la jerarquía se aplastaba. Los títulos que SÍ
+      // hacen de encabezado de pantalla —las pantallas de detalle, que no tienen
+      // PageHeader— se suben a mano con text-2xl md:text-3xl donde hace falta.
+      //
+      // leading-tight y no leading-none: con la caja igual al tamaño de la fuente, un
+      // título de dos líneas ("Órdenes de Compra (1234)" en una columna angosta) se
+      // toca consigo mismo.
+      "text-lg font-semibold leading-tight",
       className
     )}
     {...props}

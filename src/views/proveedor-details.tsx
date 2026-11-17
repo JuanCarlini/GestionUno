@@ -114,7 +114,7 @@ export function ProveedorDetails({ proveedor, onActivar, onSuspender }: Props) {
                   onClick={handleActivar}
                   disabled={isProcessing}
                 >
-                  <CheckCircle className="h-4 w-4 mr-2 text-emerald-600 dark:text-emerald-400" />
+                  <CheckCircle className="h-4 w-4 mr-2 text-emerald-700 dark:text-emerald-400" />
                   Activar
                 </Button>
               )}

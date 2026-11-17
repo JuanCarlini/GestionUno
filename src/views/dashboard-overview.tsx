@@ -171,13 +171,13 @@ export function DashboardOverview() {
               {stats.ordenesPago.porPagar > 0 && (
                 <div className="flex items-center justify-between gap-2 p-3 bg-destructive/10 rounded-lg">
                   <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <AlertTriangle className="h-4 w-4 text-destructive dark:text-red-400" />
                     <div>
-                      <p className="text-sm font-medium text-destructive">Pagos pendientes</p>
-                      <p className="text-xs text-destructive">{stats.ordenesPago.porPagar} órdenes de pago aprobadas sin pagar</p>
+                      <p className="text-sm font-medium text-destructive dark:text-red-400">Pagos pendientes</p>
+                      <p className="text-xs text-destructive dark:text-red-400">{stats.ordenesPago.porPagar} órdenes de pago aprobadas sin pagar</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 shrink-0">
+                  <Badge variant="outline" className="bg-destructive/10 text-destructive dark:text-red-400 border-destructive/20 shrink-0">
                     Por pagar
                   </Badge>
                 </div>
@@ -187,13 +187,13 @@ export function DashboardOverview() {
               {stats.ordenesCompra.pendientes > 0 && (
                 <div className="flex items-center justify-between gap-2 p-3 bg-amber-500/10 rounded-lg">
                   <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <Clock className="h-4 w-4 text-amber-700 dark:text-amber-400" />
                     <div>
-                      <p className="text-sm font-medium text-amber-600 dark:text-amber-400">Órdenes Pendientes</p>
-                      <p className="text-xs text-amber-600 dark:text-amber-400">{stats.ordenesCompra.pendientes} órdenes de compra por aprobar</p>
+                      <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Órdenes pendientes</p>
+                      <p className="text-xs text-amber-700 dark:text-amber-400">{stats.ordenesCompra.pendientes} órdenes de compra por aprobar</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20 shrink-0">
+                  <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 shrink-0">
                     Pendiente
                   </Badge>
                 </div>
@@ -202,10 +202,10 @@ export function DashboardOverview() {
               {/* Si todo está bien */}
               {stats.ordenesPago.porPagar === 0 && stats.ordenesCompra.pendientes === 0 && (
                 <div className="flex items-center space-x-2 p-3 bg-emerald-500/10 rounded-lg">
-                  <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                   <div>
-                    <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Todo al día</p>
-                    <p className="text-xs text-emerald-600 dark:text-emerald-400">No hay elementos que requieran atención inmediata</p>
+                    <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Todo al día</p>
+                    <p className="text-xs text-emerald-700 dark:text-emerald-400">No hay elementos que requieran atención inmediata</p>
                   </div>
                 </div>
               )}

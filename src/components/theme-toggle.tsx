@@ -13,9 +13,13 @@ export function ThemeToggle() {
     setMounted(true)
   }, [])
 
+  // ghost y cuadrado, igual que el resto del chrome del header: antes era un botón
+  // "outline" con el padding horizontal de size="sm", así que un ícono de 16px vivía en
+  // una caja de 40x36 con borde, al lado de dos controles ghost. El placeholder de
+  // !mounted repite exactamente la misma caja para que no haya salto al montar.
   if (!mounted) {
     return (
-      <Button variant="outline" size="sm" disabled>
+      <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
         <Sun className="h-4 w-4" />
       </Button>
     )
@@ -23,10 +27,10 @@ export function ThemeToggle() {
 
   return (
     <Button
-      variant="outline"
-      size="sm"
+      variant="ghost"
+      size="icon"
       onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      className="relative"
+      className="relative h-9 w-9"
       title={`Cambiar a tema ${theme === "light" ? "oscuro" : "claro"}`}
     >
       <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />

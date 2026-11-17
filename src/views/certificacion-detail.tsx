@@ -195,7 +195,7 @@ export function CertificacionDetail({ params }: Props) {
               <StatusBadge estado={cert.estado} />
             </div>
             <div className="text-right">
-              <div className="text-2xl md:text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+              <div className="text-2xl md:text-3xl font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
                 {formatCurrency(Number(cert.total_con_iva ?? 0), cert.moneda ?? "ARS")}
               </div>
               <div className="text-sm text-muted-foreground">Total con IVA</div>
@@ -315,7 +315,7 @@ export function CertificacionDetail({ params }: Props) {
               </div>
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Total con IVA</div>
-                <div className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                <div className="text-2xl font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
                   {formatCurrency(Number(cert.total_con_iva ?? 0), cert.moneda ?? "ARS")}
                 </div>
               </div>

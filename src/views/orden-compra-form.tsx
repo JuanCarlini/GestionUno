@@ -451,7 +451,7 @@ export function OrdenCompraForm() {
                   </div>
                   <div className="flex justify-between pt-2 border-t text-lg font-bold">
                     <span>Total con IVA:</span>
-                    <span className="tabular-nums text-emerald-600 dark:text-emerald-400">{formatCurrency(calcularTotal(), monedaElegida)}</span>
+                    <span className="tabular-nums text-emerald-700 dark:text-emerald-400">{formatCurrency(calcularTotal(), monedaElegida)}</span>
                   </div>
                 </div>
               </div>
