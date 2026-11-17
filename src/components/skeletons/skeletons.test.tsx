@@ -56,9 +56,26 @@ describe("skeletons — contrato accesible", () => {
 
 describe("skeletons — forma de la pantalla", () => {
   // El punto del skeleton es que el layout no salte: si muestra 3 filas y llegan 8, salta.
-  it("el listado muestra 8 filas por defecto, las mismas que la página", () => {
+  //
+  // 8 no es el tamaño de página: la página trae 25 (use-listado.ts). Son las que entran en
+  // una pantalla; dibujar 25 barras grises sería una pared, y el salto de la 9 en adelante
+  // pasa abajo del pliegue. El comentario de antes decía que eran "las mismas que la
+  // página" y no era cierto.
+  it("el listado muestra 8 filas por defecto, las que entran en una pantalla", () => {
     const { container } = render(<ListSkeleton />)
     expect(container.querySelectorAll('[data-skeleton="fila"]').length).toBe(8)
+  })
+
+  // Lo que se escapó una vez: la fila del skeleton tenía las acciones colgadas afuera del
+  // grid, así que eran cinco bloques contra los cuatro de la fila real y los botones se
+  // dibujaban contra el borde derecho en vez de en su columna. Esto lo fija.
+  it("la fila repite las 4 columnas de la lista, con las acciones adentro", () => {
+    const { container } = render(<ListSkeleton filas={1} />)
+    const fila = container.querySelector('[data-skeleton="fila"]')!
+    const grid = fila.querySelector(".md\\:grid-cols-4")!
+
+    expect(grid.children.length, "4 columnas: número, proveedor, monto y acción").toBe(4)
+    expect(fila.children.length, "nada colgado al lado del grid").toBe(1)
   })
 
   it("el listado acepta otra cantidad de filas", () => {
