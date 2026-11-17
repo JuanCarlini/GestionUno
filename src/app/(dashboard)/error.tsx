@@ -38,7 +38,7 @@ export default function Error({
     <Card className="mx-auto max-w-2xl">
       <CardHeader>
         <div className="flex items-center gap-3">
-          <AlertTriangle className="h-6 w-6 text-destructive" aria-hidden="true" />
+          <AlertTriangle className="h-6 w-6 text-destructive-ink" aria-hidden="true" />
           <CardTitle>Algo salió mal</CardTitle>
         </div>
       </CardHeader>

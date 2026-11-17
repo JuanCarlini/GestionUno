@@ -178,7 +178,7 @@ export function OrdenCompraList() {
                           {updatingId === orden.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                            <CheckCircle className="h-4 w-4 text-success-ink" />
                           )}
                         </Button>
                         <Button
@@ -192,7 +192,7 @@ export function OrdenCompraList() {
                           {updatingId === orden.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-destructive" />
+                            <XCircle className="h-4 w-4 text-destructive-ink" />
                           )}
                         </Button>
                       </>

@@ -406,7 +406,7 @@ export function OrdenCompraForm() {
                     <div className="col-span-1" />
                   </div>
                   {items.map((item) => (
-                    <div key={item.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 px-4 py-3 border rounded hover:bg-accent">
+                    <div key={item.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 px-4 py-3 border rounded-sm hover:bg-accent">
                       <div className="col-span-2 md:col-span-4">
                         <p className="font-medium break-words">{item.producto}</p>
                         {item.descripcion && <p className="text-sm text-muted-foreground break-words">{item.descripcion}</p>}
@@ -424,14 +424,14 @@ export function OrdenCompraForm() {
                           onClick={() => eliminarItem(item.id)}
                           disabled={isLoading}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-4 w-4 text-destructive-ink" />
                         </Button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded">
+                <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-sm">
                   No hay items agregados. Usa el formulario de arriba para agregarlos.
                 </div>
               )}
@@ -451,7 +451,7 @@ export function OrdenCompraForm() {
                   </div>
                   <div className="flex justify-between pt-2 border-t text-lg font-bold">
                     <span>Total con IVA:</span>
-                    <span className="tabular-nums text-emerald-700 dark:text-emerald-400">{formatCurrency(calcularTotal(), monedaElegida)}</span>
+                    <span className="tabular-nums text-success-ink">{formatCurrency(calcularTotal(), monedaElegida)}</span>
                   </div>
                 </div>
               </div>

@@ -190,7 +190,7 @@ export function ProveedorList() {
                         onClick={() => handleSuspender(proveedor.id)}
                         disabled={processingId === proveedor.id}
                       >
-                        <XCircle className="h-4 w-4 text-destructive" />
+                        <XCircle className="h-4 w-4 text-destructive-ink" />
                       </Button>
                     ) : (
                       <Button
@@ -201,7 +201,7 @@ export function ProveedorList() {
                         onClick={() => handleActivar(proveedor.id)}
                         disabled={processingId === proveedor.id}
                       >
-                        <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                        <CheckCircle className="h-4 w-4 text-success-ink" />
                       </Button>
                     ))}
                   </div>

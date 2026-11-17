@@ -42,7 +42,7 @@ export function DashboardOverview() {
     return (
       <Card>
         <CardContent className="text-center py-8">
-          <p className="text-destructive mb-4">Error: {error}</p>
+          <p className="text-destructive-ink mb-4">Error: {error}</p>
           <Button onClick={refreshData} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" />
             Reintentar
@@ -76,7 +76,7 @@ export function DashboardOverview() {
       value: stats.ordenesPago.total.toString(),
       change: `${stats.ordenesPago.porPagar} por pagar`,
       icon: CreditCard,
-      color: stats.ordenesPago.porPagar > 0 ? "text-destructive" : "text-muted-foreground",
+      color: stats.ordenesPago.porPagar > 0 ? "text-destructive-ink" : "text-muted-foreground",
       details: `${stats.ordenesPago.pendientes} pendientes, ${stats.ordenesPago.aprobadas} aprobadas`
     },
     {
@@ -169,15 +169,15 @@ export function DashboardOverview() {
             <div className="space-y-4">
               {/* Órdenes de pago aprobadas sin pagar */}
               {stats.ordenesPago.porPagar > 0 && (
-                <div className="flex items-center justify-between gap-2 p-3 bg-destructive/10 rounded-lg">
+                <div className="flex items-center justify-between gap-2 p-3 bg-destructive-tint/10 rounded-lg">
                   <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-4 w-4 text-destructive dark:text-red-400" />
+                    <AlertTriangle className="h-4 w-4 text-destructive-ink" />
                     <div>
-                      <p className="text-sm font-medium text-destructive dark:text-red-400">Pagos pendientes</p>
-                      <p className="text-xs text-destructive dark:text-red-400">{stats.ordenesPago.porPagar} órdenes de pago aprobadas sin pagar</p>
+                      <p className="text-sm font-medium text-destructive-ink">Pagos pendientes</p>
+                      <p className="text-xs text-destructive-ink">{stats.ordenesPago.porPagar} órdenes de pago aprobadas sin pagar</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-destructive/10 text-destructive dark:text-red-400 border-destructive/20 shrink-0">
+                  <Badge variant="outline" className="bg-destructive-tint/10 text-destructive-ink border-destructive-tint/20 shrink-0">
                     Por pagar
                   </Badge>
                 </div>
@@ -185,15 +185,15 @@ export function DashboardOverview() {
 
               {/* Órdenes pendientes */}
               {stats.ordenesCompra.pendientes > 0 && (
-                <div className="flex items-center justify-between gap-2 p-3 bg-amber-500/10 rounded-lg">
+                <div className="flex items-center justify-between gap-2 p-3 bg-warning-tint/10 rounded-lg">
                   <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-amber-700 dark:text-amber-400" />
+                    <Clock className="h-4 w-4 text-warning-ink" />
                     <div>
-                      <p className="text-sm font-medium text-amber-700 dark:text-amber-400">Órdenes pendientes</p>
-                      <p className="text-xs text-amber-700 dark:text-amber-400">{stats.ordenesCompra.pendientes} órdenes de compra por aprobar</p>
+                      <p className="text-sm font-medium text-warning-ink">Órdenes pendientes</p>
+                      <p className="text-xs text-warning-ink">{stats.ordenesCompra.pendientes} órdenes de compra por aprobar</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 shrink-0">
+                  <Badge variant="outline" className="bg-warning-tint/10 text-warning-ink border-warning-tint/20 shrink-0">
                     Pendiente
                   </Badge>
                 </div>
@@ -201,11 +201,11 @@ export function DashboardOverview() {
 
               {/* Si todo está bien */}
               {stats.ordenesPago.porPagar === 0 && stats.ordenesCompra.pendientes === 0 && (
-                <div className="flex items-center space-x-2 p-3 bg-emerald-500/10 rounded-lg">
-                  <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                <div className="flex items-center space-x-2 p-3 bg-success-tint/10 rounded-lg">
+                  <CheckCircle className="h-4 w-4 text-success-ink" />
                   <div>
-                    <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Todo al día</p>
-                    <p className="text-xs text-emerald-700 dark:text-emerald-400">No hay elementos que requieran atención inmediata</p>
+                    <p className="text-sm font-medium text-success-ink">Todo al día</p>
+                    <p className="text-xs text-success-ink">No hay elementos que requieran atención inmediata</p>
                   </div>
                 </div>
               )}

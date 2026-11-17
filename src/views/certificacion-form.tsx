@@ -260,7 +260,7 @@ export function CertificacionForm() {
                         placeholder="0"
                       />
                       {excede && (
-                        <p className="text-xs text-destructive">
+                        <p className="text-xs text-destructive-ink">
                           Máximo {linea.cantidad_disponible} (el resto ya está certificado)
                         </p>
                       )}

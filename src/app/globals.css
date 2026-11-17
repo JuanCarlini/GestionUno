@@ -71,7 +71,28 @@ html {
    más oscuro. Medido en contraste contra el fondo: borde 1.50:1, input 1.71:1. Antes
    los dos estaban en 89% de luminosidad = 1.26:1, y a ese valor las filas de los
    listados eran cajas con un borde que no se veía: la lista no tenía estructura
-   visible y lo único que separaba una fila de la otra era el hover. */
+   visible y lo único que separaba una fila de la otra era el hover.
+
+   Los estados (success, warning, info, destructive) llevan cuatro tokens cada uno
+   porque hacen cuatro trabajos distintos, y un solo valor no sirve para todos:
+
+     --X             el relleno pleno, para un botón. Depende del tema: sobre blanco
+                     tiene que ser oscuro y sobre negro, claro.
+     --X-foreground  el texto que va encima de ese relleno pleno.
+     --X-tint        la base del tinte, para bg-X-tint/10 y border-X-tint/20. No
+                     depende del tema: el tinte se mezcla con la card y se aclara u
+                     oscurece solo.
+     --X-ink         la tinta: texto e íconos, sobre el tinte o sobre la card limpia.
+
+   Antes esto eran clases crudas de Tailwind (emerald-700 dark:emerald-400 y
+   compañía) repetidas en 48 lugares con cuatro definiciones distintas del verde, y
+   --destructive hacía de relleno y de tinta a la vez: por eso el texto rojo sobre
+   su propio tinte daba 3.37:1 en oscuro, donde el valor que sirve para un botón es
+   demasiado oscuro para leerse como texto. Los valores son los mismos píxeles de
+   antes; lo que cambia es que ahora cada rol tiene su nombre. En claro --X y
+   --X-ink coinciden, y eso está bien: son dos roles que en ese tema dan el mismo
+   color. Medido, todo sobre su fondo real: tinta sobre tinte 4.64–8.79, texto sobre
+   relleno 4.64–7.03, tinta sobre card 5.04–10.38. */
 @layer base {
   :root {
     --background: 210 20% 99%;
@@ -90,14 +111,23 @@ html {
     --accent-foreground: 201 65% 22%;
     --destructive: 0 74% 46%;
     --destructive-foreground: 0 0% 98%;
+    --destructive-tint: 0 74% 46%;
+    --destructive-ink: 0 74% 46%;
+    --success: 163 94% 24%;
+    --success-foreground: 152 81% 96%;
+    --success-tint: 160 84% 39%;
+    --success-ink: 163 94% 24%;
+    --warning: 26 90% 37%;
+    --warning-foreground: 48 100% 96%;
+    --warning-tint: 38 92% 50%;
+    --warning-ink: 26 90% 37%;
+    --info: 221 83% 53%;
+    --info-foreground: 214 100% 97%;
+    --info-tint: 217 91% 60%;
+    --info-ink: 221 83% 53%;
     --border: 210 14% 82%;
     --input: 210 14% 78%;
     --ring: 201 65% 32%;
-    --chart-1: 201 65% 40%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 43 74% 55%;
-    --chart-4: 280 45% 55%;
-    --chart-5: 27 80% 55%;
     --radius: 0.5rem;
     --sidebar-background: 210 20% 97%;
     --sidebar-foreground: 210 10% 30%;
@@ -125,14 +155,23 @@ html {
     --accent-foreground: 200 40% 90%;
     --destructive: 0 62% 52%;
     --destructive-foreground: 0 0% 98%;
+    --destructive-tint: 0 62% 52%;
+    --destructive-ink: 0 91% 71%;
+    --success: 160 84% 39%;
+    --success-foreground: 166 91% 9%;
+    --success-tint: 160 84% 39%;
+    --success-ink: 158 64% 52%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 21 92% 14%;
+    --warning-tint: 38 92% 50%;
+    --warning-ink: 43 96% 56%;
+    --info: 217 91% 60%;
+    --info-foreground: 226 65% 14%;
+    --info-tint: 217 91% 60%;
+    --info-ink: 213 94% 68%;
     --border: 208 14% 22%;
     --input: 208 14% 26%;
     --ring: 199 55% 62%;
-    --chart-1: 199 55% 55%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 43 74% 55%;
-    --chart-4: 280 45% 60%;
-    --chart-5: 27 80% 55%;
     --sidebar-background: 209 18% 11%;
     --sidebar-foreground: 210 10% 88%;
     --sidebar-primary: 199 55% 62%;
