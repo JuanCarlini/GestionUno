@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "auditoria-deps": "node scripts/auditoria-deps.mjs",
     "trazabilidad": "node scripts/trazabilidad.mjs"
   },
   "dependencies": {

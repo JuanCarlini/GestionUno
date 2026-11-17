@@ -55,13 +55,16 @@ jobs:
       # Backstop de dependencias: un advisory nuevo se ve el día que sale y no meses después
       # (fue exactamente lo que pasó: 29 advisories de Next acumulados en silencio).
       #
-      # HOY ESTE STEP FALLA, y no por nada que se haya agregado acá: son 20 advisories
-      # acumulados (12 moderate, 7 high, 1 critical) que ya estaban en main. El critical es
-      # GHSA-p293-qw3h-jr36 (RCE sin autenticar en Next sobre Windows) y afecta a todo next
-      # <= 16.3.0-preview.10, asi que salir de ahi es un major: next 15 -> 16. Queda como
-      # tarea aparte; bajar el audit-level para pintar el CI de verde seria taparlo.
+      # La vara sigue en high. Lo que cambió es que ahora pasa por scripts/auditoria-deps.mjs
+      # en vez de `npm audit --audit-level=high` pelado, porque salió un caso que el comando
+      # pelado no sabe manejar: un advisory sin versión parcheada (GHSA-fc5q-39xc-vjpf en
+      # picomatch, rango vulnerable '*'). Con el comando pelado las únicas salidas eran bajar
+      # la vara —que tapa todos los high futuros, no solo ese— o poner `|| true`, que vuelve
+      # al step decoración. El script deja permitir advisories de a uno, con el motivo escrito
+      # y una fecha de revisión, y falla igual con cualquier otro high o critical, con los
+      # permisos vencidos, y con los permisos que ya no corresponden.
       - name: Audit de dependencias
-        run: npm audit --audit-level=high
+        run: npm run auditoria-deps
 
       # Último porque es el más lento: si algo más simple ya falló, no gastamos el build.
       - name: Build
