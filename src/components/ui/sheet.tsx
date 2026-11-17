@@ -33,8 +33,13 @@ SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 // Entrar y salir por el mismo camino y en el mismo tiempo. 500ms de apertura se sentían
 // lentos en el único movimiento que la app repite todo el día —el menú en móvil— y con la
 // vuelta en 300 las dos direcciones no se espejaban.
+//
+// El prefijo data-[state] no es cosmético: un `duration-300` pelado pierde contra el
+// `animation-duration: .15s` que trae .animate-in —misma especificidad, gana el que va
+// último en la hoja— y el drawer terminaba animando en 150ms. Con el atributo delante
+// la regla pesa más y el valor manda.
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out duration-300",
+  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:duration-300 data-[state=closed]:duration-300",
   {
     variants: {
       side: {
