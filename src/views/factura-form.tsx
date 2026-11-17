@@ -15,7 +15,7 @@ import { FormRootError } from "@/components/form-root-error"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
-import { mensajeDeError } from "@/shared/api-client"
+import { listado, mensajeDeError } from "@/shared/api-client"
 
 // La factura tiene líneas de detalle (LFACT) e imputa un MONTO a certificaciones aprobadas del
 // proveedor (N:M). Regla dura (fn_check_imputacion): solo certs aprobadas y Σ monto_asignado ≤ total.
@@ -66,8 +66,7 @@ export function FacturaForm() {
   const [imputaciones, setImputaciones] = useState<Record<number, string>>({})
 
   useEffect(() => {
-    fetch("/api/proveedores")
-      .then((r) => (r.ok ? r.json() : []))
+    listado<any>("/api/proveedores?estado=activo&limit=100")
       .then(setProveedores)
       .catch(() => setProveedores([]))
   }, [])

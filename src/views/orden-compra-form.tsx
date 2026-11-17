@@ -18,7 +18,7 @@ import { Proveedor, Item } from "@/models"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
 import { ItemSelector } from "@/views/item-selector"
-import { mensajeDeError } from "@/shared/api-client"
+import { listado, mensajeDeError } from "@/shared/api-client"
 
 // La CABECERA va por react-hook-form + zodResolver; los items se agregan por un mini-form de
 // staging y viven en una lista de solo lectura → estado controlado (useFieldArray no aporta acá).
@@ -88,11 +88,8 @@ export function OrdenCompraForm() {
     const fetchProveedores = async () => {
       try {
         setLoadingProveedores(true)
-        const res = await fetch("/api/proveedores")
-        const data: any[] = res.ok ? await res.json() : []
-        // en la base el estado es 'activo' / 'inactivo'
-        const activos = data.filter((p) => (p.estado ?? "activo") === "activo")
-        setProveedores(activos)
+        // en la base el estado es 'activo' / 'inactivo'; el filtro lo hace el servidor
+        setProveedores(await listado<Proveedor>("/api/proveedores?estado=activo&limit=100"))
       } catch (err) {
         console.error("Error al cargar proveedores:", err)
         form.setError("root", { message: "No se pudieron cargar los proveedores" })
