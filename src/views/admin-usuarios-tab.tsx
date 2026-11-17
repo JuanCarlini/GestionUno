@@ -224,7 +224,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                             disabled={updatingUserId === userData.id}
                             onClick={() => handleReactivar(userData)}
                           >
-                            <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                           </Button>
                         )}
                       </div>

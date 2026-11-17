@@ -187,7 +187,7 @@ export function OrdenPagoList() {
                         onClick={() => handleAprobar(orden.id)}
                         disabled={processingId === orden.id}
                       >
-                        <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                       </Button>
                     )}
 
@@ -200,7 +200,7 @@ export function OrdenPagoList() {
                         onClick={() => handlePagar(orden.id)}
                         disabled={processingId === orden.id}
                       >
-                        <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <DollarSign className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                       </Button>
                     )}
 

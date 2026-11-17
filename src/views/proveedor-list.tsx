@@ -201,7 +201,7 @@ export function ProveedorList() {
                         onClick={() => handleActivar(proveedor.id)}
                         disabled={processingId === proveedor.id}
                       >
-                        <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
                       </Button>
                     ))}
                   </div>
