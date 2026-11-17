@@ -1,10 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageHeader } from "@/components/page-header"
-import { Loader2 } from "lucide-react"
+import { PageHeaderSkeleton, UsuariosSkeleton } from "@/components/skeletons"
 import { showErrorToast } from "@/shared/toast-helpers"
 import { api } from "@/shared/api-client"
 import { UsuariosTab } from "@/views/admin-usuarios-tab"
@@ -38,14 +37,16 @@ export default function AdminUsersPage() {
     }
   }
 
+  // La misma composición que loading.tsx mientras resuelve la ruta. Antes acá había un
+  // spinner centrado en una tarjeta, así que al entrar se veían tres layouts seguidos: el
+  // skeleton de la ruta, el spinner, y recién después la pantalla. Con lo mismo de los dos
+  // lados, la transición es una sola y no salta.
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Cargando usuarios…</span>
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <PageHeaderSkeleton conAccion={false} />
+        <UsuariosSkeleton />
+      </div>
     )
   }
 

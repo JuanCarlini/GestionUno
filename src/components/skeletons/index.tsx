@@ -41,15 +41,33 @@ export function VolverSkeleton() {
   )
 }
 
-/** Encabezado de página: título, descripción y el botón de acción a la derecha. */
-export function PageHeaderSkeleton() {
+/**
+ * Encabezado de página: título, descripción y —solo donde la hay— la acción a la derecha.
+ *
+ * conAccion no es un adorno: de las 18 pantallas que dibujan este skeleton, 12 tienen un
+ * PageHeader sin botón, así que les aparecía un rectángulo de 144px a la derecha que al
+ * llegar los datos se desvanecía. Los listados del circuito sí lo tienen (el "Nueva
+ * orden", "Nueva factura") y por eso el default queda en true.
+ */
+export function PageHeaderSkeleton({ conAccion = true }: { conAccion?: boolean } = {}) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="space-y-2">
         <Skeleton className={`h-7 w-56 ${PULSO}`} />
         <Skeleton className={`h-4 w-72 ${PULSO}`} />
       </div>
-      <Skeleton className={`h-10 w-36 ${PULSO}`} />
+      {conAccion && <Skeleton className={`h-10 w-36 ${PULSO}`} />}
+    </div>
+  )
+}
+
+/** La barra de tabs: alto y fondo de TabsList, con un bloque por pestaña. */
+function TabsSkeleton({ anchos }: { anchos: string[] }) {
+  return (
+    <div className="inline-flex h-10 w-fit items-center gap-1 rounded-md bg-muted p-1">
+      {anchos.map((w, i) => (
+        <Skeleton key={i} className={`h-8 ${w} ${PULSO}`} />
+      ))}
     </div>
   )
 }
@@ -359,6 +377,121 @@ export function ReportesSkeleton() {
                 <Skeleton key={i} className={`h-8 w-full ${PULSO}`} />
               ))}
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    </Marco>
+  )
+}
+
+/**
+ * Administración de usuarios. No usa ListSkeleton: esa dibuja la fila del circuito
+ * —número, proveedor, monto, estado y un botón— y acá la fila es otra cosa. La de verdad
+ * tiene cuatro columnas: nombre con email y chips debajo, el rol con su ícono, un select
+ * para cambiarlo y dos botones de acción. Además la pantalla arranca con dos tabs y el
+ * alta va en su propia fila, no en el encabezado.
+ */
+export function UsuariosSkeleton({ filas = 6 }: { filas?: number } = {}) {
+  return (
+    <Marco etiqueta="Cargando la administración de usuarios">
+      <div className="space-y-6">
+        <TabsSkeleton anchos={["w-28", "w-20"]} />
+
+        <div className="flex justify-end">
+          <Skeleton className={`h-10 w-36 ${PULSO}`} />
+        </div>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              {Array.from({ length: filas }).map((_, i) => (
+                <div
+                  key={i}
+                  data-skeleton="fila-usuario"
+                  className="flex items-center justify-between rounded-lg border border-border p-4"
+                >
+                  <div className="grid flex-1 grid-cols-1 items-center gap-4 md:grid-cols-4">
+                    {/* nombre, email y los chips de estado */}
+                    <div className="space-y-2">
+                      <Skeleton className={`h-5 w-32 ${PULSO}`} />
+                      <Skeleton className={`h-4 w-44 ${PULSO}`} />
+                      <Skeleton className={`h-5 w-16 rounded-full ${PULSO}`} />
+                    </div>
+                    {/* el ícono del rol y su etiqueta */}
+                    <div className="flex items-center gap-2">
+                      <Skeleton className={`h-5 w-5 rounded-full ${PULSO}`} />
+                      <Skeleton className={`h-4 w-24 ${PULSO}`} />
+                    </div>
+                    {/* el select para cambiar el rol */}
+                    <Skeleton className={`h-10 w-full ${PULSO}`} />
+                    {/* resetear clave y dar de baja */}
+                    <div className="flex items-center justify-end gap-2">
+                      <Skeleton className={`h-9 w-9 ${PULSO}`} />
+                      <Skeleton className={`h-9 w-9 ${PULSO}`} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </Marco>
+  )
+}
+
+/**
+ * Auditoría. Tampoco es un listado de filas: arriba hay una tarjeta de búsqueda con cinco
+ * filtros y un botón, después dos tabs, y recién ahí una tabla de seis columnas. Los altos
+ * siguen a los de Table: el encabezado mide h-12 y cada celda lleva p-4.
+ */
+export function AuditoriaSkeleton({ filas = 8 }: { filas?: number } = {}) {
+  const columnas = ["w-24", "w-20", "w-16", "w-20", "w-12", "w-32"]
+  return (
+    <Marco etiqueta="Cargando la auditoría">
+      <div className="space-y-6">
+
+        {/* la tarjeta de búsqueda combinada */}
+        <Card>
+          <CardHeader>
+            <Skeleton className={`h-5 w-44 ${PULSO}`} />
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} data-skeleton="filtro" className="space-y-2">
+                  <Skeleton className={`h-4 w-20 ${PULSO}`} />
+                  <Skeleton className={`h-10 w-full ${PULSO}`} />
+                </div>
+              ))}
+            </div>
+            <div className="mt-4">
+              <Skeleton className={`h-10 w-28 ${PULSO}`} />
+            </div>
+          </CardContent>
+        </Card>
+
+        <TabsSkeleton anchos={["w-52", "w-44"]} />
+
+        {/* la tabla */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex h-12 items-center gap-4 border-b">
+              {columnas.map((w, i) => (
+                <Skeleton key={i} className={`h-4 ${w} ${PULSO}`} />
+              ))}
+            </div>
+            {Array.from({ length: filas }).map((_, i) => (
+              <div
+                key={i}
+                data-skeleton="fila-auditoria"
+                className="flex items-center gap-4 border-b py-4 last:border-0"
+              >
+                {columnas.map((w, j) => (
+                  <Skeleton key={j} className={`h-4 ${w} ${PULSO}`} />
+                ))}
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
