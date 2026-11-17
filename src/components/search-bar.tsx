@@ -14,7 +14,7 @@ interface SearchBarProps {
 export function SearchBar({ 
   value, 
   onChange, 
-  placeholder = "Buscar...", 
+  placeholder = "Buscar…", 
   className = "" 
 }: SearchBarProps) {
   const handleClear = () => {
@@ -26,8 +26,13 @@ export function SearchBar({
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
         <Search className="h-4 w-4 text-muted-foreground" />
       </div>
+      {/* spellCheck apagado: acá se escriben números de documento, CUIT y códigos, no
+          prosa, y el subrayado rojo del corrector sobre "OC-0013" no ayuda a nadie.
+          enterKeyHint para que en un teléfono la tecla de acción diga "buscar". */}
       <Input
         type="text"
+        spellCheck={false}
+        enterKeyHint="search"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}

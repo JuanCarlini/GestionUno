@@ -82,7 +82,7 @@ export function ProveedorList() {
   }
 
   return (
-    <ListShell loading={loading} error={error} loadingText="Cargando proveedores...">
+    <ListShell loading={loading} error={error} loadingText="Cargando proveedores…">
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -90,7 +90,7 @@ export function ProveedorList() {
           <SearchBar
             value={q}
             onChange={setQ}
-            placeholder="Buscar por nombre, CUIT, email..."
+            placeholder="Buscar por nombre, CUIT, email…"
             className="w-full sm:w-80"
           />
         </div>
@@ -107,7 +107,7 @@ export function ProveedorList() {
               icon={Building2}
               title={
                 q
-                  ? `No se encontraron proveedores que coincidan con "${q}"`
+                  ? `No se encontraron proveedores que coincidan con “${q}”`
                   : "No hay proveedores registrados"
               }
             >

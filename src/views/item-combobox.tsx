@@ -33,7 +33,7 @@ export function ItemCombobox({
   onChange,
   onCreateNew,
   disabled = false,
-  placeholder = "Seleccionar item...",
+  placeholder = "Seleccionar item…",
 }: ItemComboboxProps) {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState<Item[]>([])
@@ -127,7 +127,7 @@ export function ItemCombobox({
       <PopoverContent className="w-[min(400px,calc(100vw-2rem))] p-0" align="start">
         <Command>
           <CommandInput
-            placeholder="Buscar item..."
+            placeholder="Buscar item…"
             value={searchQuery}
             onValueChange={handleSearch}
           />

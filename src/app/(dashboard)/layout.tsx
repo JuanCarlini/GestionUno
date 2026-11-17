@@ -12,6 +12,18 @@ export default function DashboardLayout({
   return (
     <AuthProvider>
       <SidebarProvider>
+        {/* El primer tab de cada pantalla. Quien navega con teclado o lector de pantalla
+            entra por el menú, que tiene ocho links y se repite igual en todas las páginas:
+            sin esto hay que pasar por los ocho antes de llegar al contenido, en cada
+            pantalla. Invisible hasta que recibe el foco, y ahí aparece arriba a la
+            izquierda. El menú ya es un landmark de navegación con nombre, así que entre
+            los dos se puede ir a cualquiera de las dos partes directo. */}
+        <a
+          href="#contenido"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:border focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          Saltar al contenido
+        </a>
         <AppSidebar />
         {/* min-w-0: sin esto, un hijo ancho (tabla, tabs) estira el main más allá
             del viewport en vez de scrollear dentro de su propio contenedor. */}
@@ -35,7 +47,10 @@ export default function DashboardLayout({
               <UserMenu userName="Admin" />
             </div>
           </header>
-          <div className="flex-1 p-4 md:p-6">
+          {/* tabIndex -1: el destino de un salto tiene que poder recibir el foco, si no el
+              navegador mueve el scroll pero el foco se queda donde estaba y el siguiente
+              tab vuelve al menú. */}
+          <div id="contenido" tabIndex={-1} className="flex-1 p-4 md:p-6 focus:outline-none">
             {children}
           </div>
         </main>

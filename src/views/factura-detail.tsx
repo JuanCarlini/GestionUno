@@ -167,7 +167,7 @@ export function FacturaDetail({ params }: Props) {
         <CardHeader>
           <div className="flex flex-wrap justify-between items-start gap-4">
             <div>
-              <CardTitle className="text-2xl md:text-3xl mb-2">
+              <CardTitle as="h1" className="text-2xl md:text-3xl mb-2">
                 {factura.numero_factura}
               </CardTitle>
               <StatusBadge estado={factura.estado} />

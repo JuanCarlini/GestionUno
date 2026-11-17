@@ -105,7 +105,7 @@ export function OrdenPagoList() {
   }
 
   return (
-    <ListShell loading={loading} error={error} loadingText="Cargando órdenes de pago...">
+    <ListShell loading={loading} error={error} loadingText="Cargando órdenes de pago…">
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -113,7 +113,7 @@ export function OrdenPagoList() {
           <SearchBar
             value={q}
             onChange={setQ}
-            placeholder="Buscar por número, proveedor, método..."
+            placeholder="Buscar por número, proveedor, método…"
             className="w-full sm:w-80"
           />
         </div>
@@ -130,7 +130,7 @@ export function OrdenPagoList() {
               icon={CreditCard}
               title={
                 q
-                  ? `No se encontraron órdenes que coincidan con "${q}"`
+                  ? `No se encontraron órdenes que coincidan con “${q}”`
                   : "No hay órdenes de pago registradas"
               }
             >

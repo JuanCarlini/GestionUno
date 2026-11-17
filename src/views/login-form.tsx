@@ -42,15 +42,21 @@ export function LoginForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-center">Iniciar Sesión</CardTitle>
+        <CardTitle className="text-center">Iniciar sesión</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Correo electrónico</Label>
+            {/* autoComplete es lo que le dice al navegador y al gestor de contraseñas qué
+                campo es este. Sin eso no se puede completar la sesión guardada, y el
+                navegador ofrece guardar cosas donde no van. spellCheck apagado porque un
+                correo subrayado en rojo parece un error y no lo es. */}
             <Input
               id="email"
               type="email"
+              autoComplete="email"
+              spellCheck={false}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -61,13 +67,14 @@ export function LoginForm() {
             <Input
               id="password"
               type="password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
             />
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Iniciando..." : "Iniciar Sesión"}
+            {isLoading ? "Iniciando…" : "Iniciar sesión"}
           </Button>
           <div className="text-center text-sm text-muted-foreground">
             ¿Olvidaste tu contraseña o no tenés cuenta? Contactá al administrador.
