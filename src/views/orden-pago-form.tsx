@@ -15,7 +15,7 @@ import { FormRootError } from "@/components/form-root-error"
 import { Loader2 } from "lucide-react"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
-import { mensajeDeError } from "@/shared/api-client"
+import { listado, mensajeDeError } from "@/shared/api-client"
 
 // La OP paga N facturas FINALIZADAS del mismo proveedor y reparte el total en N cajas de la
 // misma moneda. Regla dura (fn_op_gate): Σcajas = Σfacturas = total_a_pagar; se valida al aprobar.
@@ -52,7 +52,8 @@ export function OrdenPagoForm() {
   const [repartos, setRepartos] = useState<Record<number, string>>({})
 
   useEffect(() => {
-    fetch("/api/proveedores").then((r) => (r.ok ? r.json() : [])).then(setProveedores).catch(() => {})
+    // /api/proveedores es un listado paginado ({data,...}); /api/cajas devuelve un array.
+    listado<any>("/api/proveedores?estado=activo&limit=100").then(setProveedores).catch(() => {})
     fetch("/api/cajas").then((r) => (r.ok ? r.json() : [])).then(setCajas).catch(() => {})
   }, [])
 
@@ -63,11 +64,10 @@ export function OrdenPagoForm() {
       setPagos({})
       return
     }
-    fetch("/api/facturas")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: any[]) =>
-        setFacturas(data.filter((f) => f.proveedor_id === Number(proveedorId) && f.estado === "finalizado"))
-      )
+    // El estado y el proveedor los filtra el servidor: filtrar una página de 25 en el browser
+    // escondía facturas pagables en cuanto el listado creció.
+    listado<any>(`/api/facturas?estado=finalizado&proveedorId=${Number(proveedorId)}&limit=100`)
+      .then(setFacturas)
       .catch(() => setFacturas([]))
     setPagos({})
   }, [proveedorId])

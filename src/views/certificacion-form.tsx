@@ -16,7 +16,7 @@ import { FormRootError } from "@/components/form-root-error"
 import { Loader2 } from "lucide-react"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { formatCurrency } from "@/shared/format-utils"
-import { mensajeDeError } from "@/shared/api-client"
+import { listado, mensajeDeError } from "@/shared/api-client"
 
 // La certificación cuelga de UNA orden de compra aprobada (hereda proveedor y moneda, no se eligen).
 // La única entrada por línea es el AVANCE EN UNIDADES; el tope del 100% lo aplica fn_check_avance_100.
@@ -71,11 +71,10 @@ export function CertificacionForm() {
   // Solo se puede certificar contra una OC aprobada (fn_cert_oc_aprobada lo garantiza) y que
   // NO esté 100% certificada: estado_certificacion "total" significa que ya no queda avance.
   useEffect(() => {
-    fetch("/api/ordenes-compra")
-      .then((r) => (r.ok ? r.json() : []))
-      .then((data: OrdenCompraAprobada[]) =>
-        setOrdenes(data.filter((o) => o.estado === "aprobado" && o.estado_certificacion !== "total"))
-      )
+    // El estado lo filtra el servidor; el 100% certificado no es una columna, así que ese
+    // queda acá sobre las aprobadas.
+    listado<OrdenCompraAprobada>("/api/ordenes-compra?estado=aprobado&limit=100")
+      .then((data) => setOrdenes(data.filter((o) => o.estado_certificacion !== "total")))
       .catch(() => setOrdenes([]))
   }, [])
 
