@@ -4,8 +4,15 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+// El press responde en pointer-down, no al soltar: en touch no hay hover, así que sin esto
+// tocar un botón no devuelve nada hasta que cambia la pantalla.
+//
+// Un botón ancho se hunde menos. El hundimiento se siente por cuánto se corre el borde, y
+// eso crece con el ancho: al 0.97 un submit de ancho completo (medido: 399px) mueve cada
+// borde 6px y se lee deformado, no hundido; al 0.99 mueve 2px. El selector compuesto —dos
+// clases + :active— le gana en especificidad al 0.97 de arriba.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-[color,background-color,border-color,transform] duration-100 active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-[color,background-color,border-color,transform] duration-100 active:scale-[0.97] [&.w-full]:active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
