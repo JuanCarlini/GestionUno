@@ -188,14 +188,21 @@ export function DashboardOverview() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Órdenes de pago aprobadas sin pagar */}
+              {/* Órdenes de pago aprobadas sin pagar.
+
+                  Las tres filas de acá abajo dicen su estado con la barra de la izquierda,
+                  el ícono y el chip. El texto es texto. Antes el color estaba cinco veces
+                  en la misma fila —fondo, ícono, título, cuerpo y chip—: con tanta
+                  repetición la fila dejaba de leerse como información y pasaba a ser un
+                  rectángulo de color. Y encima el texto pintado se leía peor que el neutro
+                  sobre ese mismo fondo: 6,8:1 contra 13,5:1 del título en foreground. */}
               {stats.ordenesPago.porPagar > 0 && (
-                <div className="flex items-center justify-between gap-2 p-3 bg-destructive-tint/10 rounded-lg">
+                <div className="flex items-center justify-between gap-2 border-l-2 border-destructive-ink py-1 pl-3">
                   <div className="flex items-center space-x-2">
-                    <AlertTriangle className="h-4 w-4 text-destructive-ink" />
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-destructive-ink" />
                     <div>
-                      <p className="text-sm font-medium text-destructive-ink">Pagos pendientes</p>
-                      <p className="text-xs text-destructive-ink">{stats.ordenesPago.porPagar} órdenes de pago aprobadas sin pagar</p>
+                      <p className="text-sm font-medium text-foreground">Pagos pendientes</p>
+                      <p className="text-xs text-muted-foreground">{stats.ordenesPago.porPagar} órdenes de pago aprobadas sin pagar</p>
                     </div>
                   </div>
                   <Badge variant="outline" className="bg-destructive-tint/10 text-destructive-ink border-destructive-tint/20 shrink-0">
@@ -206,12 +213,12 @@ export function DashboardOverview() {
 
               {/* Órdenes pendientes */}
               {stats.ordenesCompra.pendientes > 0 && (
-                <div className="flex items-center justify-between gap-2 p-3 bg-warning-tint/10 rounded-lg">
+                <div className="flex items-center justify-between gap-2 border-l-2 border-warning-ink py-1 pl-3">
                   <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-warning-ink" />
+                    <Clock className="h-4 w-4 shrink-0 text-warning-ink" />
                     <div>
-                      <p className="text-sm font-medium text-warning-ink">Órdenes pendientes</p>
-                      <p className="text-xs text-warning-ink">{stats.ordenesCompra.pendientes} órdenes de compra por aprobar</p>
+                      <p className="text-sm font-medium text-foreground">Órdenes pendientes</p>
+                      <p className="text-xs text-muted-foreground">{stats.ordenesCompra.pendientes} órdenes de compra por aprobar</p>
                     </div>
                   </div>
                   <Badge variant="outline" className="bg-warning-tint/10 text-warning-ink border-warning-tint/20 shrink-0">
@@ -222,11 +229,11 @@ export function DashboardOverview() {
 
               {/* Si todo está bien */}
               {stats.ordenesPago.porPagar === 0 && stats.ordenesCompra.pendientes === 0 && (
-                <div className="flex items-center space-x-2 p-3 bg-success-tint/10 rounded-lg">
-                  <CheckCircle className="h-4 w-4 text-success-ink" />
+                <div className="flex items-center space-x-2 border-l-2 border-success-ink py-1 pl-3">
+                  <CheckCircle className="h-4 w-4 shrink-0 text-success-ink" />
                   <div>
-                    <p className="text-sm font-medium text-success-ink">Todo al día</p>
-                    <p className="text-xs text-success-ink">No hay elementos que requieran atención inmediata</p>
+                    <p className="text-sm font-medium text-foreground">Todo al día</p>
+                    <p className="text-xs text-muted-foreground">No hay elementos que requieran atención inmediata</p>
                   </div>
                 </div>
               )}
