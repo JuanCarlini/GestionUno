@@ -50,22 +50,35 @@ function getStatusCategory(estado: string | null | undefined): StatusCategory {
   return statusMap[estadoLower] || StatusCategory.INFO
 }
 
+// El chip no lleva relleno: el estado lo dice la tinta del texto y nada más. Antes era el
+// tinte al 10% de fondo + el borde al 20% + la tinta, o sea el mismo color tres veces en
+// una pastilla de 20px de alto, y en un listado de 25 filas eso es una grilla de manchas
+// de color que compite con los números, que es lo que hay que leer.
+//
+// El borde lo pone solo el `border` del Badge, en el gris de --border: la pastilla la
+// dibuja la estructura y el color queda para el estado. Por eso los dos lugares que usan
+// esto van con variant="outline": el variant default del Badge trae bg-primary, y sin
+// fondo propio que lo pise los chips saldrían azul sólido.
+//
+// Los cuatro tokens de cada estado están explicados en globals.css; acá alcanza con saber
+// que `-ink` ya trae el valor que corresponde al tema, así que no hace falta dark: por
+// clase. Sobre la card limpia dan entre 6,1:1 y 8,8:1.
 function getStatusColor(estado: string | null | undefined): string {
   const category = getStatusCategory(estado)
 
   switch (category) {
     case StatusCategory.SUCCESS:
-      return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+      return "text-success-ink"
     case StatusCategory.PENDING:
-      return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+      return "text-warning-ink"
     case StatusCategory.ERROR:
-      return "bg-destructive/10 text-destructive border-destructive/20"
+      return "text-destructive-ink"
     case StatusCategory.INFO:
-      return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20"
+      return "text-info-ink"
     case StatusCategory.DRAFT:
-      return "bg-muted text-muted-foreground border-border"
+      return "text-muted-foreground"
     default:
-      return "bg-muted text-muted-foreground border-border"
+      return "text-muted-foreground"
   }
 }
 
@@ -92,14 +105,15 @@ function getStatusIconColor(estado: string | null | undefined): string {
   const category = getStatusCategory(estado)
 
   switch (category) {
+    // La misma tinta que la etiqueta del chip: el ícono y el texto comparten color.
     case StatusCategory.SUCCESS:
-      return "text-emerald-600 dark:text-emerald-400"
+      return "text-success-ink"
     case StatusCategory.PENDING:
-      return "text-amber-600 dark:text-amber-400"
+      return "text-warning-ink"
     case StatusCategory.ERROR:
-      return "text-destructive"
+      return "text-destructive-ink"
     case StatusCategory.INFO:
-      return "text-blue-600 dark:text-blue-400"
+      return "text-info-ink"
     case StatusCategory.DRAFT:
       return "text-muted-foreground"
     default:

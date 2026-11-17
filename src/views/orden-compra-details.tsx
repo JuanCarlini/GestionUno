@@ -228,7 +228,7 @@ export function OrdenCompraDetails({ ordenId }: Props) {
                 </thead>
                 <tbody className="divide-y">
                   {lineas.map((linea) => (
-                    <tr key={linea.id} className="hover:bg-accent">
+                    <tr key={linea.id} className="hover:bg-muted/50">
                       <td className="px-4 py-3">
                         <p className="text-sm font-medium text-foreground">
                           {linea.descripcion}

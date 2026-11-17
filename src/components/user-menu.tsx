@@ -106,7 +106,7 @@ export function UserMenu({ userName = "Admin" }: UserMenuProps) {
           <DropdownMenuItem
             onClick={handleLogout}
             disabled={isLoading}
-            className="text-destructive cursor-pointer"
+            className="text-destructive-ink cursor-pointer"
           >
             {isLoading ? (
               <>
@@ -131,9 +131,14 @@ export function UserMenu({ userName = "Admin" }: UserMenuProps) {
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
               <Label htmlFor="old-pass">Contraseña actual</Label>
+              {/* current-password en la actual y new-password en las dos nuevas: así el
+                  gestor de contraseñas completa la vieja, ofrece generar una nueva y sabe
+                  cuál guardar cuando el formulario se manda. Sin esto, los tres campos le
+                  parecen lo mismo. */}
               <Input
                 id="old-pass"
                 type="password"
+                autoComplete="current-password"
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
                 required
@@ -144,6 +149,7 @@ export function UserMenu({ userName = "Admin" }: UserMenuProps) {
               <Input
                 id="new-pass"
                 type="password"
+                autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 minLength={6}
@@ -155,6 +161,7 @@ export function UserMenu({ userName = "Admin" }: UserMenuProps) {
               <Input
                 id="confirm-pass"
                 type="password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 minLength={6}

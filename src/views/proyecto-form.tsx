@@ -98,7 +98,7 @@ export function ProyectoForm({ proyecto }: Props) {
               <Label htmlFor="nombre">Nombre</Label>
               <Input id="nombre" {...form.register("nombre")} />
               {form.formState.errors.nombre && (
-                <p className="text-sm text-destructive">{form.formState.errors.nombre.message}</p>
+                <p className="text-sm text-destructive-ink">{form.formState.errors.nombre.message}</p>
               )}
             </div>
 
@@ -111,7 +111,7 @@ export function ProyectoForm({ proyecto }: Props) {
               <Label htmlFor="fecha_inicio">Fecha de inicio</Label>
               <Input id="fecha_inicio" type="date" {...form.register("fecha_inicio")} />
               {form.formState.errors.fecha_inicio && (
-                <p className="text-sm text-destructive">
+                <p className="text-sm text-destructive-ink">
                   {form.formState.errors.fecha_inicio.message}
                 </p>
               )}

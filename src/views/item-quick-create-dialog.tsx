@@ -128,7 +128,7 @@ export function ItemQuickCreateDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    Nombre <span className="text-destructive">*</span>
+                    Nombre <span className="text-destructive-ink">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -151,7 +151,7 @@ export function ItemQuickCreateDialog({
                   <FormLabel>Descripción</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Detalles adicionales del item..."
+                      placeholder="Detalles adicionales del item…"
                       className="resize-none"
                       rows={3}
                       {...field}
@@ -177,7 +177,7 @@ export function ItemQuickCreateDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Código <span className="text-destructive">*</span>
+                      Código <span className="text-destructive-ink">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input

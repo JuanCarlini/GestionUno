@@ -82,7 +82,7 @@ export function ProveedorList() {
   }
 
   return (
-    <ListShell loading={loading} error={error} loadingText="Cargando proveedores...">
+    <ListShell loading={loading} error={error} loadingText="Cargando proveedores…">
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -90,7 +90,7 @@ export function ProveedorList() {
           <SearchBar
             value={q}
             onChange={setQ}
-            placeholder="Buscar por nombre, CUIT, email..."
+            placeholder="Buscar por nombre, CUIT, email…"
             className="w-full sm:w-80"
           />
         </div>
@@ -107,7 +107,7 @@ export function ProveedorList() {
               icon={Building2}
               title={
                 q
-                  ? `No se encontraron proveedores que coincidan con "${q}"`
+                  ? `No se encontraron proveedores que coincidan con “${q}”`
                   : "No hay proveedores registrados"
               }
             >
@@ -119,7 +119,7 @@ export function ProveedorList() {
             proveedores.map((proveedor) => (
               <div
                 key={proveedor.id}
-                className="border border-border rounded-lg p-4 hover:bg-accent transition-colors"
+                className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   {/* columnas */}
@@ -190,7 +190,7 @@ export function ProveedorList() {
                         onClick={() => handleSuspender(proveedor.id)}
                         disabled={processingId === proveedor.id}
                       >
-                        <XCircle className="h-4 w-4 text-destructive" />
+                        <XCircle className="h-4 w-4 text-destructive-ink" />
                       </Button>
                     ) : (
                       <Button
@@ -201,7 +201,7 @@ export function ProveedorList() {
                         onClick={() => handleActivar(proveedor.id)}
                         disabled={processingId === proveedor.id}
                       >
-                        <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle className="h-4 w-4 text-success-ink" />
                       </Button>
                     ))}
                   </div>

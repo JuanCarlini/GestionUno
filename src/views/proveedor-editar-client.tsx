@@ -59,7 +59,7 @@ export function ProveedorEditarClient() {
     return (
       <Card>
         <CardContent className="text-center py-8">
-          <p className="text-destructive">Error: {error}</p>
+          <p className="text-destructive-ink">Error: {error}</p>
         </CardContent>
       </Card>
     )

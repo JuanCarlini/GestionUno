@@ -13,7 +13,9 @@ export function PageHeader({
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">{title}</h1>
+        {/* text-balance: la utilidad estaba definida en globals.css y no la usaba nadie,
+            así que los títulos de dos líneas se partían donde cayera. */}
+        <h1 className="text-balance text-2xl md:text-3xl font-bold text-foreground">{title}</h1>
         {description && <p className="text-muted-foreground">{description}</p>}
       </div>
       {children}

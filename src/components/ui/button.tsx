@@ -4,8 +4,19 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "@/lib/utils"
 
+// El press responde en pointer-down, no al soltar: en touch no hay hover, así que sin esto
+// tocar un botón no devuelve nada hasta que cambia la pantalla.
+//
+// Un botón ancho se hunde menos. El hundimiento se siente por cuánto se corre el borde, y
+// eso crece con el ancho: al 0.97 un submit de ancho completo (medido: 399px) mueve cada
+// borde 6px y se lee deformado, no hundido; al 0.99 mueve 2px. El selector compuesto —dos
+// clases + :active— le gana en especificidad al 0.97 de arriba.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  // touch-manipulation: en un navegador móvil, un elemento pulsable que no lo declara
+  // reserva ~300ms esperando a ver si el toque es un doble tap para hacer zoom, y recién
+  // ahí dispara el click. El press en pointer-down tapa parte de esa espera, pero la acción
+  // igual llegaba tarde. Con esto, el navegador sabe que acá no hay doble tap que esperar.
+  "inline-flex touch-manipulation items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-[color,background-color,border-color,transform] duration-100 active:scale-[0.97] [&.w-full]:active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -13,13 +24,13 @@ const buttonVariants = cva(
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         success:
-          "bg-emerald-700 text-emerald-50 hover:bg-emerald-800 dark:bg-emerald-500 dark:text-emerald-950 dark:hover:bg-emerald-400",
+          "bg-success text-success-foreground hover:bg-success/90",
         outline:
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 hover:underline active:scale-100",
       },
       size: {
         default: "h-10 px-4 py-2",

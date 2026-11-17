@@ -105,7 +105,7 @@ export function OrdenPagoList() {
   }
 
   return (
-    <ListShell loading={loading} error={error} loadingText="Cargando órdenes de pago...">
+    <ListShell loading={loading} error={error} loadingText="Cargando órdenes de pago…">
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -113,7 +113,7 @@ export function OrdenPagoList() {
           <SearchBar
             value={q}
             onChange={setQ}
-            placeholder="Buscar por número, proveedor, método..."
+            placeholder="Buscar por número, proveedor, método…"
             className="w-full sm:w-80"
           />
         </div>
@@ -130,7 +130,7 @@ export function OrdenPagoList() {
               icon={CreditCard}
               title={
                 q
-                  ? `No se encontraron órdenes que coincidan con "${q}"`
+                  ? `No se encontraron órdenes que coincidan con “${q}”`
                   : "No hay órdenes de pago registradas"
               }
             >
@@ -142,7 +142,7 @@ export function OrdenPagoList() {
             orders.map((orden) => (
               <div 
                 key={orden.id}
-                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
+                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div>
@@ -174,7 +174,7 @@ export function OrdenPagoList() {
                         onClick={() => handleMandarAAprobar(orden.id)}
                         disabled={processingId === orden.id}
                       >
-                        <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <CheckCircle className="h-4 w-4 text-info-ink" />
                       </Button>
                     )}
 
@@ -187,7 +187,7 @@ export function OrdenPagoList() {
                         onClick={() => handleAprobar(orden.id)}
                         disabled={processingId === orden.id}
                       >
-                        <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle className="h-4 w-4 text-success-ink" />
                       </Button>
                     )}
 
@@ -200,7 +200,7 @@ export function OrdenPagoList() {
                         onClick={() => handlePagar(orden.id)}
                         disabled={processingId === orden.id}
                       >
-                        <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <DollarSign className="h-4 w-4 text-success-ink" />
                       </Button>
                     )}
 
@@ -213,7 +213,7 @@ export function OrdenPagoList() {
                         onClick={() => handleRechazar(orden.id)}
                         disabled={processingId === orden.id}
                       >
-                        <XCircle className="h-4 w-4 text-destructive" />
+                        <XCircle className="h-4 w-4 text-destructive-ink" />
                       </Button>
                     )}
                   </div>

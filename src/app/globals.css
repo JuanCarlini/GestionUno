@@ -16,20 +16,22 @@
   }
 }
 
-/* Toast notifications positioning */
-[data-sonner-toaster] {
-  position: fixed !important;
-  top: 1rem !important;
-  right: 1rem !important;
-  z-index: 9999 !important;
-}
+/* Acá había cuatro reglas !important para posicionar el toaster. Las cuatro eran de más:
+   position fija y z-index los pone sonner en su propio CSS (y su z-index es 999999999, así
+   que el "z-index: 9999 !important" lo bajaba en vez de subirlo), y el top/right de 1rem ya
+   lo dan las props position="top-right" y offset={16} del componente.
+   Peor: ese "right: 1rem !important" pisaba la media query con la que sonner pasa a ancho
+   completo en pantallas chicas, así que en un teléfono el toast quedaba angosto en la
+   esquina en lugar de ocupar el ancho como corresponde. */
 
 /* Dark mode improvements */
 .dark {
   color-scheme: dark;
 }
 
-/* Smooth transitions for theme changes */
+/* El scroll suave es una preferencia, no un default: más abajo vuelve a ser instantáneo
+   para quien pidió menos movimiento. Recorrer un listado largo de golpe es justo el tipo
+   de desplazamiento que marea. */
 html {
   scroll-behavior: smooth;
 }
@@ -61,7 +63,46 @@ html {
 
 /* Paleta de marca: azul petróleo (hue 201) a baja saturación.
    Los neutrales van tintados hacia el mismo hue para que cuerpo y sidebar
-   compartan familia; el color pleno queda reservado a primary/ring y estados. */
+   compartan familia; el color pleno queda reservado a primary/ring y estados.
+
+   --border y --input no son el mismo gris a propósito. El borde dibuja estructura
+   (filas de los listados, separadores) y alcanza con que se lea; el input dibuja un
+   control, así que tiene que leerse como algo donde se puede escribir y va un paso
+   más oscuro. Medido en contraste contra el fondo: borde 1.50:1, input 1.71:1. Antes
+   los dos estaban en 89% de luminosidad = 1.26:1, y a ese valor las filas de los
+   listados eran cajas con un borde que no se veía: la lista no tenía estructura
+   visible y lo único que separaba una fila de la otra era el hover.
+
+   Los estados (success, warning, info, destructive) llevan cuatro tokens cada uno
+   porque hacen cuatro trabajos distintos, y un solo valor no sirve para todos:
+
+     --X             el relleno pleno, para un botón. Depende del tema: sobre blanco
+                     tiene que ser oscuro y sobre negro, claro.
+     --X-foreground  el texto que va encima de ese relleno pleno.
+     --X-tint        la base del tinte, para bg-X-tint/10 y border-X-tint/20. No
+                     depende del tema: el tinte se mezcla con la card y se aclara u
+                     oscurece solo.
+     --X-ink         la tinta: texto e íconos, sobre el tinte o sobre la card limpia.
+
+   Antes esto eran clases crudas de Tailwind (emerald-700 dark:emerald-400 y
+   compañía) repetidas en 48 lugares con cuatro definiciones distintas del verde, y
+   --destructive hacía de relleno y de tinta a la vez: por eso el texto rojo sobre
+   su propio tinte daba 3.37:1 en oscuro, donde el valor que sirve para un botón es
+   demasiado oscuro para leerse como texto. En claro --X y --X-ink coinciden, y eso
+   está bien: son dos roles que en ese tema dan el mismo color.
+
+   Las tintas no van a la saturación de Tailwind. Heredadas de emerald-400 y
+   compañía estaban en 84–96% de saturación, y al lado de una marca que vive en
+   55–65% se leían fosforescentes: un chip "Aprobado" gritaba más que cualquier
+   dato de la pantalla, que es exactamente al revés de lo que tiene que pasar en un
+   sistema donde el estado acompaña al número, no compite con él. Bajan al registro
+   de la marca (45–70%), con el rojo un poco más arriba que el resto porque es el
+   único estado al que le corresponde levantar la voz. Lo que NO baja es --X-tint:
+   al 10% de opacidad la saturación casi no se ve, y dejarlo quieto mantiene
+   medidos los contrastes de abajo.
+
+   Medido, todo sobre su fondo real: tinta sobre tinte 5.26–7.43, texto sobre
+   relleno 4.64–6.05, tinta sobre card 6.11–8.78. */
 @layer base {
   :root {
     --background: 210 20% 99%;
@@ -80,14 +121,23 @@ html {
     --accent-foreground: 201 65% 22%;
     --destructive: 0 74% 46%;
     --destructive-foreground: 0 0% 98%;
-    --border: 210 14% 89%;
-    --input: 210 14% 89%;
+    --destructive-tint: 0 74% 46%;
+    --destructive-ink: 0 65% 44%;
+    --success: 163 60% 26%;
+    --success-foreground: 152 40% 96%;
+    --success-tint: 160 84% 39%;
+    --success-ink: 163 60% 26%;
+    --warning: 26 70% 34%;
+    --warning-foreground: 48 100% 96%;
+    --warning-tint: 38 92% 50%;
+    --warning-ink: 26 70% 34%;
+    --info: 221 60% 45%;
+    --info-foreground: 214 100% 97%;
+    --info-tint: 217 91% 60%;
+    --info-ink: 221 60% 45%;
+    --border: 210 14% 82%;
+    --input: 210 14% 78%;
     --ring: 201 65% 32%;
-    --chart-1: 201 65% 40%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 43 74% 55%;
-    --chart-4: 280 45% 55%;
-    --chart-5: 27 80% 55%;
     --radius: 0.5rem;
     --sidebar-background: 210 20% 97%;
     --sidebar-foreground: 210 10% 30%;
@@ -115,14 +165,23 @@ html {
     --accent-foreground: 200 40% 90%;
     --destructive: 0 62% 52%;
     --destructive-foreground: 0 0% 98%;
-    --border: 208 14% 17%;
-    --input: 208 14% 17%;
+    --destructive-tint: 0 62% 52%;
+    --destructive-ink: 0 60% 68%;
+    --success: 160 45% 48%;
+    --success-foreground: 166 60% 10%;
+    --success-tint: 160 84% 39%;
+    --success-ink: 158 45% 55%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 21 92% 14%;
+    --warning-tint: 38 92% 50%;
+    --warning-ink: 43 60% 60%;
+    --info: 217 91% 60%;
+    --info-foreground: 226 65% 14%;
+    --info-tint: 217 91% 60%;
+    --info-ink: 213 55% 66%;
+    --border: 208 14% 22%;
+    --input: 208 14% 26%;
     --ring: 199 55% 62%;
-    --chart-1: 199 55% 55%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 43 74% 55%;
-    --chart-4: 280 45% 60%;
-    --chart-5: 27 80% 55%;
     --sidebar-background: 209 18% 11%;
     --sidebar-foreground: 210 10% 88%;
     --sidebar-primary: 199 55% 62%;
@@ -141,6 +200,34 @@ html {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* El flash gris que el navegador móvil dibuja encima de lo que se toca. Se apaga porque
+     los controles de la app ya dicen solos que fueron tocados: los botones se hunden con
+     active:scale en pointer-down, las filas y los links tienen su propio estado. Dejar los
+     dos es una respuesta doble, y la del navegador llega tarde y no se puede ajustar.
+
+     Se apaga solo acá, en los elementos que SÍ tienen respuesta propia. Nunca en general
+     sobre todo el documento: en algo pulsable que no tenga estado propio, ese flash es la
+     única señal de que el toque llegó. */
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  summary {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* El material translúcido del chrome (header). Con prefers-reduced-transparency se
+   vuelve opaco: el blur deja de ser profundidad y pasa a ser ruido detrás del texto
+   para quien pidió menos transparencia. */
+@media (prefers-reduced-transparency: reduce) {
+  .chrome-translucida {
+    background-color: hsl(var(--background));
+    backdrop-filter: none;
+  }
 }
 
 /* Un spinner es información, no decoración: dice "esto sigue trabajando". Con
@@ -151,5 +238,31 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .animate-spin {
     animation-duration: 2.5s;
+  }
+
+  /* Ver arriba: el scroll vuelve a ser instantáneo. */
+  html {
+    scroll-behavior: auto;
+  }
+
+  /* Los overlays de Radix (dialog, alert-dialog, sheet, select, popover, dropdown,
+     command) entran con desplazamiento + zoom vía tailwindcss-animate, que arma su
+     transform con estas variables. Puestas en neutro, la animación sigue existiendo
+     pero se queda solo con el fundido: la aparición se sigue entendiendo —algo nuevo
+     llegó— sin nada viajando por la pantalla.
+
+     No se apagan con "animation: none" porque Radix espera el animationend para
+     desmontar el contenido: sin ese evento, un dialog cerrado se queda en el DOM. */
+  [data-state="open"],
+  [data-state="closed"] {
+    animation-duration: 150ms !important;
+    --tw-enter-translate-x: 0 !important;
+    --tw-enter-translate-y: 0 !important;
+    --tw-exit-translate-x: 0 !important;
+    --tw-exit-translate-y: 0 !important;
+    --tw-enter-scale: 1 !important;
+    --tw-exit-scale: 1 !important;
+    --tw-enter-rotate: 0 !important;
+    --tw-exit-rotate: 0 !important;
   }
 }

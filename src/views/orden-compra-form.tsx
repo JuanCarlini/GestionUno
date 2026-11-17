@@ -226,7 +226,7 @@ export function OrdenCompraForm() {
                           <SelectValue
                             placeholder={
                               loadingProveedores
-                                ? "Cargando proveedores..."
+                                ? "Cargando proveedores…"
                                 : proveedores.length === 0
                                 ? "No hay proveedores disponibles"
                                 : "Selecciona un proveedor"
@@ -298,7 +298,7 @@ export function OrdenCompraForm() {
                   <FormItem className="md:col-span-2">
                     <FormLabel>Observaciones</FormLabel>
                     <FormControl>
-                      <Textarea rows={2} disabled={isLoading} placeholder="Notas u observaciones internas..." {...field} />
+                      <Textarea rows={2} disabled={isLoading} placeholder="Notas u observaciones internas…" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -325,7 +325,7 @@ export function OrdenCompraForm() {
                         setNuevoItem((prev) => ({ ...prev, item_id: itemId, producto: item?.nombre || "" }))
                       }}
                       disabled={isLoading}
-                      placeholder="Buscar o crear item..."
+                      placeholder="Buscar o crear item…"
                     />
                     {selectedItem && selectedItem.descripcion && (
                       <p className="text-xs text-muted-foreground mt-1">{selectedItem.descripcion}</p>
@@ -406,7 +406,7 @@ export function OrdenCompraForm() {
                     <div className="col-span-1" />
                   </div>
                   {items.map((item) => (
-                    <div key={item.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 px-4 py-3 border rounded hover:bg-accent">
+                    <div key={item.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 px-4 py-3 border rounded-sm hover:bg-muted/50">
                       <div className="col-span-2 md:col-span-4">
                         <p className="font-medium break-words">{item.producto}</p>
                         {item.descripcion && <p className="text-sm text-muted-foreground break-words">{item.descripcion}</p>}
@@ -424,14 +424,14 @@ export function OrdenCompraForm() {
                           onClick={() => eliminarItem(item.id)}
                           disabled={isLoading}
                         >
-                          <Trash2 className="h-4 w-4 text-destructive" />
+                          <Trash2 className="h-4 w-4 text-destructive-ink" />
                         </Button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded">
+                <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-sm">
                   No hay items agregados. Usa el formulario de arriba para agregarlos.
                 </div>
               )}
@@ -451,7 +451,7 @@ export function OrdenCompraForm() {
                   </div>
                   <div className="flex justify-between pt-2 border-t text-lg font-bold">
                     <span>Total con IVA:</span>
-                    <span className="tabular-nums text-emerald-600 dark:text-emerald-400">{formatCurrency(calcularTotal(), monedaElegida)}</span>
+                    <span className="tabular-nums text-success-ink">{formatCurrency(calcularTotal(), monedaElegida)}</span>
                   </div>
                 </div>
               </div>
@@ -461,7 +461,7 @@ export function OrdenCompraForm() {
             <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={isLoading || loadingProveedores}>
                 {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {isLoading ? "Creando..." : "Crear Orden"}
+                {isLoading ? "Creando…" : "Crear Orden"}
               </Button>
               <Button type="button" variant="outline" onClick={() => router.push("/ordenes-compra")} disabled={isLoading}>
                 Cancelar

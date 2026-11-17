@@ -76,7 +76,7 @@ export function OrdenCompraList() {
   }
 
   return (
-    <ListShell loading={loading} error={error} loadingText="Cargando órdenes...">
+    <ListShell loading={loading} error={error} loadingText="Cargando órdenes…">
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -84,7 +84,7 @@ export function OrdenCompraList() {
           <SearchBar
             value={q}
             onChange={setQ}
-            placeholder="Buscar por número, tarea u observación..."
+            placeholder="Buscar por número, tarea u observación…"
             className="w-full sm:w-80"
           />
         </div>
@@ -105,7 +105,7 @@ export function OrdenCompraList() {
               icon={ShoppingCart}
               title={
                 q
-                  ? `No se encontraron órdenes que coincidan con "${q}"`
+                  ? `No se encontraron órdenes que coincidan con “${q}”`
                   : "No hay órdenes de compra registradas"
               }
             >
@@ -115,9 +115,17 @@ export function OrdenCompraList() {
             </EmptyState>
           ) : (
             orders.map((orden: any) => (
+              // El hover es bg-muted/50, el mismo que usa TableRow: sirve para seguir la
+              // fila con la vista, no promete nada. bg-accent al pasar por encima queda
+              // reservado para lo que de verdad se puede apretar —los botones, y la fila
+              // de certificaciones imputadas de factura-detail, que es un <Link> con su
+              // press y su anillo de foco—. Esta fila no es pulsable: lo que abre la orden
+              // es el botón del ojo. Si alguna vez se quiere la fila entera clickeable, el
+              // camino es un <Link> con after:absolute after:inset-0 sobre el número y los
+              // botones de acción en z-10 por encima, no un onClick en el div.
               <div
                 key={orden.id}
-                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
+                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
                   {/* columna 1: número y fecha */}
@@ -178,7 +186,7 @@ export function OrdenCompraList() {
                           {updatingId === orden.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <CheckCircle className="h-4 w-4 text-success-ink" />
                           )}
                         </Button>
                         <Button
@@ -192,7 +200,7 @@ export function OrdenCompraList() {
                           {updatingId === orden.id ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-destructive" />
+                            <XCircle className="h-4 w-4 text-destructive-ink" />
                           )}
                         </Button>
                       </>

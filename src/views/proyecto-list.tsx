@@ -53,12 +53,12 @@ export function ProyectoList() {
   const canEdit = puede("proyectos", "crear")
 
   return (
-    <ListShell loading={loading} error={error} loadingText="Cargando proyectos...">
+    <ListShell loading={loading} error={error} loadingText="Cargando proyectos…">
       <div className="space-y-4">
         <SearchBar
           value={q}
           onChange={setQ}
-          placeholder="Buscar por nombre, código o descripción..."
+          placeholder="Buscar por nombre, código o descripción…"
         />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-muted-foreground tabular-nums">
@@ -100,7 +100,7 @@ export function ProyectoList() {
                   </div>
                   <div className="flex items-center gap-2">
                     {proyecto.estado && (
-                      <Badge className={getStatusStyle(proyecto.estado).color}>
+                      <Badge variant="outline" className={getStatusStyle(proyecto.estado).color}>
                         {LABEL_PROYECTO_ESTADO[proyecto.estado]}
                       </Badge>
                     )}

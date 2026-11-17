@@ -189,13 +189,13 @@ export function CertificacionDetail({ params }: Props) {
         <CardHeader>
           <div className="flex flex-wrap justify-between items-start gap-4">
             <div>
-              <CardTitle className="text-2xl md:text-3xl mb-2">
+              <CardTitle as="h1" className="text-2xl md:text-3xl mb-2">
                 {cert.numero_cert ?? `CERT-${cert.id}`}
               </CardTitle>
               <StatusBadge estado={cert.estado} />
             </div>
             <div className="text-right">
-              <div className="text-2xl md:text-3xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+              <div className="text-2xl md:text-3xl font-bold tabular-nums text-success-ink">
                 {formatCurrency(Number(cert.total_con_iva ?? 0), cert.moneda ?? "ARS")}
               </div>
               <div className="text-sm text-muted-foreground">Total con IVA</div>
@@ -315,7 +315,7 @@ export function CertificacionDetail({ params }: Props) {
               </div>
               <div className="text-right">
                 <div className="text-sm text-muted-foreground">Total con IVA</div>
-                <div className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+                <div className="text-2xl font-bold tabular-nums text-success-ink">
                   {formatCurrency(Number(cert.total_con_iva ?? 0), cert.moneda ?? "ARS")}
                 </div>
               </div>
@@ -341,7 +341,7 @@ export function CertificacionDetail({ params }: Props) {
               disabled={updating}
               className={buttonVariants({ variant: "success" })}
             >
-              {updating ? "Aprobando..." : "Aprobar"}
+              {updating ? "Aprobando…" : "Aprobar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -364,7 +364,7 @@ export function CertificacionDetail({ params }: Props) {
               disabled={updating}
               className={buttonVariants({ variant: "destructive" })}
             >
-              {updating ? "Rechazando..." : "Rechazar"}
+              {updating ? "Rechazando…" : "Rechazar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

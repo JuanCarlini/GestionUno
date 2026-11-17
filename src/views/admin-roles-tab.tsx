@@ -116,7 +116,7 @@ export function RolesTab({ roles, refetchRoles }: RolesTabProps) {
                     disabled={rol.es_sistema || rol.usuarios > 0}
                     onClick={() => handleEliminarRol(rol)}
                   >
-                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <Trash2 className="h-4 w-4 text-destructive-ink" />
                   </Button>
                 </div>
               </div>

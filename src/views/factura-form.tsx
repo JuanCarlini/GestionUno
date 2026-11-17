@@ -307,14 +307,14 @@ export function FacturaForm() {
                         placeholder="0"
                       />
                       {excede && (
-                        <p className="text-xs text-destructive">Máximo {formatCurrency(cert.saldo_facturable, cert.moneda ?? "ARS")}</p>
+                        <p className="text-xs text-destructive-ink">Máximo {formatCurrency(cert.saldo_facturable, cert.moneda ?? "ARS")}</p>
                       )}
                     </div>
                   </div>
                 )
               })}
               <div className="flex justify-end text-sm">
-                <span className={totalImputado > totalLineas + 0.01 ? "text-destructive" : ""}>
+                <span className={totalImputado > totalLineas + 0.01 ? "text-destructive-ink" : ""}>
                   Total imputado: <strong>{formatCurrency(totalImputado)}</strong>
                 </span>
               </div>

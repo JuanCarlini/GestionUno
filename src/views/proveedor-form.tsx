@@ -115,19 +115,25 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
                   placeholder="Nombre de la empresa"
                 />
                 {form.formState.errors.nombre && (
-                  <p className="text-sm text-destructive">{form.formState.errors.nombre.message}</p>
+                  <p className="text-sm text-destructive-ink">{form.formState.errors.nombre.message}</p>
                 )}
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="cuit">CUIT *</Label>
+                {/* Estos campos son datos del proveedor, no de quien está usando la app:
+                    autoComplete en off para que el navegador no ofrezca el correo ni el
+                    teléfono propios. spellCheck apagado en el CUIT y el correo, que son
+                    cadenas sin palabras y quedaban subrayados en rojo. */}
                 <Input
                   id="cuit"
+                  autoComplete="off"
+                  spellCheck={false}
                   {...form.register("cuit")}
                   placeholder="20-12345678-9"
                 />
                 {form.formState.errors.cuit && (
-                  <p className="text-sm text-destructive">{form.formState.errors.cuit.message}</p>
+                  <p className="text-sm text-destructive-ink">{form.formState.errors.cuit.message}</p>
                 )}
               </div>
             </div>
@@ -141,23 +147,29 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="off"
+                  spellCheck={false}
                   {...form.register("email")}
                   placeholder="contacto@empresa.com"
                 />
                 {form.formState.errors.email && (
-                  <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+                  <p className="text-sm text-destructive-ink">{form.formState.errors.email.message}</p>
                 )}
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="telefono">Teléfono</Label>
+                {/* type="tel" para que en un teléfono abra el teclado numérico con +, * y
+                    #, que es lo que hace falta para escribir un número con código de área. */}
                 <Input
                   id="telefono"
+                  type="tel"
+                  autoComplete="off"
                   {...form.register("telefono")}
                   placeholder="+54 341 1234567"
                 />
                 {form.formState.errors.telefono && (
-                  <p className="text-sm text-destructive">{form.formState.errors.telefono.message}</p>
+                  <p className="text-sm text-destructive-ink">{form.formState.errors.telefono.message}</p>
                 )}
               </div>
             </div>
@@ -174,7 +186,7 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
                 rows={3}
               />
               {form.formState.errors.direccion && (
-                <p className="text-sm text-destructive">{form.formState.errors.direccion.message}</p>
+                <p className="text-sm text-destructive-ink">{form.formState.errors.direccion.message}</p>
               )}
             </div>
           </div>
@@ -182,7 +194,7 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
           <div className="flex flex-wrap gap-4 pt-6 border-t">
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {isLoading ? "Guardando..." : (isEditing ? "Actualizar Proveedor" : "Crear Proveedor")}
+              {isLoading ? "Guardando…" : (isEditing ? "Actualizar Proveedor" : "Crear Proveedor")}
             </Button>
             <Button 
               type="button" 

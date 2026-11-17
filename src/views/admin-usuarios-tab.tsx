@@ -147,7 +147,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                 return (
                   <div
                     key={userData.id}
-                    className={`flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors ${userData.estado === "inactivo" ? "opacity-60" : ""}`}
+                    className={`flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors ${userData.estado === "inactivo" ? "opacity-60" : ""}`}
                   >
                     <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                       <div className="min-w-0">
@@ -155,7 +155,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                         <p className="text-sm text-muted-foreground truncate">{userData.email}</p>
                         <div className="flex gap-1 mt-1">
                           {esUnoMismo && (
-                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">Tú</span>
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-sm">Tú</span>
                           )}
                           <Badge variant={userData.estado === "activo" ? "outline" : "destructive"}>
                             {userData.estado}
@@ -213,7 +213,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                             disabled={esUnoMismo || updatingUserId === userData.id}
                             onClick={() => handleBaja(userData)}
                           >
-                            <UserX className="h-4 w-4 text-destructive" />
+                            <UserX className="h-4 w-4 text-destructive-ink" />
                           </Button>
                         ) : (
                           <Button
@@ -224,7 +224,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                             disabled={updatingUserId === userData.id}
                             onClick={() => handleReactivar(userData)}
                           >
-                            <UserCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                            <UserCheck className="h-4 w-4 text-success-ink" />
                           </Button>
                         )}
                       </div>
@@ -248,13 +248,18 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
               <Label htmlFor="nuevo-user-nombre">Nombre *</Label>
               <Input id="nuevo-user-nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} required />
             </div>
+            {/* Acá un admin da de alta la cuenta de OTRA persona, así que autoComplete va
+                en off: lo último que queremos es que el navegador complete el correo del
+                admin en el campo del nuevo usuario. En la contraseña va new-password, que
+                es lo que evita que el gestor meta ahí la del admin, y de paso le ofrece
+                generar una. */}
             <div>
               <Label htmlFor="nuevo-user-email">Email *</Label>
-              <Input id="nuevo-user-email" type="email" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} required />
+              <Input id="nuevo-user-email" type="email" autoComplete="off" spellCheck={false} value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} required />
             </div>
             <div>
               <Label htmlFor="nuevo-user-pass">Contraseña inicial *</Label>
-              <Input id="nuevo-user-pass" type="password" minLength={6} value={nuevo.password} onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })} required />
+              <Input id="nuevo-user-pass" type="password" autoComplete="new-password" minLength={6} value={nuevo.password} onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })} required />
             </div>
             <div>
               <Label htmlFor="nuevo-user-rol">Rol *</Label>
