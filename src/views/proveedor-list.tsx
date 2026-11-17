@@ -119,7 +119,7 @@ export function ProveedorList() {
             proveedores.map((proveedor) => (
               <div
                 key={proveedor.id}
-                className="border border-border rounded-lg p-4 hover:bg-accent transition-colors"
+                className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                   {/* columnas */}

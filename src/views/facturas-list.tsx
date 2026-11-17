@@ -86,7 +86,7 @@ export function FacturasList() {
             facturas.map((factura: any) => (
               <div
                 key={factura.id}
-                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
+                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>

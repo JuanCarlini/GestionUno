@@ -158,7 +158,7 @@ export default function AuditoriaPage() {
         <TabsContent value="bitacora">
           <Card>
             <CardContent className="pt-6">
-              <Table>
+              <Table containerClassName="max-h-[70vh]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Fecha y hora</TableHead>
@@ -191,7 +191,7 @@ export default function AuditoriaPage() {
         <TabsContent value="cambios">
           <Card>
             <CardContent className="pt-6">
-              <Table>
+              <Table containerClassName="max-h-[70vh]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Fecha y hora</TableHead>
