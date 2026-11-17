@@ -83,23 +83,41 @@ export function ListSkeleton({
 
           <div className="space-y-4">
             {Array.from({ length: filas }).map((_, i) => (
+              // La misma caja que la fila de verdad: el grid de 4 columnas con las acciones
+              // DENTRO como cuarta columna, no colgadas afuera. Antes las dos columnas del
+              // medio eran una barra sola cada una, el chip de estado ocupaba la cuarta
+              // columna y los botones iban por fuera del grid: cinco bloques contra cuatro,
+              // alineados contra el borde derecho en vez de donde caen en la lista. Medido,
+              // la fila quedaba en 68px contra los 82px de la real, así que al llegar los
+              // datos todo lo de abajo bajaba 14px por fila.
               <div
                 key={i}
                 data-skeleton="fila"
-                className="flex items-center justify-between gap-4 rounded-lg border border-border p-4"
+                className="flex items-center justify-between rounded-lg border border-border p-4"
               >
                 <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-4">
+                  {/* número y fecha */}
                   <div className="space-y-2">
-                    <Skeleton className={`h-4 w-24 ${PULSO}`} />
-                    <Skeleton className={`h-3 w-20 ${PULSO}`} />
+                    <Skeleton className={`h-5 w-28 ${PULSO}`} />
+                    <Skeleton className={`h-4 w-20 ${PULSO}`} />
                   </div>
-                  <Skeleton className={`h-4 w-32 ${PULSO}`} />
-                  <Skeleton className={`h-4 w-24 ${PULSO}`} />
-                  <Skeleton className={`h-6 w-24 rounded-full ${PULSO}`} />
-                </div>
-                <div className="flex gap-2">
-                  <Skeleton className={`h-9 w-9 ${PULSO}`} />
-                  <Skeleton className={`h-9 w-9 ${PULSO}`} />
+                  {/* proveedor y observaciones */}
+                  <div className="space-y-2">
+                    <Skeleton className={`h-4 w-32 ${PULSO}`} />
+                    <Skeleton className={`h-4 w-40 ${PULSO}`} />
+                  </div>
+                  {/* monto y chip de estado */}
+                  <div className="space-y-2">
+                    <Skeleton className={`h-5 w-28 ${PULSO}`} />
+                    <Skeleton className={`h-6 w-24 rounded-full ${PULSO}`} />
+                  </div>
+                  {/* la acción: una sola, como en una fila ya aprobada, que es el caso
+                      normal. Las de aprobar y anular solo aparecen en borrador y en
+                      aprobación, y dibujar tres botones acá haría encoger la fila al
+                      llegar los datos. */}
+                  <div className="flex items-center">
+                    <Skeleton className={`h-9 w-9 ${PULSO}`} />
+                  </div>
                 </div>
               </div>
             ))}
