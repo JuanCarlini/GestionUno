@@ -36,7 +36,10 @@ const CardTitle = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "text-2xl font-semibold leading-none tracking-tight",
+      // Sin tracking fijo: lo pone la escala de tamaños (tailwind.config.ts), que lo
+      // ajusta por tamaño. Acá hace falta porque el CardTitle se usa también con
+      // md:text-3xl encima, y un valor clavado no acompaña ese cambio.
+      "text-2xl font-semibold leading-none",
       className
     )}
     {...props}
