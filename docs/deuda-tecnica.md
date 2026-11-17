@@ -5,13 +5,31 @@ se arregla, se borra de este archivo.
 
 ## Advisories de dependencias que quedan abiertos
 
-`npm audit` en el CI corre con la vara en `high`, y hoy pasa: no quedan advisories high ni
-critical. Quedan **8 moderate**, que el CI deja pasar:
+El CI corre `npm run auditoria-deps`, con la vara en `high`. El script permite advisories de
+a uno, con el motivo escrito y una fecha de revisión, y falla con cualquier otro high o
+critical, con un permiso vencido y con un permiso que ya no corresponde a ningún advisory.
+
+### Permitido hoy: `GHSA-fc5q-39xc-vjpf` en `picomatch`, hasta 2027-02-15
+
+ReDoS en extglobs. **No hay versión parcheada**: el rango vulnerable es `*`, incluida la
+última publicada (4.0.7), así que no hay a dónde subir. Lo que `npm audit fix --force`
+propone es bajar `vitest` 4 a 3.1.4 —un downgrade de major que tampoco arregla nada— o migrar
+`tailwindcss` 3 a 4.
+
+Arrastra a 15 paquetes más por cascada (`fdir`, `micromatch`, `anymatch`, `readdirp`,
+`chokidar`, `fast-glob`, `tinyglobby`, `sucrase`, `tailwindcss`, `vite`, `vitest` y las
+herramientas de eslint). Son todos glob de build corriendo sobre rutas del propio repo, no
+sobre input de usuario, y ninguno entra al bundle.
+
+Qué hace falta para sacarlo: que `picomatch` publique una versión parcheada. Ahí se borra la
+entrada de `PERMITIDOS` en `scripts/auditoria-deps.mjs` y el propio script avisa si alguien
+se olvida, porque falla cuando un permiso ya no corresponde.
+
+### Los moderate, que el CI deja pasar
 
 | Paquete | Dónde pega |
 |---|---|
-| `@typescript-eslint/*` (5 paquetes) | Solo herramienta de desarrollo, no entra al bundle. |
-| `minimatch` | Transitiva de la misma herramienta. |
+| `@typescript-eslint/*` | Solo herramienta de desarrollo, no entra al bundle. |
 | `exceljs` + `uuid` | Sí entra al runtime: es el export a Excel de los reportes. |
 
 Los de `exceljs` son los únicos que importan de verdad. Salen con el major de `exceljs`, que

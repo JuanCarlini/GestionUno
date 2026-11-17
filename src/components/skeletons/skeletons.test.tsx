@@ -9,6 +9,8 @@ import {
   PageHeaderSkeleton,
   TabReporteSkeleton,
   VolverSkeleton,
+  UsuariosSkeleton,
+  AuditoriaSkeleton,
 } from "."
 
 // Un skeleton mal anunciado es peor que ninguno: el lector de pantalla lee una pila de divs
@@ -22,6 +24,8 @@ const SKELETONS = [
   ["FormSkeleton", <FormSkeleton key="f" />, "Cargando el formulario"],
   ["DashboardSkeleton", <DashboardSkeleton key="da" />, "Cargando el dashboard"],
   ["ReportesSkeleton", <ReportesSkeleton key="r" />, "Cargando los reportes"],
+  ["UsuariosSkeleton", <UsuariosSkeleton key="u" />, "Cargando la administración de usuarios"],
+  ["AuditoriaSkeleton", <AuditoriaSkeleton key="a" />, "Cargando la auditoría"],
 ] as const
 
 describe("skeletons — contrato accesible", () => {
@@ -160,5 +164,40 @@ describe("skeletons — forma de la pantalla", () => {
   it("el encabezado de página no se anuncia como status (va dentro de otro)", () => {
     render(<PageHeaderSkeleton />)
     expect(screen.queryByRole("status")).toBeNull()
+  })
+})
+
+describe("skeletons — las pantallas que no son un listado del circuito", () => {
+  // PageHeaderSkeleton dibujaba siempre la acción de la derecha, y 12 de las 18 pantallas
+  // que lo usan tienen un PageHeader sin botón: les aparecía un rectángulo de 144px que al
+  // llegar los datos se desvanecía.
+  it("el encabezado dibuja la acción solo donde la hay", () => {
+    const { container: con } = render(<PageHeaderSkeleton />)
+    const { container: sin } = render(<PageHeaderSkeleton conAccion={false} />)
+
+    expect(con.querySelectorAll(".h-10.w-36").length, "con acción").toBe(1)
+    expect(sin.querySelectorAll(".h-10.w-36").length, "sin acción").toBe(0)
+  })
+
+  // Usaban ListSkeleton, que dibuja la fila del circuito: número, proveedor, monto, estado
+  // y un botón. Ninguna de las dos pantallas tiene esa forma.
+  it("usuarios: dos tabs, el alta aparte y filas con el select de rol", () => {
+    const { container } = render(<UsuariosSkeleton filas={3} />)
+
+    expect(container.querySelectorAll('[data-skeleton="fila-usuario"]').length).toBe(3)
+    // El select de rol es la tercera columna de cada fila; sin él la fila mide otra cosa.
+    expect(container.querySelectorAll(".h-10.w-full").length).toBe(3)
+    expect(container.querySelector(".bg-muted"), "la barra de tabs").toBeTruthy()
+  })
+
+  it("auditoría: la búsqueda de cinco filtros y la tabla de seis columnas", () => {
+    const { container } = render(<AuditoriaSkeleton filas={4} />)
+
+    // Cinco filtros arriba, cada uno con su etiqueta y su control.
+    expect(container.querySelectorAll('[data-skeleton="filtro"]').length).toBe(5)
+    expect(container.querySelectorAll('[data-skeleton="fila-auditoria"]').length).toBe(4)
+    // Seis columnas por fila, las mismas que la Table de la pantalla.
+    const fila = container.querySelector('[data-skeleton="fila-auditoria"]')!
+    expect(fila.children.length).toBe(6)
   })
 })
