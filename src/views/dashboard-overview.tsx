@@ -205,7 +205,7 @@ export function DashboardOverview() {
                       <p className="text-xs text-muted-foreground">{stats.ordenesPago.porPagar} órdenes de pago aprobadas sin pagar</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-destructive-tint/10 text-destructive-ink border-destructive-tint/20 shrink-0">
+                  <Badge variant="outline" className="text-destructive-ink shrink-0">
                     Por pagar
                   </Badge>
                 </div>
@@ -221,7 +221,7 @@ export function DashboardOverview() {
                       <p className="text-xs text-muted-foreground">{stats.ordenesCompra.pendientes} órdenes de compra por aprobar</p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-warning-tint/10 text-warning-ink border-warning-tint/20 shrink-0">
+                  <Badge variant="outline" className="text-warning-ink shrink-0">
                     Pendiente
                   </Badge>
                 </div>

@@ -17,7 +17,7 @@ export function StatusBadge({ estado, showIcon = false, className = "" }: Status
   const label = conocido ?? estado ?? "Sin estado"
 
   return (
-    <Badge className={`${style.color} ${className}`}>
+    <Badge variant="outline" className={`${style.color} ${className}`}>
       <div className="flex items-center space-x-1">
         {showIcon && <Icon className={`h-3.5 w-3.5 ${style.iconColor}`} />}
         <span className={conocido ? "" : "capitalize"}>{label}</span>

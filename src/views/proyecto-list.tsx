@@ -100,7 +100,7 @@ export function ProyectoList() {
                   </div>
                   <div className="flex items-center gap-2">
                     {proyecto.estado && (
-                      <Badge className={getStatusStyle(proyecto.estado).color}>
+                      <Badge variant="outline" className={getStatusStyle(proyecto.estado).color}>
                         {LABEL_PROYECTO_ESTADO[proyecto.estado]}
                       </Badge>
                     )}

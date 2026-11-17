@@ -50,26 +50,35 @@ function getStatusCategory(estado: string | null | undefined): StatusCategory {
   return statusMap[estadoLower] || StatusCategory.INFO
 }
 
-// El chip es siempre el mismo patrón: el tinte del estado al 10%, su borde al 20% y la
-// tinta encima. Los cuatro tokens de cada estado están explicados en globals.css; acá
-// alcanza con saber que `-tint` es el fondo y `-ink` el texto, y que cada uno ya trae el
-// valor que corresponde al tema, así que no hace falta una variante dark: por clase.
+// El chip no lleva relleno: el estado lo dice la tinta del texto y nada más. Antes era el
+// tinte al 10% de fondo + el borde al 20% + la tinta, o sea el mismo color tres veces en
+// una pastilla de 20px de alto, y en un listado de 25 filas eso es una grilla de manchas
+// de color que compite con los números, que es lo que hay que leer.
+//
+// El borde lo pone solo el `border` del Badge, en el gris de --border: la pastilla la
+// dibuja la estructura y el color queda para el estado. Por eso los dos lugares que usan
+// esto van con variant="outline": el variant default del Badge trae bg-primary, y sin
+// fondo propio que lo pise los chips saldrían azul sólido.
+//
+// Los cuatro tokens de cada estado están explicados en globals.css; acá alcanza con saber
+// que `-ink` ya trae el valor que corresponde al tema, así que no hace falta dark: por
+// clase. Sobre la card limpia dan entre 6,1:1 y 8,8:1.
 function getStatusColor(estado: string | null | undefined): string {
   const category = getStatusCategory(estado)
 
   switch (category) {
     case StatusCategory.SUCCESS:
-      return "bg-success-tint/10 text-success-ink border-success-tint/20"
+      return "text-success-ink"
     case StatusCategory.PENDING:
-      return "bg-warning-tint/10 text-warning-ink border-warning-tint/20"
+      return "text-warning-ink"
     case StatusCategory.ERROR:
-      return "bg-destructive-tint/10 text-destructive-ink border-destructive-tint/20"
+      return "text-destructive-ink"
     case StatusCategory.INFO:
-      return "bg-info-tint/10 text-info-ink border-info-tint/20"
+      return "text-info-ink"
     case StatusCategory.DRAFT:
-      return "bg-muted text-muted-foreground border-border"
+      return "text-muted-foreground"
     default:
-      return "bg-muted text-muted-foreground border-border"
+      return "text-muted-foreground"
   }
 }
 
