@@ -30,10 +30,21 @@ const CardHeader = React.forwardRef<
 CardHeader.displayName = "CardHeader"
 
 const CardTitle = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
+  HTMLHeadingElement,
+  React.HTMLAttributes<HTMLHeadingElement> & { as?: "h1" | "h2" | "h3" }
+>(({ className, as: Etiqueta = "h2", ...props }, ref) => (
+  // h2 y no div. Con un div, la app tenía un solo encabezado —el h1 de PageHeader— y
+  // ningún h2: quien navega por encabezados con un lector de pantalla no tenía forma de
+  // saltar entre las secciones de una pantalla, que es justo para lo que sirven. Cada
+  // tarjeta es una sección de su página, así que h2 es el nivel que corresponde.
+  //
+  // `as` existe por las pantallas de detalle: no tienen PageHeader, el título del
+  // documento ES el título de la página y va con as="h1". Sin eso, esas pantallas
+  // empezarían en h2 y el orden quedaría roto al revés.
+  //
+  // El preflight de Tailwind le saca a los h1-h6 su tamaño y peso por defecto, así que
+  // cambiar la etiqueta no mueve ni un píxel.
+  <Etiqueta
     ref={ref}
     className={cn(
       // Sin tracking fijo: lo pone la escala de tamaños (tailwind.config.ts), que lo
@@ -51,7 +62,9 @@ const CardTitle = React.forwardRef<
       // leading-tight y no leading-none: con la caja igual al tamaño de la fuente, un
       // título de dos líneas ("Órdenes de Compra (1234)" en una columna angosta) se
       // toca consigo mismo.
-      "text-lg font-semibold leading-tight",
+      // text-balance: un título de dos líneas reparte el texto entre las dos en vez de
+      // dejar una palabra sola abajo.
+      "text-balance text-lg font-semibold leading-tight",
       className
     )}
     {...props}

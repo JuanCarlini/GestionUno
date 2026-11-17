@@ -191,7 +191,7 @@ export function OrdenPagoDetails() {
         <CardHeader>
           <div className="flex flex-wrap justify-between items-start gap-4">
             <div>
-              <CardTitle className="text-2xl md:text-3xl mb-2">{orden.numero_op}</CardTitle>
+              <CardTitle as="h1" className="text-2xl md:text-3xl mb-2">{orden.numero_op}</CardTitle>
               <StatusBadge estado={orden.estado} showIcon />
             </div>
             <div className="text-right">

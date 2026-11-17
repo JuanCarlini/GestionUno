@@ -50,7 +50,7 @@ export function CertificacionesList() {
 
 
   return (
-    <ListShell loading={loading} error={error} loadingText="Cargando certificaciones...">
+    <ListShell loading={loading} error={error} loadingText="Cargando certificaciones…">
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -58,7 +58,7 @@ export function CertificacionesList() {
           <SearchBar
             value={q}
             onChange={setQ}
-            placeholder="Buscar por número, OC, proveedor..."
+            placeholder="Buscar por número, OC, proveedor…"
             className="w-full sm:w-80"
           />
         </div>
@@ -75,7 +75,7 @@ export function CertificacionesList() {
               icon={FileCheck}
               title={
                 q
-                  ? `No se encontraron certificaciones que coincidan con "${q}"`
+                  ? `No se encontraron certificaciones que coincidan con “${q}”`
                   : "No hay certificaciones registradas"
               }
             >

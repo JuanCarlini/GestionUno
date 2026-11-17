@@ -20,7 +20,7 @@ export function ItemSelector({
   value,
   onChange,
   disabled = false,
-  placeholder = "Seleccionar item...",
+  placeholder = "Seleccionar item…",
 }: ItemSelectorProps) {
   const [dialogOpen, setDialogOpen] = useState(false)
 

@@ -33,7 +33,7 @@ const TableHeader = React.forwardRef<
   //
   // top-0 y no un offset por la barra de la app: esto se pega contra el div de Table, que
   // es el contenedor de scroll, no contra la ventana. Solo tiene efecto si ese div tiene
-  // un alto acotado (containerClassName="max-h-..."); en una tabla corta no molesta.
+  // un alto acotado (containerClassName con un max-h); en una tabla corta no molesta.
   // bg-card porque estas tablas viven dentro de una Card y, sin fondo opaco, las filas
   // pasarían por debajo y se leerían encima del texto del encabezado.
   <thead

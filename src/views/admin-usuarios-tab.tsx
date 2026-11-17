@@ -248,13 +248,18 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
               <Label htmlFor="nuevo-user-nombre">Nombre *</Label>
               <Input id="nuevo-user-nombre" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} required />
             </div>
+            {/* Acá un admin da de alta la cuenta de OTRA persona, así que autoComplete va
+                en off: lo último que queremos es que el navegador complete el correo del
+                admin en el campo del nuevo usuario. En la contraseña va new-password, que
+                es lo que evita que el gestor meta ahí la del admin, y de paso le ofrece
+                generar una. */}
             <div>
               <Label htmlFor="nuevo-user-email">Email *</Label>
-              <Input id="nuevo-user-email" type="email" value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} required />
+              <Input id="nuevo-user-email" type="email" autoComplete="off" spellCheck={false} value={nuevo.email} onChange={(e) => setNuevo({ ...nuevo, email: e.target.value })} required />
             </div>
             <div>
               <Label htmlFor="nuevo-user-pass">Contraseña inicial *</Label>
-              <Input id="nuevo-user-pass" type="password" minLength={6} value={nuevo.password} onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })} required />
+              <Input id="nuevo-user-pass" type="password" autoComplete="new-password" minLength={6} value={nuevo.password} onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })} required />
             </div>
             <div>
               <Label htmlFor="nuevo-user-rol">Rol *</Label>

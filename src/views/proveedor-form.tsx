@@ -121,8 +121,14 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
               
               <div className="space-y-2">
                 <Label htmlFor="cuit">CUIT *</Label>
+                {/* Estos campos son datos del proveedor, no de quien está usando la app:
+                    autoComplete en off para que el navegador no ofrezca el correo ni el
+                    teléfono propios. spellCheck apagado en el CUIT y el correo, que son
+                    cadenas sin palabras y quedaban subrayados en rojo. */}
                 <Input
                   id="cuit"
+                  autoComplete="off"
+                  spellCheck={false}
                   {...form.register("cuit")}
                   placeholder="20-12345678-9"
                 />
@@ -141,6 +147,8 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="off"
+                  spellCheck={false}
                   {...form.register("email")}
                   placeholder="contacto@empresa.com"
                 />
@@ -151,8 +159,12 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
               
               <div className="space-y-2">
                 <Label htmlFor="telefono">Teléfono</Label>
+                {/* type="tel" para que en un teléfono abra el teclado numérico con +, * y
+                    #, que es lo que hace falta para escribir un número con código de área. */}
                 <Input
                   id="telefono"
+                  type="tel"
+                  autoComplete="off"
                   {...form.register("telefono")}
                   placeholder="+54 341 1234567"
                 />
@@ -182,7 +194,7 @@ export function ProveedorForm({ proveedor, isEditing = false }: Props) {
           <div className="flex flex-wrap gap-4 pt-6 border-t">
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {isLoading ? "Guardando..." : (isEditing ? "Actualizar Proveedor" : "Crear Proveedor")}
+              {isLoading ? "Guardando…" : (isEditing ? "Actualizar Proveedor" : "Crear Proveedor")}
             </Button>
             <Button 
               type="button" 

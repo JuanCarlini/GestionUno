@@ -151,7 +151,7 @@ export function ItemQuickCreateDialog({
                   <FormLabel>Descripción</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Detalles adicionales del item..."
+                      placeholder="Detalles adicionales del item…"
                       className="resize-none"
                       rows={3}
                       {...field}

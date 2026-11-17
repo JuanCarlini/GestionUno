@@ -226,7 +226,7 @@ export function OrdenCompraForm() {
                           <SelectValue
                             placeholder={
                               loadingProveedores
-                                ? "Cargando proveedores..."
+                                ? "Cargando proveedores…"
                                 : proveedores.length === 0
                                 ? "No hay proveedores disponibles"
                                 : "Selecciona un proveedor"
@@ -298,7 +298,7 @@ export function OrdenCompraForm() {
                   <FormItem className="md:col-span-2">
                     <FormLabel>Observaciones</FormLabel>
                     <FormControl>
-                      <Textarea rows={2} disabled={isLoading} placeholder="Notas u observaciones internas..." {...field} />
+                      <Textarea rows={2} disabled={isLoading} placeholder="Notas u observaciones internas…" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -325,7 +325,7 @@ export function OrdenCompraForm() {
                         setNuevoItem((prev) => ({ ...prev, item_id: itemId, producto: item?.nombre || "" }))
                       }}
                       disabled={isLoading}
-                      placeholder="Buscar o crear item..."
+                      placeholder="Buscar o crear item…"
                     />
                     {selectedItem && selectedItem.descripcion && (
                       <p className="text-xs text-muted-foreground mt-1">{selectedItem.descripcion}</p>
@@ -461,7 +461,7 @@ export function OrdenCompraForm() {
             <div className="flex gap-4 pt-4">
               <Button type="submit" disabled={isLoading || loadingProveedores}>
                 {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {isLoading ? "Creando..." : "Crear Orden"}
+                {isLoading ? "Creando…" : "Crear Orden"}
               </Button>
               <Button type="button" variant="outline" onClick={() => router.push("/ordenes-compra")} disabled={isLoading}>
                 Cancelar

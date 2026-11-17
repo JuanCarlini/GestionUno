@@ -49,7 +49,7 @@ export function FacturasList() {
 
 
   return (
-    <ListShell loading={loading} error={error} loadingText="Cargando facturas...">
+    <ListShell loading={loading} error={error} loadingText="Cargando facturas…">
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -57,7 +57,7 @@ export function FacturasList() {
           <SearchBar
             value={q}
             onChange={setQ}
-            placeholder="Buscar por número, proveedor, estado..."
+            placeholder="Buscar por número, proveedor, estado…"
             className="w-full sm:w-80"
           />
         </div>
@@ -74,7 +74,7 @@ export function FacturasList() {
               icon={Receipt}
               title={
                 q
-                  ? `No se encontraron facturas que coincidan con "${q}"`
+                  ? `No se encontraron facturas que coincidan con “${q}”`
                   : "No hay facturas registradas"
               }
             >

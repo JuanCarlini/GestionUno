@@ -189,7 +189,7 @@ export function CertificacionDetail({ params }: Props) {
         <CardHeader>
           <div className="flex flex-wrap justify-between items-start gap-4">
             <div>
-              <CardTitle className="text-2xl md:text-3xl mb-2">
+              <CardTitle as="h1" className="text-2xl md:text-3xl mb-2">
                 {cert.numero_cert ?? `CERT-${cert.id}`}
               </CardTitle>
               <StatusBadge estado={cert.estado} />
@@ -341,7 +341,7 @@ export function CertificacionDetail({ params }: Props) {
               disabled={updating}
               className={buttonVariants({ variant: "success" })}
             >
-              {updating ? "Aprobando..." : "Aprobar"}
+              {updating ? "Aprobando…" : "Aprobar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -364,7 +364,7 @@ export function CertificacionDetail({ params }: Props) {
               disabled={updating}
               className={buttonVariants({ variant: "destructive" })}
             >
-              {updating ? "Rechazando..." : "Rechazar"}
+              {updating ? "Rechazando…" : "Rechazar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

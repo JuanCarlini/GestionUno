@@ -76,7 +76,7 @@ export function OrdenCompraList() {
   }
 
   return (
-    <ListShell loading={loading} error={error} loadingText="Cargando órdenes...">
+    <ListShell loading={loading} error={error} loadingText="Cargando órdenes…">
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -84,7 +84,7 @@ export function OrdenCompraList() {
           <SearchBar
             value={q}
             onChange={setQ}
-            placeholder="Buscar por número, tarea u observación..."
+            placeholder="Buscar por número, tarea u observación…"
             className="w-full sm:w-80"
           />
         </div>
@@ -105,7 +105,7 @@ export function OrdenCompraList() {
               icon={ShoppingCart}
               title={
                 q
-                  ? `No se encontraron órdenes que coincidan con "${q}"`
+                  ? `No se encontraron órdenes que coincidan con “${q}”`
                   : "No hay órdenes de compra registradas"
               }
             >
