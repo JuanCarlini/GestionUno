@@ -147,7 +147,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                 return (
                   <div
                     key={userData.id}
-                    className={`flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors ${userData.estado === "inactivo" ? "opacity-60" : ""}`}
+                    className={`flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors ${userData.estado === "inactivo" ? "opacity-60" : ""}`}
                   >
                     <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                       <div className="min-w-0">

@@ -16,13 +16,13 @@
   }
 }
 
-/* Toast notifications positioning */
-[data-sonner-toaster] {
-  position: fixed !important;
-  top: 1rem !important;
-  right: 1rem !important;
-  z-index: 9999 !important;
-}
+/* Acá había cuatro reglas !important para posicionar el toaster. Las cuatro eran de más:
+   position fija y z-index los pone sonner en su propio CSS (y su z-index es 999999999, así
+   que el "z-index: 9999 !important" lo bajaba en vez de subirlo), y el top/right de 1rem ya
+   lo dan las props position="top-right" y offset={16} del componente.
+   Peor: ese "right: 1rem !important" pisaba la media query con la que sonner pasa a ancho
+   completo en pantallas chicas, así que en un teléfono el toast quedaba angosto en la
+   esquina en lugar de ocupar el ancho como corresponde. */
 
 /* Dark mode improvements */
 .dark {

@@ -23,7 +23,10 @@ export default function DashboardLayout({
 
               z-30 lo pone arriba del contenido y del sidebar fijo de escritorio (z-10) y
               debajo del overlay del drawer y de los dialogs (z-50), que tienen que taparlo. */}
-          <header className="chrome-translucida sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6 py-3 flex items-center justify-between">
+          {/* h-14 en vez de py-3: el alto de la barra es un número, no el resultado de lo
+              que haya adentro. Con py-3 dependía del control más alto, así que cambiar un
+              botón del header movía el alto de la barra en todas las pantallas. */}
+          <header className="chrome-translucida sticky top-0 z-30 h-14 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6 flex items-center justify-between">
             {/* h-9 w-9: el default del componente es h-7 (28px) y al lado convivían dos
                 controles de 36px, tres alturas distintas en la misma barra. */}
             <SidebarTrigger className="h-9 w-9" />

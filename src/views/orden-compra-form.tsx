@@ -406,7 +406,7 @@ export function OrdenCompraForm() {
                     <div className="col-span-1" />
                   </div>
                   {items.map((item) => (
-                    <div key={item.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 px-4 py-3 border rounded-sm hover:bg-accent">
+                    <div key={item.id} className="grid grid-cols-2 md:grid-cols-12 gap-2 px-4 py-3 border rounded-sm hover:bg-muted/50">
                       <div className="col-span-2 md:col-span-4">
                         <p className="font-medium break-words">{item.producto}</p>
                         {item.descripcion && <p className="text-sm text-muted-foreground break-words">{item.descripcion}</p>}

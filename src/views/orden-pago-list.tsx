@@ -142,7 +142,7 @@ export function OrdenPagoList() {
             orders.map((orden) => (
               <div 
                 key={orden.id}
-                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-accent transition-colors"
+                className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   <div>

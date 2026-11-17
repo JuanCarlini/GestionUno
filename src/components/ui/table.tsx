@@ -4,9 +4,14 @@ import { cn } from "@/lib/utils"
 
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  React.HTMLAttributes<HTMLTableElement> & { containerClassName?: string }
+>(({ className, containerClassName, ...props }, ref) => (
+  // containerClassName llega al div que scrollea, no a la <table>. Hace falta para que una
+  // tabla larga pueda pedir su propio alto (max-h-...): este div es overflow-auto, o sea
+  // que es el contenedor de scroll, y mientras su alto sea automático nunca scrollea él
+  // —scrollea la página— y un thead sticky adentro no tiene contra qué pegarse. Con un
+  // max-h, el div scrollea de verdad y el encabezado se queda arriba.
+  <div className={cn("relative w-full overflow-auto", containerClassName)}>
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}
@@ -20,7 +25,19 @@ const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
   React.HTMLAttributes<HTMLTableSectionElement>
 >(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("[&_tr]:border-b", className)} {...props} />
+  // El encabezado se queda arriba mientras se recorre la tabla: en una bitácora de
+  // auditoría de cientos de filas, saber qué columna se está mirando importa.
+  //
+  // top-0 y no un offset por la barra de la app: esto se pega contra el div de Table, que
+  // es el contenedor de scroll, no contra la ventana. Solo tiene efecto si ese div tiene
+  // un alto acotado (containerClassName="max-h-..."); en una tabla corta no molesta.
+  // bg-card porque estas tablas viven dentro de una Card y, sin fondo opaco, las filas
+  // pasarían por debajo y se leerían encima del texto del encabezado.
+  <thead
+    ref={ref}
+    className={cn("sticky top-0 z-10 bg-card [&_tr]:border-b", className)}
+    {...props}
+  />
 ))
 TableHeader.displayName = "TableHeader"
 
