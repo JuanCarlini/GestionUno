@@ -408,7 +408,11 @@ const SidebarContent = React.forwardRef<
       ref={ref}
       data-sidebar="content"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
+        // overscroll-contain: este es el que scrollea de verdad adentro del drawer, así que
+        // es acá y no en el Sheet donde el gesto tiene que quedar encerrado al llegar al
+        // final del menú. (El scroll de la página de atrás ya lo bloquea Radix con
+        // react-remove-scroll mientras el drawer está abierto; esto es el rebote de acá.)
+        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto overscroll-contain group-data-[collapsible=icon]:overflow-hidden",
         className
       )}
       {...props}

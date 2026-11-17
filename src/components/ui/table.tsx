@@ -11,7 +11,10 @@ const Table = React.forwardRef<
   // que es el contenedor de scroll, y mientras su alto sea automático nunca scrollea él
   // —scrollea la página— y un thead sticky adentro no tiene contra qué pegarse. Con un
   // max-h, el div scrollea de verdad y el encabezado se queda arriba.
-  <div className={cn("relative w-full overflow-auto", containerClassName)}>
+  // overscroll-x-contain: estas tablas son anchas y en un teléfono se recorren de costado.
+  // Al llegar al borde, ese mismo gesto lo toma el navegador como "volver atrás", así que
+  // buscar una columna terminaba saliendo de la pantalla. Esto encierra el gesto.
+  <div className={cn("relative w-full overflow-auto overscroll-x-contain", containerClassName)}>
     <table
       ref={ref}
       className={cn("w-full caption-bottom text-sm", className)}
