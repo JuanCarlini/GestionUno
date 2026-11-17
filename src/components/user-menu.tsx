@@ -106,7 +106,7 @@ export function UserMenu({ userName = "Admin" }: UserMenuProps) {
           <DropdownMenuItem
             onClick={handleLogout}
             disabled={isLoading}
-            className="text-destructive cursor-pointer"
+            className="text-destructive-ink cursor-pointer"
           >
             {isLoading ? (
               <>

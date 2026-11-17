@@ -173,7 +173,7 @@ export function FacturaDetail({ params }: Props) {
               <StatusBadge estado={factura.estado} />
             </div>
             <div className="text-right">
-              <div className="text-2xl md:text-3xl font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+              <div className="text-2xl md:text-3xl font-bold tabular-nums text-success-ink">
                 {formatCurrency(Number(factura.total_con_iva ?? 0), factura.moneda ?? "ARS")}
               </div>
               <div className="text-sm text-muted-foreground">Total con IVA</div>
@@ -235,7 +235,7 @@ export function FacturaDetail({ params }: Props) {
               </div>
               <div className="flex justify-between text-lg font-bold border-t pt-2">
                 <span>Total con IVA</span>
-                <span className="tabular-nums text-emerald-700 dark:text-emerald-400">
+                <span className="tabular-nums text-success-ink">
                   {formatCurrency(Number(factura.total_con_iva ?? 0), factura.moneda ?? "ARS")}
                 </span>
               </div>
@@ -309,7 +309,7 @@ export function FacturaDetail({ params }: Props) {
                     </div>
                     <div className="col-span-2 text-right md:col-span-1">
                       <div className="text-sm text-muted-foreground">Total</div>
-                      <div className="font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+                      <div className="font-bold tabular-nums text-success-ink">
                         {formatCurrency(Number(linea.total_con_iva ?? 0), factura.moneda ?? "ARS")}
                       </div>
                       <div className="text-xs text-muted-foreground">IVA: {linea.iva_porcentaje}%</div>

@@ -30,7 +30,7 @@ export function TabDeuda() {
   const { reporte, loading, error } = useReporte("deuda")
 
   if (error && !reporte) {
-    return <p role="alert" className="py-8 text-center text-destructive">Error: {error}</p>
+    return <p role="alert" className="py-8 text-center text-destructive-ink">Error: {error}</p>
   }
   if (!reporte) {
     return <TabReporteSkeleton />
@@ -42,7 +42,7 @@ export function TabDeuda() {
   return (
     // Al refiltrar se conserva el render anterior atenuado: sin salto a esqueleto.
     <div aria-busy={loading} className={`space-y-6 ${loading ? "opacity-40 transition-opacity" : ""}`}>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive-ink">{error}</p>}
 
       {porMoneda(filas).map(([moneda, filasMoneda]) => {
         const total = filasMoneda.reduce((s, f) => s + Number(f.saldo), 0)

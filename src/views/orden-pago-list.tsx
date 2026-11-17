@@ -174,7 +174,7 @@ export function OrdenPagoList() {
                         onClick={() => handleMandarAAprobar(orden.id)}
                         disabled={processingId === orden.id}
                       >
-                        <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <CheckCircle className="h-4 w-4 text-info-ink" />
                       </Button>
                     )}
 
@@ -187,7 +187,7 @@ export function OrdenPagoList() {
                         onClick={() => handleAprobar(orden.id)}
                         disabled={processingId === orden.id}
                       >
-                        <CheckCircle className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                        <CheckCircle className="h-4 w-4 text-success-ink" />
                       </Button>
                     )}
 
@@ -200,7 +200,7 @@ export function OrdenPagoList() {
                         onClick={() => handlePagar(orden.id)}
                         disabled={processingId === orden.id}
                       >
-                        <DollarSign className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                        <DollarSign className="h-4 w-4 text-success-ink" />
                       </Button>
                     )}
 
@@ -213,7 +213,7 @@ export function OrdenPagoList() {
                         onClick={() => handleRechazar(orden.id)}
                         disabled={processingId === orden.id}
                       >
-                        <XCircle className="h-4 w-4 text-destructive" />
+                        <XCircle className="h-4 w-4 text-destructive-ink" />
                       </Button>
                     )}
                   </div>

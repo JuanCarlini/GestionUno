@@ -245,7 +245,7 @@ export function OrdenPagoForm() {
                 </div>
               ))}
               <div className="flex justify-end text-sm">
-                <span className={!sumasCoinciden && totalCajas > 0 ? "text-destructive" : ""}>
+                <span className={!sumasCoinciden && totalCajas > 0 ? "text-destructive-ink" : ""}>
                   Total cajas: <strong>{formatCurrency(totalCajas, moneda)}</strong>
                 </span>
               </div>

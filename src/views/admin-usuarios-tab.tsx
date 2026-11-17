@@ -155,7 +155,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                         <p className="text-sm text-muted-foreground truncate">{userData.email}</p>
                         <div className="flex gap-1 mt-1">
                           {esUnoMismo && (
-                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">Tú</span>
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-sm">Tú</span>
                           )}
                           <Badge variant={userData.estado === "activo" ? "outline" : "destructive"}>
                             {userData.estado}
@@ -213,7 +213,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                             disabled={esUnoMismo || updatingUserId === userData.id}
                             onClick={() => handleBaja(userData)}
                           >
-                            <UserX className="h-4 w-4 text-destructive" />
+                            <UserX className="h-4 w-4 text-destructive-ink" />
                           </Button>
                         ) : (
                           <Button
@@ -224,7 +224,7 @@ export function UsuariosTab({ users, setUsers, roles, refetchUsers, refetchRoles
                             disabled={updatingUserId === userData.id}
                             onClick={() => handleReactivar(userData)}
                           >
-                            <UserCheck className="h-4 w-4 text-emerald-700 dark:text-emerald-400" />
+                            <UserCheck className="h-4 w-4 text-success-ink" />
                           </Button>
                         )}
                       </div>

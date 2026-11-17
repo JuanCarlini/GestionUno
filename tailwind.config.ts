@@ -39,20 +39,38 @@ const config: Config = {
   				DEFAULT: 'hsl(var(--accent))',
   				foreground: 'hsl(var(--accent-foreground))'
   			},
+  			// Los cuatro roles de cada estado están explicados en globals.css.
   			destructive: {
   				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
+  				foreground: 'hsl(var(--destructive-foreground))',
+  				tint: 'hsl(var(--destructive-tint))',
+  				ink: 'hsl(var(--destructive-ink))'
+  			},
+  			success: {
+  				DEFAULT: 'hsl(var(--success))',
+  				foreground: 'hsl(var(--success-foreground))',
+  				tint: 'hsl(var(--success-tint))',
+  				ink: 'hsl(var(--success-ink))'
+  			},
+  			warning: {
+  				DEFAULT: 'hsl(var(--warning))',
+  				foreground: 'hsl(var(--warning-foreground))',
+  				tint: 'hsl(var(--warning-tint))',
+  				ink: 'hsl(var(--warning-ink))'
+  			},
+  			info: {
+  				DEFAULT: 'hsl(var(--info))',
+  				foreground: 'hsl(var(--info-foreground))',
+  				tint: 'hsl(var(--info-tint))',
+  				ink: 'hsl(var(--info-ink))'
   			},
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',
   			ring: 'hsl(var(--ring))',
-  			chart: {
-  				'1': 'hsl(var(--chart-1))',
-  				'2': 'hsl(var(--chart-2))',
-  				'3': 'hsl(var(--chart-3))',
-  				'4': 'hsl(var(--chart-4))',
-  				'5': 'hsl(var(--chart-5))'
-  			},
+  			// No hay familia `chart`: los gráficos tienen su propia paleta en
+  			// views/reportes/paleta.css (--rep-serie-*), validada aparte contra el fondo
+  			// de la card y para daltonismo. Las --chart-1..5 que venían de shadcn no las
+  			// usaba nadie y eran una segunda paleta de gráficos en discordia.
   			sidebar: {
   				DEFAULT: 'hsl(var(--sidebar-background))',
   				foreground: 'hsl(var(--sidebar-foreground))',
@@ -77,6 +95,10 @@ const config: Config = {
   			'4xl': ['2.25rem', { lineHeight: '2.5rem', letterSpacing: '-0.025em' }]
   		},
   		borderRadius: {
+  			// xl entra a la escala para que el recuadro del logo en el login siga a
+  			// --radius como todo lo demás; suelto, rounded-xl era un 0.75rem clavado que
+  			// un cambio de radio de marca se habría dejado atrás.
+  			xl: 'calc(var(--radius) + 4px)',
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'

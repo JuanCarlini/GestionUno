@@ -27,9 +27,13 @@
   --rep-tinta-suave: #52514e;
   --rep-tinta-mutada: #898781;
 
-  /* Color de superficie de la tarjeta (--card de globals.css). Separa marcas
-     apiladas con un hueco real, nunca con un borde dibujado. */
-  --rep-superficie: #ffffff;
+  /* Separa marcas apiladas con un hueco real, nunca con un borde dibujado. Es el único
+     valor de este archivo que SÍ se deriva de los tokens: su trabajo es desaparecer
+     contra la card, así que tiene que ser la card, no una copia de su color. Clavado
+     como hex se desincronizó: en oscuro decía #0a0a0a mientras --card era
+     hsl(208 16% 10%) ≈ #15191d, y el hueco entre barras se dibujaba como una ranura
+     más oscura en vez de no verse. */
+  --rep-superficie: hsl(var(--card));
 }
 
 .dark .reportes-viz {
@@ -38,10 +42,14 @@
   --rep-serie-3: #199e70;
   --rep-serie-4: #c98500;
   --rep-serie-5: #d55181;
-  --rep-serie-6: #008300;
+  /* Era #008300, el mismo valor que en claro: la única serie que no se aclaraba al
+     pasar a oscuro. Sobre la card real daba 3.55:1, y bajo protanopia se confundía con
+     la serie 2 (ΔE 7.6). Este verde la deja en 7.80:1 y lleva esa separación a 17.3 sin
+     tocar ningún otro par. */
+  --rep-serie-6: #4ec44e;
 
-  /* En oscuro la progresión se invierte: sobre fondo negro, más claro es más peso
-     visual. Mismos pasos del azul, validados contra #0a0a0a. */
+  /* En oscuro la progresión se invierte: sobre fondo oscuro, más claro es más peso
+     visual. Mismos pasos del azul. */
   --rep-ordinal-1: #86b6ef;
   --rep-ordinal-2: #3987e5;
   --rep-ordinal-3: #256abf;
@@ -53,7 +61,6 @@
   --rep-tinta-suave: #c3c2b7;
   --rep-tinta-mutada: #898781;
 
-  /* Color de superficie de la tarjeta (--card de globals.css). Separa marcas
-     apiladas con un hueco real, nunca con un borde dibujado. */
-  --rep-superficie: #0a0a0a;
+  /* --rep-superficie no se redeclara acá: arriba es hsl(var(--card)) y --card ya cambia
+     con el tema, así que el hueco entre barras sigue a la card sola. */
 }

@@ -135,7 +135,7 @@ export function OrdenPagoDetails() {
     return (
       <Card>
         <CardContent className="py-8 text-center">
-          <p className="text-destructive">{error || "Orden no encontrada"}</p>
+          <p className="text-destructive-ink">{error || "Orden no encontrada"}</p>
           <Button className="mt-4" onClick={() => router.push("/ordenes-pago")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver

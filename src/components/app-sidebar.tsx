@@ -72,21 +72,20 @@ export function AppSidebar() {
           afuera a propósito. */}
       <SidebarContent role="navigation" aria-label="Navegación principal">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-muted-foreground font-medium">
-            Menú Principal
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Menú principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {visibles.map((item) => {
                 const isActive = pathname === item.url
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      className={`text-muted-foreground hover:bg-accent hover:text-foreground ${
-                        isActive ? "bg-muted text-foreground font-medium" : ""
-                      }`}
-                    >
+                    {/* isActive, que es la prop del componente, en vez de clases propias: el
+                        hover y el estado activo ya los dibuja SidebarMenuButton con los
+                        tokens --sidebar-*, que son los que están tintados al hue de marca.
+                        Las clases que había acá (bg-accent, bg-muted, text-muted-foreground)
+                        pisaban esa paleta con los tokens globales, así que las 16 variables
+                        --sidebar-* estaban definidas y no se veían en ningún lado. */}
+                    <SidebarMenuButton asChild isActive={isActive}>
                       {/* aria-current: el fondo gris dice cuál es la página actual a quien la
                           ve. Sin esto, quien usa lector de pantalla no tiene cómo saberlo. */}
                       <Link href={item.url} aria-current={isActive ? "page" : undefined}>
@@ -101,21 +100,20 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Sección de Administración - Solo para admins */}
+        {/* Sección de Administración - Solo para admins.
+
+            Sin rojo: el rojo es el color de "esto rompe algo" y navegar no rompe nada. Con
+            la etiqueta y los items en destructive, a un admin le quedaba toda su navegación
+            pintada de advertencia, y el hover de cada link se leía como un botón de borrar.
+            Lo que separa esta sección es ser un grupo aparte con su propio título y el ícono
+            del escudo, no el color. */}
         {userIsAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-destructive font-medium">
-              Administración
-            </SidebarGroupLabel>
+            <SidebarGroupLabel>Administración</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className={`text-muted-foreground hover:bg-destructive/10 hover:text-destructive ${
-                      pathname === "/admin/usuarios" ? "bg-destructive/10 text-destructive font-medium" : ""
-                    }`}
-                  >
+                  <SidebarMenuButton asChild isActive={pathname === "/admin/usuarios"}>
                     <Link
                       href="/admin/usuarios"
                       aria-current={pathname === "/admin/usuarios" ? "page" : undefined}
@@ -126,12 +124,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    className={`text-muted-foreground hover:bg-destructive/10 hover:text-destructive ${
-                      pathname === "/admin/auditoria" ? "bg-destructive/10 text-destructive font-medium" : ""
-                    }`}
-                  >
+                  <SidebarMenuButton asChild isActive={pathname === "/admin/auditoria"}>
                     <Link
                       href="/admin/auditoria"
                       aria-current={pathname === "/admin/auditoria" ? "page" : undefined}
