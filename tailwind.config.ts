@@ -64,6 +64,18 @@ const config: Config = {
   				ring: 'hsl(var(--sidebar-ring))'
   			}
   		},
+  		fontSize: {
+  			// El tracking es específico del tamaño: un solo valor para toda la escala está
+  			// mal en algún lado. Los títulos grandes se cierran —al crecer, las letras se
+  			// leen demasiado separadas— y el texto chico se abre un poco para que respire.
+  			// Cuerpo (sm, base, lg) queda en cero: ahí el default de Inter ya está bien.
+  			// Tamaño y line-height son los de Tailwind, intactos: esto solo agrega tracking.
+  			xs: ['0.75rem', { lineHeight: '1rem', letterSpacing: '0.01em' }],
+  			xl: ['1.25rem', { lineHeight: '1.75rem', letterSpacing: '-0.01em' }],
+  			'2xl': ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.0125em' }],
+  			'3xl': ['1.875rem', { lineHeight: '2.25rem', letterSpacing: '-0.02em' }],
+  			'4xl': ['2.25rem', { lineHeight: '2.5rem', letterSpacing: '-0.025em' }]
+  		},
   		borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',

@@ -6,6 +6,7 @@ import {
 } from "recharts"
 import { formatearValor } from "./formato"
 import { parseFecha } from "@/shared/date-utils"
+import { useReducedMotion } from "@/components/ui/use-reduced-motion"
 
 const ORDINAL = [
   "var(--rep-ordinal-1)", "var(--rep-ordinal-2)",
@@ -65,6 +66,7 @@ export function BarraHorizontal({
   alto?: number
   descripcion?: string
 }) {
+  const reducido = useReducedMotion()
   return (
     <Contenedor alto={alto} descripcion={descripcion ?? `Gráfico de barras de ${clave} por ${etiqueta}`}>
       <BarChart data={datos} layout="vertical" margin={{ left: 8, right: 24 }}>
@@ -75,7 +77,7 @@ export function BarraHorizontal({
           formatter={(v) => formatearValor(v, "moneda", moneda)}
           contentStyle={{ background: "var(--rep-grid)", border: "none", borderRadius: 8 }}
         />
-        <Bar dataKey={clave} fill="var(--rep-serie-1)" radius={[0, 4, 4, 0]} barSize={18} />
+        <Bar dataKey={clave} fill="var(--rep-serie-1)" radius={[0, 4, 4, 0]} barSize={18} isAnimationActive={!reducido} />
       </BarChart>
     </Contenedor>
   )
@@ -89,6 +91,7 @@ export function Embudo({
   moneda: string
   alto?: number
 }) {
+  const reducido = useReducedMotion()
   return (
     <Contenedor alto={alto} descripcion={`Embudo del circuito en ${moneda}: ${etapas.map((e) => e.etapa).join(", ")}`}>
       <BarChart data={etapas} layout="vertical" margin={{ left: 8, right: 48 }}>
@@ -99,7 +102,7 @@ export function Embudo({
           formatter={(v) => formatearValor(v, "moneda", moneda)}
           contentStyle={{ background: "var(--rep-grid)", border: "none", borderRadius: 8 }}
         />
-        <Bar dataKey="monto" radius={[0, 4, 4, 0]} barSize={26}>
+        <Bar dataKey="monto" radius={[0, 4, 4, 0]} barSize={26} isAnimationActive={!reducido}>
           {etapas.map((_, i) => <Cell key={i} fill={ORDINAL[i] ?? ORDINAL[3]} />)}
         </Bar>
       </BarChart>
@@ -117,6 +120,8 @@ export function LineaTemporal({
   moneda: string
   alto?: number
 }) {
+  const reducido = useReducedMotion()
+
   // "2026-03-01" (date_trunc de la RPC) se rotula como "mar 26": el string crudo en el
   // eje no lo lee nadie, y parseado local para no correr un día (UTC-3).
   const mesCorto = (v: unknown) =>
@@ -143,6 +148,7 @@ export function LineaTemporal({
             stroke={SERIES[i]}
             strokeWidth={2}
             dot={false}
+            isAnimationActive={!reducido}
           />
         ))}
       </LineChart>
@@ -159,10 +165,19 @@ export function TortaComposicion({
   moneda: string
   alto?: number
 }) {
+  const reducido = useReducedMotion()
   return (
     <Contenedor alto={alto} descripcion={`Composición por ${datos.map((d) => d.nombre).join(", ")} en ${moneda}`}>
       <PieChart>
-        <Pie data={datos} dataKey="monto" nameKey="nombre" innerRadius={0} outerRadius={110} paddingAngle={1}>
+        <Pie
+          data={datos}
+          dataKey="monto"
+          nameKey="nombre"
+          innerRadius={0}
+          outerRadius={110}
+          paddingAngle={1}
+          isAnimationActive={!reducido}
+        >
           {/* key por nombre: con el índice, al cambiar el filtro Recharts reusa los
               segmentos y puede pintar un frame con el color anterior */}
           {datos.map((d, i) => (
