@@ -3,6 +3,7 @@
 import { DetailSkeleton } from "@/components/skeletons"
 import { useCallback, useEffect, useState } from "react"
 import { notFound, useRouter } from "next/navigation"
+import Link from "next/link"
 import { use } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -254,10 +255,10 @@ export function FacturaDetail({ params }: Props) {
           <CardContent>
             <div className="space-y-3">
               {factura.imputaciones.map((imp) => (
-                <div
+                <Link
                   key={imp.certificacion_id}
-                  className="flex items-center justify-between gap-3 p-4 border rounded-lg hover:bg-accent cursor-pointer"
-                  onClick={() => router.push(`/certificaciones/${imp.certificacion_id}`)}
+                  href={`/certificaciones/${imp.certificacion_id}`}
+                  className="flex items-center justify-between gap-3 p-4 border rounded-lg ring-offset-background transition-[background-color,transform] duration-100 hover:bg-accent active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
                   <div className="min-w-0">
                     <div className="font-semibold truncate">{imp.gu_certificaciones?.numero_cert}</div>
@@ -271,7 +272,7 @@ export function FacturaDetail({ params }: Props) {
                       {formatCurrency(Number(imp.monto_asignado ?? 0), factura.moneda ?? "ARS")}
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </CardContent>

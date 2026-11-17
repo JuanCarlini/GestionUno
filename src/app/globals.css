@@ -29,7 +29,9 @@
   color-scheme: dark;
 }
 
-/* Smooth transitions for theme changes */
+/* El scroll suave es una preferencia, no un default: más abajo vuelve a ser instantáneo
+   para quien pidió menos movimiento. Recorrer un listado largo de golpe es justo el tipo
+   de desplazamiento que marea. */
 html {
   scroll-behavior: smooth;
 }
@@ -143,6 +145,16 @@ html {
   }
 }
 
+/* El material translúcido del chrome (header). Con prefers-reduced-transparency se
+   vuelve opaco: el blur deja de ser profundidad y pasa a ser ruido detrás del texto
+   para quien pidió menos transparencia. */
+@media (prefers-reduced-transparency: reduce) {
+  .chrome-translucida {
+    background-color: hsl(var(--background));
+    backdrop-filter: none;
+  }
+}
+
 /* Un spinner es información, no decoración: dice "esto sigue trabajando". Con
    prefers-reduced-motion no se apaga —quedaría un ícono quieto que parece colgado— sino que
    gira despacio: sigue avisando, sin el movimiento rápido que a algunas personas les marea.
@@ -151,5 +163,31 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .animate-spin {
     animation-duration: 2.5s;
+  }
+
+  /* Ver arriba: el scroll vuelve a ser instantáneo. */
+  html {
+    scroll-behavior: auto;
+  }
+
+  /* Los overlays de Radix (dialog, alert-dialog, sheet, select, popover, dropdown,
+     command) entran con desplazamiento + zoom vía tailwindcss-animate, que arma su
+     transform con estas variables. Puestas en neutro, la animación sigue existiendo
+     pero se queda solo con el fundido: la aparición se sigue entendiendo —algo nuevo
+     llegó— sin nada viajando por la pantalla.
+
+     No se apagan con "animation: none" porque Radix espera el animationend para
+     desmontar el contenido: sin ese evento, un dialog cerrado se queda en el DOM. */
+  [data-state="open"],
+  [data-state="closed"] {
+    animation-duration: 150ms !important;
+    --tw-enter-translate-x: 0 !important;
+    --tw-enter-translate-y: 0 !important;
+    --tw-exit-translate-x: 0 !important;
+    --tw-exit-translate-y: 0 !important;
+    --tw-enter-scale: 1 !important;
+    --tw-exit-scale: 1 !important;
+    --tw-enter-rotate: 0 !important;
+    --tw-exit-rotate: 0 !important;
   }
 }
