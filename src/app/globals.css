@@ -190,6 +190,24 @@ html {
   body {
     @apply bg-background text-foreground;
   }
+
+  /* El flash gris que el navegador móvil dibuja encima de lo que se toca. Se apaga porque
+     los controles de la app ya dicen solos que fueron tocados: los botones se hunden con
+     active:scale en pointer-down, las filas y los links tienen su propio estado. Dejar los
+     dos es una respuesta doble, y la del navegador llega tarde y no se puede ajustar.
+
+     Se apaga solo acá, en los elementos que SÍ tienen respuesta propia. Nunca en general
+     sobre todo el documento: en algo pulsable que no tenga estado propio, ese flash es la
+     única señal de que el toque llegó. */
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  summary {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 /* El material translúcido del chrome (header). Con prefers-reduced-transparency se
