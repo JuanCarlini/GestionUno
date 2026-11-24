@@ -24,23 +24,14 @@ import { pathToFileURL } from "node:url"
 // Los advisories en cascada no se listan. Cuando `picomatch` es vulnerable, npm marca también
 // a `fdir`, `micromatch`, `chokidar` y todo lo que cuelgue, pero esos entran con un `via` que
 // es el NOMBRE del paquete de abajo, no un advisory propio. Acá se miran solo los advisories
-// raíz —los que traen su GHSA—, así que permitir el de picomatch cubre su cascada sola.
+// raíz —los que traen su GHSA—, así que permitir el advisory de abajo cubre su cascada sola.
 
 const VARA = new Set(["high", "critical"])
 
-const PERMITIDOS = [
-  {
-    ghsa: "GHSA-fc5q-39xc-vjpf",
-    paquete: "picomatch",
-    motivo:
-      "ReDoS en extglobs. El rango vulnerable es '*': no hay versión parcheada publicada, " +
-      "ni siquiera la última (4.0.7), así que no hay a dónde subir. Lo que npm propone como " +
-      "arreglo es bajar vitest 4 a 3.1.4 (un downgrade de major) o migrar tailwind 3 a 4. " +
-      "Dónde corre: glob de herramientas de build (tailwind, vite, vitest, sucrase, eslint) " +
-      "sobre rutas del propio repo, no sobre input de usuario, y nada de eso entra al bundle.",
-    revisar: "2027-02-15",
-  },
-]
+// Vacía a propósito: hoy no hay ningún high ni critical que permitir. Estaba el ReDoS de
+// picomatch (GHSA-fc5q-39xc-vjpf), que ya no sale en el audit; el propio script avisa cuando
+// un permiso dejó de corresponder a un advisory, y así fue como se sacó.
+const PERMITIDOS = []
 
 /** Corre npm audit y devuelve el JSON. El exit code no sirve: da != 0 si hay vulnerabilidades. */
 function auditar() {
