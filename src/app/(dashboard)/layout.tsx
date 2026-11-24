@@ -44,7 +44,7 @@ export default function DashboardLayout({
             <SidebarTrigger className="h-9 w-9" />
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              <UserMenu userName="Admin" />
+              <UserMenu />
             </div>
           </header>
           {/* tabIndex -1: el destino de un salto tiene que poder recibir el foco, si no el

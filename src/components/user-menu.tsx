@@ -20,14 +20,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useAuth } from "@/components/auth-context"
 import { showSuccessToast, showErrorToast } from "@/shared/toast-helpers"
 import { mensajeDeError } from "@/shared/api-client"
 
-interface UserMenuProps {
-  userName?: string
-}
-
-export function UserMenu({ userName = "Admin" }: UserMenuProps) {
+// El nombre sale del usuario de la sesión, no de una prop: antes el layout pasaba "Admin"
+// fijo y la barra decía lo mismo para cualquiera que entrara.
+export function UserMenu() {
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [changing, setChanging] = useState(false)
@@ -92,8 +93,15 @@ export function UserMenu({ userName = "Admin" }: UserMenuProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground max-w-[120px] truncate">{userName}</span>
+          {/* Mientras /api/auth/me no contestó no hay nombre que poner. El placeholder del
+              mismo alto evita que el header salte cuando llega, y el aria-label le deja al
+              botón un nombre accesible en ese rato. */}
+          <Button variant="ghost" size="sm" className="flex items-center gap-2" aria-label="Mi cuenta">
+            {user ? (
+              <span className="text-sm text-muted-foreground max-w-[120px] truncate">{user.nombre}</span>
+            ) : (
+              <Skeleton className="h-4 w-20" />
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
