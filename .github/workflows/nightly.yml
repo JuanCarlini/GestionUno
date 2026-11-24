@@ -4,10 +4,18 @@ name: Night job
 # tests y build. Lo que no entra ahí por lento o por necesitar una base de verdad corre acá,
 # una vez por noche.
 on:
-  schedule:
-    # 06:00 UTC = 03:00 en Argentina. Si rompe, el resultado está antes de que alguien empiece.
-    - cron: "0 6 * * *"
-  # Para poder dispararlo a mano cuando se toca el circuito.
+  # El cron está apagado a propósito. Los secrets E2E_* no existen, así que la corrida moría
+  # en el primer paso ("--db-url cannot be empty") y lo único que producía era un comentario
+  # por noche en el issue de night-job: un cron que solo avisa de sí mismo enseña a ignorar
+  # los avisos. Y aunque estuvieran los secrets, el paso siguiente fallaría igual mientras el
+  # esquema base no esté en el repo (ver docs/deuda-tecnica.md).
+  #
+  # Para volver a prenderlo: cargar los secrets E2E_*, correrlo a mano con workflow_dispatch
+  # hasta verlo verde, y recién ahí descomentar estas dos líneas.
+  # schedule:
+  #   # 06:00 UTC = 03:00 en Argentina. Si rompe, el resultado está antes de que alguien empiece.
+  #   - cron: "0 6 * * *"
+  # A mano sigue andando: es la única forma de correrlo hoy.
   workflow_dispatch:
 
 permissions:

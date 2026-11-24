@@ -51,7 +51,9 @@ migraciones de julio que nunca entraron al repo. Sobre una base vacía, `ccip_02
 primer `ALTER TABLE`.
 
 **Consecuencia directa:** el night job (`.github/workflows/nightly.yml`) no puede correr,
-porque arma la base de prueba desde cero con `supabase db push`.
+porque arma la base de prueba desde cero con `supabase db push`. Su cron quedó apagado por
+eso: fallaba todas las noches en el primer paso y cada falla comentaba en el issue de
+`night-job`. Sigue disponible a mano (`workflow_dispatch`).
 
 **Qué hace falta:** un `pg_dump --schema-only` de producción, recortado a esas tablas, como
 migración 0 del repo.
